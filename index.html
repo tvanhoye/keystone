@@ -97,6 +97,7 @@ th{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t3
 td{padding:8px 11px;border-bottom:1px solid var(--bd);font-size:.79rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafaf8}
+tr[onclick]{cursor:pointer}
 .mono{font-family:monospace;font-size:.77rem}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:12px;font-size:.64rem;font-weight:700}
@@ -471,6 +472,7 @@ tr:hover td{background:#fafaf8}
     <div class="sb-sec">Vue générale</div>
     <div class="sb-item active" data-p="dashboard" data-tip="Tableau de bord"><span class="sb-icon">🏠</span><span class="sb-lbl">Tableau de bord</span></div>
     <div class="sb-sec">Gestion</div>
+    <div class="sb-item" data-p="batiments" data-tip="Bâtiments"><span class="sb-icon">🏗</span><span class="sb-lbl">Bâtiments</span></div>
     <div class="sb-item" data-p="logements" data-tip="Logements"><span class="sb-icon">🏢</span><span class="sb-lbl">Logements</span></div>
     <div class="sb-item" data-p="locataires" data-tip="Locataires"><span class="sb-icon">👥</span><span class="sb-lbl">Locataires</span></div>
     <div class="sb-item" data-p="paiements" data-tip="Paiements"><span class="sb-icon">💶</span><span class="sb-lbl">Paiements</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
@@ -533,6 +535,12 @@ tr:hover td{background:#fafaf8}
           <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"></div></div>
         </div>
       </div>
+    </div>
+
+    <!-- BÂTIMENTS -->
+    <div class="page" id="page-batiments">
+      <div class="sh-row"><div><h2>Bâtiments</h2><p id="batCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mBat')">＋ Ajouter</button></div></div>
+      <div id="batGrid"></div>
     </div>
 
     <!-- LOGEMENTS -->
@@ -665,11 +673,22 @@ tr:hover td{background:#fafaf8}
 </div><!-- /main -->
 
 <!-- MODALS -->
-<div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Adresse *</label><input id="lAddr"></div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
+<div class="overlay" id="mBat"><div class="modal" style="max-width:480px"><div class="mh"><span class="mtitle" id="mBatT">Ajouter un bâtiment</span><button class="mclose" onclick="closeM('mBat')">✕</button></div><div class="mbody"><input type="hidden" id="batId"><div class="fg"><label>Nom *</label><input id="batNom" placeholder="Ex: Résidence Les Acacias"></div><div class="fg"><label>Adresse *</label><input id="batAddr" placeholder="Rue, numéro, ville"></div><div class="fr"><div class="fg"><label>Nb logements prévus</label><input id="batNbLg" type="number" placeholder="12"></div><div class="fg"><label>Année construction</label><input id="batAnnee" type="number" placeholder="1985"></div></div><div class="fg"><label>Notes</label><textarea id="batNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mBat')">Annuler</button><button class="btn btn-p" onclick="saveBat()">Enregistrer</button></div></div></div>
+
+<div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Bâtiment</label><select id="lBat"><option value="">Aucun / Maison individuelle</option></select></div><div class="fr"></div><div class="fg"><label>Adresse *</label>
+<input id="lAddr" list="addrList" autocomplete="off">
+<datalist id="addrList"></datalist>
+</div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
 <div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
 <div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
 </div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div></div>
-<div class="overlay" id="mLoc"><div class="modal"><div class="mh"><span class="mtitle" id="mLocT">Ajouter un locataire</span><button class="mclose" onclick="closeM('mLoc')">✕</button></div><div class="mbody"><input type="hidden" id="locId"><div class="fr"><div class="fg"><label>Prénom *</label><input id="locPre"></div><div class="fg"><label>Nom *</label><input id="locNom"></div></div><div class="fr"><div class="fg"><label>Email</label><input id="locEmail" type="email"></div><div class="fg"><label>Téléphone</label><input id="locTel"></div></div><div class="fr"><div class="fg"><label>Logement *</label><select id="locLog"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Jour paiement</label><input id="locJour" type="number" min="1" max="28" value="1"></div></div><div class="fr"><div class="fg"><label>Date entrée *</label><input id="locEnt" type="date"></div><div class="fg"><label>Fin de bail</label><input id="locFin" type="date"></div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
+<div class="overlay" id="mLoc"><div class="modal"><div class="mh"><span class="mtitle" id="mLocT">Ajouter un locataire</span><button class="mclose" onclick="closeM('mLoc')">✕</button></div><div class="mbody"><input type="hidden" id="locId"><div class="fr"><div class="fg"><label>Prénom *</label><input id="locPre"></div><div class="fg"><label>Nom *</label><input id="locNom"></div></div><div class="fr"><div class="fg"><label>Email</label><input id="locEmail" type="email"></div><div class="fg"><label>Téléphone</label><input id="locTel"></div></div><div class="fr"><div class="fg"><label>Logement *</label><select id="locLog"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Jour paiement</label><input id="locJour" type="number" min="1" max="28" value="1"></div></div><div class="fr"><div class="fg"><label>Date entrée *</label><input id="locEnt" type="date"></div><div class="fg"><label>Fin de bail</label>
+<div style="display:flex;gap:6px;align-items:center">
+  <input id="locFin" type="date" style="flex:1">
+  <button type="button" class="btn btn-s btn-xs" onclick="document.getElementById('locFin').value=''" title="Bail indéterminé">∞ Indét.</button>
+</div>
+<div style="font-size:.65rem;color:var(--t3);margin-top:2px">Laisser vide = bail à durée indéterminée</div>
+</div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mComp"><div class="modal"><div class="mh"><span class="mtitle">Gérer les compteurs</span><button class="mclose" onclick="closeM('mComp')">✕</button></div><div class="mbody"><div id="compList" style="margin-bottom:14px"></div><div style="background:var(--s2);border-radius:var(--rs);padding:14px"><p style="font-size:.74rem;font-weight:700;margin-bottom:10px">＋ Nouveau compteur</p><div class="fr"><div class="fg"><label>Nom</label><input id="cNom"></div><div class="fg"><label>Type</label><select id="cType"><option value="eau">💧 Eau</option><option value="gaz">🔥 Gaz</option><option value="elec_mono">⚡ Électricité mono</option><option value="elec_bi">⚡ Élec. bihoraire HP/HC</option><option value="autre">📊 Autre</option></select></div></div><div class="fr"><div class="fg"><label>Unité</label><input id="cUnit" placeholder="kWh ou m³"></div><div class="fg"><label>Logement</label><select id="cLog"><option value="">Tous / Immeuble</option></select></div></div><button class="btn btn-p btn-sm" onclick="saveComp()">Ajouter</button></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mComp')">Fermer</button></div></div></div>
 <div class="overlay" id="mRel"><div class="modal" style="max-width:600px"><div class="mh"><span class="mtitle">Saisir un relevé</span><button class="mclose" onclick="closeM('mRel')">✕</button></div><div class="mbody">
@@ -734,13 +753,13 @@ tr:hover td{background:#fafaf8}
 
 <script>
 // ═══ STORAGE ═══
-const K={lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl'};
+const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl'};
 const ld=k=>{try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
 const sv=(k,d)=>{localStorage.setItem(K[k],JSON.stringify(d));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
-let lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl');
+let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl');
 const gLg=id=>lgs.find(l=>l.id===id)||{nom:'—',loyer:0,ch:0};
 const gLc=id=>lcs.find(l=>l.id===id);
 const lcFull=l=>l?l.prenom+' '+l.nom:'—';
@@ -763,7 +782,7 @@ function injectRealData(){
 }
 
 // ═══ NAVIGATION ═══
-const pTitles={dashboard:'Tableau de bord',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA'};
+const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
 document.querySelectorAll('.sb-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
@@ -781,6 +800,7 @@ function nav(p){
 }
 function rP(p){
   if(p==='dashboard')rDash();
+  else if(p==='batiments')rBats();
   else if(p==='logements')rLgs();
   else if(p==='locataires')rLcs();
   else if(p==='paiements')rPays(payF);
@@ -801,7 +821,16 @@ function openM(id){
     setTimeout(initPhotoDrop, 50);
   }
   if(id==='mLog'){
-    setTimeout(()=>fillLogCompteurs([]), 10);
+    setTimeout(()=>{
+      fillLogCompteurs([]);
+      // Populate address suggestions from existing logements
+      const dl=document.getElementById('addrList');
+      if(dl){
+        // Extract unique street names (without apt numbers)
+        const addrs=[...new Set(lgs.map(l=>l.addr).filter(Boolean))];
+        dl.innerHTML=addrs.map(a=>`<option value="${a}">`).join('');
+      }
+    }, 10);
   }
 }
 function closeM(id){document.getElementById(id).classList.remove('open')}
@@ -825,6 +854,13 @@ function getSelectedCompteurs(){
 }
 
 function fillSels(){
+  // Bâtiment selector in logement modal
+  const lBatSel=document.getElementById('lBat');
+  if(lBatSel){
+    const cv=lBatSel.value;
+    lBatSel.innerHTML='<option value="">Aucun / Maison individuelle</option>'+bats.map(b=>'<option value="'+b.id+'">'+b.nom+' — '+b.addr+'</option>').join('');
+    if(cv)lBatSel.value=cv;
+  }
   ['locLog','entLog','rapLog','cLog'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
     const cv=el.value,req=sid==='locLog';
@@ -865,16 +901,82 @@ function rDash(){
     '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
     '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>';
   const al=[];
-  tmP.filter(p=>p.stat==='retard').forEach(p=>{const l=gLc(p.lcId);if(l)al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l),s:p.mois+' · '+fE(p.du)})});
-  urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom}));
-  lcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.'})});
+  tmP.filter(p=>p.stat==='retard').forEach(p=>{const l=gLc(p.lcId);if(l)al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l),s:p.mois+' · '+fE(p.du),p:'paiements'})});
+  urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom,p:'entretien'}));
+  lcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
-  ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'"><span>'+a.i+'</span><div><strong>'+a.ti+'</strong><br><span style="opacity:.8">'+a.s+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
+  ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'" style="cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'""><span>'+a.i+'</span><div><strong>'+a.ti+'</strong><br><span style="opacity:.8">'+a.s+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
   const pr=rps.filter(r=>r.stat!=='fait').sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
-  document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd)"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+r.tit+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
+  document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editRap(\''+r.id+'\')"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+r.tit+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
   const rec=pys.slice(-8).reverse();
-  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr><td>'+lcFull(l)+'</td><td class="mono">'+p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
-  document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+'</div></div><button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
+  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+lcFull(l)+'</td><td class="mono">'+p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
+  document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+'</div></div><button class="btn btn-xs btn-s" onclick="event.stopPropagation();doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
+}
+
+// ═══ BÂTIMENTS ═══
+const gBat=id=>bats.find(b=>b.id===id)||{nom:'—',addr:''};
+
+function rBats(){
+  document.getElementById('batCnt').textContent=bats.length+' bâtiment'+(bats.length>1?'s':'');
+  const g=document.getElementById('batGrid');
+  if(!bats.length){
+    g.innerHTML='<div class="empty"><div class="empty-icon">🏗</div><div class="empty-text">Aucun bâtiment.<br><br><button class="btn btn-p" onclick="openM(\'mBat\')">Ajouter</button></div></div>';
+    return;
+  }
+  g.innerHTML=bats.map(b=>{
+    const nbLg=lgs.filter(l=>l.batId===b.id).length;
+    return`<div class="card" style="padding:14px;cursor:pointer;margin-bottom:10px" onclick="editBat('${b.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:.92rem;margin-bottom:3px">🏗 ${b.nom}</div>
+          <div style="font-size:.74rem;color:var(--t2)">📍 ${b.addr}</div>
+          ${b.annee?`<div style="font-size:.68rem;color:var(--t3);margin-top:2px">Construction ${b.annee}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--ac)">${nbLg}</div>
+          <div style="font-size:.62rem;color:var(--t3)">logement${nbLg>1?'s':''}</div>
+        </div>
+      </div>
+      ${b.notes?`<div style="font-size:.72rem;color:var(--t2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">${b.notes}</div>`:''}
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delBat('${b.id}')">✕ Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editBat(id){
+  const b=bats.find(x=>x.id===id);if(!b)return;
+  document.getElementById('mBatT').textContent='Modifier le bâtiment';
+  document.getElementById('batId').value=b.id;
+  document.getElementById('batNom').value=b.nom;
+  document.getElementById('batAddr').value=b.addr||'';
+  document.getElementById('batNbLg').value=b.nbLg||'';
+  document.getElementById('batAnnee').value=b.annee||'';
+  document.getElementById('batNotes').value=b.notes||'';
+  openM('mBat');
+}
+
+function saveBat(){
+  const nom=document.getElementById('batNom').value.trim();
+  const addr=document.getElementById('batAddr').value.trim();
+  if(!nom||!addr){alert('Nom et adresse requis');return;}
+  const eid=document.getElementById('batId').value;
+  const obj={nom,addr,nbLg:parseInt(document.getElementById('batNbLg').value)||0,annee:parseInt(document.getElementById('batAnnee').value)||0,notes:document.getElementById('batNotes').value};
+  if(eid){const i=bats.findIndex(x=>x.id===eid);bats[i]={...bats[i],...obj};}
+  else{bats.push({id:uid(),...obj});}
+  sv('bt',bats);
+  document.getElementById('batId').value='';
+  document.getElementById('mBatT').textContent='Ajouter un bâtiment';
+  ['batNom','batAddr','batNbLg','batAnnee','batNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  closeM('mBat');rBats();
+}
+
+function delBat(id){
+  if(!confirm('Supprimer ce bâtiment ? Les logements associés resteront mais ne seront plus liés.'))return;
+  bats=bats.filter(b=>b.id!==id);
+  lgs.forEach(l=>{if(l.batId===id)delete l.batId;});
+  sv('bt',bats);sv('lg',lgs);rBats();
 }
 
 // ═══ LOGEMENTS ═══
@@ -886,7 +988,7 @@ function rLgs(){
   if(!lgs.length){g.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Aucun logement.<br><br><button class="btn btn-p" onclick="openM(\'mLog\')">Ajouter</button></div></div>';return;}
   g.innerHTML=lgs.map(l=>{
     const lc=lcs.find(c=>c.lgId===l.id);const cc=pCol[l.type]||'#555';
-    return'<div class="pc"><div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div><div class="pb"><div class="pn">'+l.nom+'</div><div class="pa">📍 '+l.addr+'</div>'+(l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+'<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+'</div><div class="pf"><span class="pr">'+fE(l.loyer+l.ch)+'<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+(lc?'<span class="badge bg"><span class="dot"></span>occupé</span>':'<span class="badge bx"><span class="dot"></span>vacant</span>')+'</div><div style="display:flex;gap:5px;margin-top:7px"><button class="btn btn-s btn-xs" onclick="editLg(\''+l.id+'\')">✏ Modifier</button><button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></div></div></div>';
+    return'<div class="pc" onclick="editLg(\''+ l.id +'\')" style="cursor:pointer"><div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div><div class="pb"><div class="pn">'+l.nom+'</div><div class="pa">📍 '+l.addr+'</div>'+(l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+'<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+'</div><div class="pf"><span class="pr">'+fE(l.loyer+l.ch)+'<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+(lc?'<span class="badge bg"><span class="dot"></span>occupé</span>':'<span class="badge bx"><span class="dot"></span>vacant</span>')+'</div><div style="display:flex;gap:5px;margin-top:7px"><button class="btn btn-s btn-xs" onclick="editLg(\''+l.id+'\')">✏ Modifier</button><button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></div></div></div>';
   }).join('');
 }
 function editLg(id){
@@ -896,18 +998,29 @@ function editLg(id){
   document.getElementById('lNom').value=l.nom;document.getElementById('lType').value=l.type;
   document.getElementById('lAddr').value=l.addr;document.getElementById('lSurf').value=l.surf||'';
   document.getElementById('lLoyer').value=l.loyer||'';document.getElementById('lCh').value=l.ch||'';
-  document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';
+  document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';if(document.getElementById('lBat'))document.getElementById('lBat').value=l.batId||'';
   fillSels();
-  setTimeout(()=>fillLogCompteurs(l.compteurs||[]), 10);
+  setTimeout(()=>{
+    fillLogCompteurs(l.compteurs||[]);
+    const dl=document.getElementById('addrList');
+    if(dl){
+      const addrs=[...new Set(lgs.map(x=>x.addr).filter(Boolean))];
+      dl.innerHTML=addrs.map(a=>`<option value="${a}">`).join('');
+    }
+  }, 10);
   document.getElementById('mLog').classList.add('open');
 }
 function saveLog(){
   const nom=document.getElementById('lNom').value.trim();
   const addr=document.getElementById('lAddr').value.trim();
   const loyer=parseFloat(document.getElementById('lLoyer').value);
-  if(!nom||!addr||isNaN(loyer)){alert('Champs * requis');return;}
+  const missingLg=[];
+  if(!nom) missingLg.push('Nom du logement');
+  if(!addr) missingLg.push('Adresse');
+  if(isNaN(loyer)) missingLg.push('Loyer');
+  if(missingLg.length){alert('Champs manquants : '+missingLg.join(', '));return;}
   const eid=document.getElementById('lId').value;
-  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs()};
+  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||''};
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
@@ -926,7 +1039,7 @@ function rLcs(f){
   tb.innerHTML=list.map(l=>{
     const lg=gLg(l.lgId);const d=dTo(l.fin);
     const bb=d===null?'<span class="badge bx">—</span>':d<0?'<span class="badge br">Expiré</span>':d<=60?'<span class="badge bo">⚠ '+d+'j</span>':'<span class="badge bg">OK</span>';
-    return'<tr><td><strong>'+lcFull(l)+'</strong><div style="font-size:.67rem;color:var(--t2)">'+(l.email||'')+'</div></td><td style="font-size:.77rem">'+lg.nom+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
+    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+lcFull(l)+'</strong><div style="font-size:.67rem;color:var(--t2)">'+(l.email||'')+'</div></td><td style="font-size:.77rem">'+lg.nom+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
   }).join('');
 }
 function filterLc(v){rLcs(v);}
@@ -947,7 +1060,12 @@ function editLc(id){
 function saveLoc(){
   const pre=document.getElementById('locPre').value.trim(),nom=document.getElementById('locNom').value.trim();
   const lgId=document.getElementById('locLog').value,ent=document.getElementById('locEnt').value;
-  if(!pre||!nom||!lgId||!ent){alert('Champs * requis');return;}
+  const missing=[];
+  if(!pre) missing.push('Prénom');
+  if(!nom) missing.push('Nom');
+  if(!lgId) missing.push('Logement');
+  if(!ent) missing.push("Date d'entrée");
+  if(missing.length){alert('Champs manquants : '+missing.join(', '));return;}
   const eid=document.getElementById('locId').value;
   const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,notes:document.getElementById('locNotes').value};
   if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
@@ -965,7 +1083,7 @@ function rPays(f){
   if(!list.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">Aucun paiement</td></tr>';return;}
   tb.innerHTML=list.map(p=>{
     const l=gLc(p.lcId);const lg=l?gLg(l.lgId):{nom:'—'};
-    return'<tr><td><strong>'+lcFull(l)+'</strong></td><td style="font-size:.74rem">'+lg.nom+'</td><td class="mono">'+p.mois+'</td><td class="mono">'+fE(p.du)+'</td><td class="mono" style="color:'+((p.rec||0)>=(p.du||0)?'var(--ac)':'var(--wa)')+'">'+fE(p.rec)+'</td><td>'+fD(p.date)+'</td><td style="font-size:.71rem">'+(p.mode||'—')+'</td><td>'+sBadge(p.stat)+'</td><td><div style="display:flex;gap:3px"><button class="btn btn-s btn-xs" onclick="editPay(\''+p.id+'\')">✏</button><button class="btn btn-d btn-xs" onclick="delPay(\''+p.id+'\')">✕</button></div></td></tr>';
+    return'<tr onclick="editPay(\''+p.id+'\')" style="cursor:pointer"><td><strong>'+lcFull(l)+'</strong></td><td style="font-size:.74rem">'+lg.nom+'</td><td class="mono">'+p.mois+'</td><td class="mono">'+fE(p.du)+'</td><td class="mono" style="color:'+((p.rec||0)>=(p.du||0)?'var(--ac)':'var(--wa)')+'">'+fE(p.rec)+'</td><td>'+fD(p.date)+'</td><td style="font-size:.71rem">'+(p.mode||'—')+'</td><td>'+sBadge(p.stat)+'</td><td><div style="display:flex;gap:3px"><button class="btn btn-s btn-xs" onclick="editPay(\''+p.id+'\')">✏</button><button class="btn btn-d btn-xs" onclick="delPay(\''+p.id+'\')">✕</button></div></td></tr>';
   }).join('');
 }
 function tabPay(f,el){document.querySelectorAll('#payTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rPays(f);}
@@ -1861,7 +1979,7 @@ function rEnts(f){
   let list=f==='tous'?ens:ens.filter(e=>e.prio===f);
   const cont=document.getElementById('entL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Aucune intervention</div></div>';return;}
-  cont.innerHTML=list.map(e=>'<div class="mi"><div class="mico" style="background:'+(ePBg[e.prio]||'var(--s2)')+'">'+ePIco[e.prio]+'</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+(e.prest?' · '+e.prest:'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+fD(e.date)+(e.desc?' — '+e.desc:'')+'</div></div><div class="mac">'+(e.prio!=='terminé'?'<button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editEnt(\''+e.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delEnt(\''+e.id+'\')">✕</button></div></div>').join('');
+  cont.innerHTML=list.map(e=>'<div class="mi" onclick="editEnt(\''+e.id+'\')" style="cursor:pointer"><div class="mico" style="background:'+(ePBg[e.prio]||'var(--s2)')+'">'+ePIco[e.prio]+'</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+(e.prest?' · '+e.prest:'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+fD(e.date)+(e.desc?' — '+e.desc:'')+'</div></div><div class="mac">'+(e.prio!=='terminé'?'<button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editEnt(\''+e.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delEnt(\''+e.id+'\')">✕</button></div></div>').join('');
 }
 function tabEnt(f,el){document.querySelectorAll('#entTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rEnts(f);}
 function editEnt(id){
@@ -1887,7 +2005,7 @@ function rDocs(f){
   docF=f;let list=f==='tous'?dcs:dcs.filter(d=>d.type===f);
   const cont=document.getElementById('docL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">Aucun document</div></div>';return;}
-  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di"><span style="font-size:1.35rem">'+dIco[d.type]+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+d.nom+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+lcFull(l):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
+  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+dIco[d.type]+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+d.nom+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+lcFull(l):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
 }
 function tabDoc(f,el){document.querySelectorAll('#docTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rDocs(f);}
 function editDoc(id){
@@ -1913,7 +2031,7 @@ function rRaps(){
     const d=dTo(r.date);const cl=r.stat==='fait'?'bx':d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';
     const lbl=r.stat==='fait'?'Fait':d<0?Math.abs(d)+'j passé':d===0?'Auj.':d+'j';
     const lg=lgs.find(l=>l.id===r.lgId);
-    return'<div class="mi" style="'+(r.stat==='fait'?'opacity:.5':'')+'"><div class="mico" style="background:var(--s2)">🔔</div><div class="mb"><div class="mt">'+r.tit+'</div><div class="mm">'+r.cat+(lg?' · '+lg.nom:'')+'</div><div class="mf">'+fD(r.date)+(r.notes?' — '+r.notes:'')+'</div></div><div class="mac"><span class="badge '+cl+'">'+lbl+'</span>'+(r.stat!=='fait'?'<button class="btn btn-xs btn-s" onclick="doneRap(\''+r.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editRap(\''+r.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delRap(\''+r.id+'\')">✕</button></div></div>';
+    return'<div class="mi" onclick="editRap(\''+r.id+'\')" style="'+(r.stat==='fait'?'cursor:pointer;opacity:.5':'cursor:pointer')+'"><div class="mico" style="background:var(--s2)">🔔</div><div class="mb"><div class="mt">'+r.tit+'</div><div class="mm">'+r.cat+(lg?' · '+lg.nom:'')+'</div><div class="mf">'+fD(r.date)+(r.notes?' — '+r.notes:'')+'</div></div><div class="mac"><span class="badge '+cl+'">'+lbl+'</span>'+(r.stat!=='fait'?'<button class="btn btn-xs btn-s" onclick="doneRap(\''+r.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editRap(\''+r.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delRap(\''+r.id+'\')">✕</button></div></div>';
   }).join('');
 }
 function editRap(id){
@@ -2026,7 +2144,7 @@ function importData(input){
       const data=JSON.parse(e.target.result);
       if(!data.logements&&!data.locataires)throw new Error('Format invalide');
       if(!confirm('Importer ces données ? Les données actuelles seront remplacées.'))return;
-      if(data.logements){lgs=data.logements;sv('lg',lgs);}
+      if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.logements){lgs=data.logements;sv('lg',lgs);}
       if(data.locataires){lcs=data.locataires;sv('lc',lcs);}
       if(data.paiements){pys=data.paiements;sv('py',pys);}
       if(data.entretiens){ens=data.entretiens;sv('en',ens);}
@@ -2733,7 +2851,7 @@ async function driveLoad(){
     if(!resp.ok)throw new Error('Erreur lecture: '+resp.status);
     const data=await resp.json();
     // Merge: Drive data wins (it's the source of truth)
-    if(data.logements){lgs=data.logements;sv('lg',lgs);}
+    if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.logements){lgs=data.logements;sv('lg',lgs);}
     if(data.locataires){lcs=data.locataires;sv('lc',lcs);}
     if(data.paiements){pys=data.paiements;sv('py',pys);}
     if(data.entretiens){ens=data.entretiens;sv('en',ens);}
@@ -2759,7 +2877,7 @@ async function driveSave(silent){
   try{
     const payload=JSON.stringify({
       version:'1.0', savedAt:new Date().toISOString(),
-      logements:lgs, locataires:lcs, paiements:pys,
+      batiments:bats, logements:lgs, locataires:lcs, paiements:pys,
       entretiens:ens, documents:dcs, rappels:rps,
       compteurs:cos, releves:rls
     });
