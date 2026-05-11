@@ -301,7 +301,7 @@
 <meta name="msapplication-TileColor" content="#2d5a3d">
 
 <!-- MANIFEST inline via blob (pas de serveur nécessaire) -->
-<link id="pwaManifest" rel="manifest" href="blob-request://blob-1778494549715-0.7235682276062102">
+<link id="pwaManifest" rel="manifest" href="blob-request://blob-1778495524649-0.43661795424187444">
 <script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
 
 <!-- ICONS inline SVG as data URI -->
@@ -759,6 +759,12 @@ tr:hover td{background:#fafaf8}
     </div>
     <div style="display:flex;align-items:center;gap:6px">
       <div id="tdate" style="font-size:.69rem;color:var(--t3)">lundi 11 mai 2026</div>
+      <button id="driveBtn" class="btn btn-s btn-sm" onclick="driveToken?syncNow():driveSignIn()" title="Google Drive" style="display:none">
+        <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Drive
+      </button>
+      <button id="driveBtnConnect" class="btn btn-p btn-sm" onclick="driveSignIn()" title="Connecter Google Drive">
+        🔗 Drive
+      </button>
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
       <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
@@ -2856,17 +2862,26 @@ function driveInit(){
       driveFileId = saved.fileId||null;
       driveEmail  = saved.email||null;
       syncBarShow('Connecté — '+driveEmail);
+      document.getElementById('driveBtn').style.display='';
+      document.getElementById('driveBtnConnect').style.display='none';
       driveLoad(); // load data on init
     }
   }catch(e){}
 }
 
 function driveSignIn(){
+  // Check if Google GSI loaded
+  if(typeof google === 'undefined' || !google.accounts){
+    alert('Le script Google ne s\'est pas chargé. Vérifiez votre connexion internet et rechargez la page.');
+    return;
+  }
+  try{
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GDRIVE_CLIENT_ID,
     scope:     GDRIVE_SCOPE,
+    prompt:    'consent',
     callback:  async (resp) => {
-      if(resp.error){ syncBarError('Erreur connexion: '+resp.error); return; }
+      if(resp.error){ syncBarError('Erreur connexion: '+resp.error); alert('Erreur Google: '+resp.error); return; }
       driveToken = resp.access_token;
       // Get user info
       try{
@@ -2881,10 +2896,16 @@ function driveSignIn(){
         fileId: driveFileId, email: driveEmail
       }));
       syncBarShow('Connecté — '+driveEmail);
+      document.getElementById('driveBtn').style.display='';
+      document.getElementById('driveBtnConnect').style.display='none';
       await driveLoad();
     }
   });
   client.requestAccessToken();
+  }catch(e){
+    alert('Erreur initialisation Google: '+e.message);
+    console.error('driveSignIn error:', e);
+  }
 }
 
 function driveSignOut(){
@@ -3030,7 +3051,14 @@ function addDriveMenuItem(){
   item.className='top-menu-item drive-item';
   item.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)';
   item.innerHTML='<img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive';
-  item.onclick=()=>{closeTopMenu();driveToken?syncNow():driveSignIn();};
+  item.onclick=()=>{
+    closeTopMenu();
+    if(driveToken){ syncNow(); }
+    else{
+      showToast('Connexion Google Drive...');
+      setTimeout(driveSignIn, 100);
+    }
+  };
   menu.appendChild(item);
 }
 
