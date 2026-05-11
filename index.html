@@ -815,7 +815,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.20</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:36</div></div>
+  <div class="sb-foot"><div>Keystone v1.21</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:39</div></div>
 </aside>
 
 <div id="main">
@@ -829,7 +829,7 @@ tr[onclick]{cursor:pointer}
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
       </button>
-      <button id="driveBtnConnect" class="btn btn-s btn-sm" onclick="driveSignIn()" title="Connecter Google Drive" style="">
+      <button id="driveBtnConnect" class="btn btn-s btn-sm" onclick="driveSignIn()" title="Connecter Google Drive">
         🔗 Drive
       </button>
       <div style="position:relative;display:inline-block">
@@ -3574,6 +3574,8 @@ function driveInit(){
   }catch(e){
     const dc = document.getElementById('driveBtnConnect');
     if(dc) dc.style.display='';
+    const sc = document.getElementById('syncBtnConnect');
+    if(sc) sc.style.display='';
   }
 }
 
@@ -4200,6 +4202,7 @@ setTimeout(checkOnboarding, 1200);
   <span id="syncMsg">Google Drive</span>
   <span id="driveStatus"></span>
   <button class="drive-btn" onclick="syncNow()" id="syncBtn">↕ Sync</button>
+  <button class="drive-btn" id="syncBtnConnect" onclick="driveSignIn()" style="display:none">🔗 Connecter Drive</button>
   <button class="drive-btn" onclick="driveSignOut()">Déconnecter</button>
 </div>
 
