@@ -493,7 +493,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.5</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:04</div></div>
+  <div class="sb-foot"><div>Keystone v1.6</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:09</div></div>
 </aside>
 
 <div id="main">
@@ -778,54 +778,85 @@ const dTo=s=>{if(!s)return null;return Math.ceil((new Date(s+'T12:00:00')-new Da
 var REAL_COS=[{"id":"__EAU__","nom":"Compteur Eau","type":"eau","unit":"m3","lgId":"","notes":"n.I19307764"},{"id":"__GAZ__","nom":"Compteur Gaz","type":"gaz","unit":"m3","lgId":"","notes":"n.28881655"},{"id":"__ELEC_BI__","nom":"Elec. Bihoraire ADC65","type":"elec_bi","unit":"kWh","lgId":"","notes":"HP+HC ME867607"},{"id":"__ELEC_MONO__","nom":"Elec. Mono ADC45","type":"elec_mono","unit":"kWh","lgId":"","notes":"ME867574"}];
 var REAL_RLS=[{"id":"eau_0","coId":"__EAU__","date":"2025-01-02","idx":890.0,"notes":"380.55m3/492j"},{"id":"eau_1","coId":"__EAU__","date":"2025-02-01","idx":894.0,"notes":"4m3/30j"},{"id":"eau_2","coId":"__EAU__","date":"2025-04-21","idx":908.0,"notes":"14m3/79j"},{"id":"eau_3","coId":"__EAU__","date":"2025-06-12","idx":966.9,"notes":"58.9m3/52j"},{"id":"eau_4","coId":"__EAU__","date":"2025-09-13","idx":1077.0,"notes":"110.1m3/93j"},{"id":"eau_5","coId":"__EAU__","date":"2025-10-11","idx":1113.0,"notes":"36m3/28j"},{"id":"eau_6","coId":"__EAU__","date":"2025-12-26","idx":1153.0,"notes":"40m3/76j"},{"id":"eau_7","coId":"__EAU__","date":"2026-01-15","idx":1170.0,"notes":"17m3/20j"},{"id":"eau_8","coId":"__EAU__","date":"2026-01-28","idx":1179.0,"notes":"9m3/13j"},{"id":"eau_9","coId":"__EAU__","date":"2026-03-05","idx":1204.0,"notes":"25m3/36j"},{"id":"eau_10","coId":"__EAU__","date":"2026-04-04","idx":1224.0,"notes":"20m3/30j"},{"id":"gaz_0","coId":"__GAZ__","date":"2025-01-02","idx":80633.0,"notes":"492j"},{"id":"gaz_1","coId":"__GAZ__","date":"2025-02-01","idx":81310.0,"notes":"30j"},{"id":"gaz_2","coId":"__GAZ__","date":"2025-04-21","idx":82928.0,"notes":"79j"},{"id":"gaz_3","coId":"__GAZ__","date":"2025-06-12","idx":83621.0,"notes":"52j"},{"id":"gaz_4","coId":"__GAZ__","date":"2025-10-11","idx":84710.0,"notes":""},{"id":"gaz_5","coId":"__GAZ__","date":"2025-12-26","idx":85715.0,"notes":"76j"},{"id":"gaz_6","coId":"__GAZ__","date":"2026-01-15","idx":86382.0,"notes":"20j"},{"id":"gaz_7","coId":"__GAZ__","date":"2026-01-28","idx":86773.0,"notes":"13j"},{"id":"gaz_8","coId":"__GAZ__","date":"2026-03-05","idx":87731.0,"notes":"36j"},{"id":"gaz_9","coId":"__GAZ__","date":"2026-04-04","idx":88499.0,"notes":"30j"},{"id":"elbi_0","coId":"__ELEC_BI__","date":"2025-01-02","hp":261210.0,"hc":330446.0,"notes":"492j"},{"id":"elbi_1","coId":"__ELEC_BI__","date":"2025-02-01","hp":262309.0,"hc":331763.0,"notes":"30j"},{"id":"elbi_2","coId":"__ELEC_BI__","date":"2025-04-21","hp":264388.0,"hc":334402.0,"notes":"79j"},{"id":"elbi_3","coId":"__ELEC_BI__","date":"2025-06-12","hp":265125.0,"hc":335256.0,"notes":"52j"},{"id":"elbi_4","coId":"__ELEC_BI__","date":"2025-10-11","hp":266646.0,"hc":337096.0,"notes":"121j"},{"id":"elbi_5","coId":"__ELEC_BI__","date":"2025-12-26","hp":268648.0,"hc":339378.0,"notes":"76j"},{"id":"elbi_6","coId":"__ELEC_BI__","date":"2026-01-15","hp":269360.0,"hc":340465.0,"notes":"20j"},{"id":"elbi_7","coId":"__ELEC_BI__","date":"2026-01-28","hp":269703.0,"hc":341054.0,"notes":"13j"},{"id":"elbi_8","coId":"__ELEC_BI__","date":"2026-03-05","hp":270611.0,"hc":342431.0,"notes":"36j"},{"id":"elbi_9","coId":"__ELEC_BI__","date":"2026-04-04","hp":271145.0,"hc":343364.0,"notes":"30j"},{"id":"adc45_0","coId":"__ELEC_MONO__","date":"2025-01-02","idx":45783.0,"notes":"ADC45"},{"id":"adc45_1","coId":"__ELEC_MONO__","date":"2025-02-01","idx":46622.0,"notes":"ADC45"},{"id":"adc45_2","coId":"__ELEC_MONO__","date":"2025-04-21","idx":48069.0,"notes":"ADC45"},{"id":"adc45_3","coId":"__ELEC_MONO__","date":"2025-06-12","idx":48239.0,"notes":"ADC45"},{"id":"adc45_4","coId":"__ELEC_MONO__","date":"2025-10-11","idx":48956.0,"notes":"ADC45"},{"id":"adc45_5","coId":"__ELEC_MONO__","date":"2026-01-15","idx":49388.0,"notes":"ADC45"},{"id":"adc45_6","coId":"__ELEC_MONO__","date":"2026-01-28","idx":49393.0,"notes":"ADC45"},{"id":"adc45_7","coId":"__ELEC_MONO__","date":"2026-03-05","idx":49408.0,"notes":"ADC45"},{"id":"adc45_8","coId":"__ELEC_MONO__","date":"2026-04-04","idx":49421.0,"notes":"ADC45"}];
 
-function injectLogementData(){
-  const marker = 'ks_lc_injected_v2';
-  if(localStorage.getItem(marker)) return;
 
-  const data = [('63', 'Shadi', 'SHUHDI', '0471/90.79.38', ''), ('65/01', 'Hassein', 'ALSALAMI', '', ''), ('45', 'SAUD', '', '0498/78.22.37', ''), ('65/11', 'Olivier', 'BANZE', '0479/70.47.81', ''), ('65/12', 'LI', 'FUHAO', '', ''), ('65/13', 'Claude', 'ROLIN', '0492/09.13.09', ''), ('65/14', 'Leonardo', 'Wepierre', '0493/97.81.93', '2024-04-18'), ('65/21', 'Alex', 'BONSIGNORE', '0465/98.17.47', ''), ('65/22', '', '', '', ''), ('65/23', 'Sassi', 'DHIAB', '0495/90.07.24', ''), ('65/24', 'Saka', 'YAROU LAFIA', '0471/94.30.32', ''), ('65/31', 'Lissa', '', '0471/13.99.24', ''), ('65/32', 'Aya', 'Chouiba', '0493/37.08.82', ''), ('65/33', 'Michel', 'MONFORT', '0494/91.56.60', '')];
+// ── DONNÉES RÉELLES BÂTIMENT & LOGEMENTS ──
+var REAL_BATS=[
+  {id:"__BAT_ADC__",nom:"Résidence Albert de Cuyck",addr:"Rue Albert de Cuyck, Esneux",nbLg:14,annee:0,notes:"Numéros 45, 63 et 65"}
+];
 
-  data.forEach(function(d){
-    const num=d[0], prenom=d[1], nom=d[2], tel=d[3], ent=d[4];
-    const lgNom = 'ADC ' + num;
-    const lg = lgs.find(function(l){ return l.nom === lgNom; });
-    if(!lg){ console.log('Logement not found: ' + lgNom); return; }
+var REAL_LGS=[
+  {id:"__LG_63__",   nom:"ADC 63",   type:"Appartement",addr:"",surf:28.5,loyer:536,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6501__", nom:"ADC 65/01",type:"Appartement",addr:"",surf:27.8,loyer:650,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_45__",   nom:"ADC 45",   type:"Appartement",addr:"",surf:28.1,loyer:535,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_MONO__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6511__", nom:"ADC 65/11",type:"Appartement",addr:"",surf:22.0,loyer:520,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6512__", nom:"ADC 65/12",type:"Appartement",addr:"",surf:11.6,loyer:480,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6513__", nom:"ADC 65/13",type:"Appartement",addr:"",surf:16.5,loyer:530,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6514__", nom:"ADC 65/14",type:"Appartement",addr:"",surf:13.6,loyer:495,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6521__", nom:"ADC 65/21",type:"Appartement",addr:"",surf:22.0,loyer:530,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6522__", nom:"ADC 65/22",type:"Appartement",addr:"",surf:11.6,loyer:390,ch:0,dep:0,notes:"Vacant",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6523__", nom:"ADC 65/23",type:"Appartement",addr:"",surf:16.5,loyer:485,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6524__", nom:"ADC 65/24",type:"Appartement",addr:"",surf:13.6,loyer:555,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6531__", nom:"ADC 65/31",type:"Appartement",addr:"",surf:22.0,loyer:625,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6532__", nom:"ADC 65/32",type:"Appartement",addr:"",surf:20.5,loyer:595,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"},
+  {id:"__LG_6533__", nom:"ADC 65/33",type:"Appartement",addr:"",surf:31.6,loyer:460,ch:0,dep:0,notes:"",compteurs:["__EAU__","__GAZ__","__ELEC_BI__"],batId:"__BAT_ADC__"}
+];
 
-    // Check if locataire already exists for this logement
-    const existing = lcs.find(function(l){ return l.lgId === lg.id; });
-    if(existing){
-      // Update phone if missing
-      if(!existing.tel && tel){ existing.tel = tel; }
-      // Update name if incomplete
-      if(!existing.nom && nom){ existing.nom = nom; }
-      if(!existing.prenom && prenom){ existing.prenom = prenom; }
-      return;
-    }
-
-    // Skip vacant
-    if(!prenom && !nom) return;
-
-    lcs.push({
-      id: uid(), prenom: prenom, nom: nom, email: '', tel: tel,
-      lgId: lg.id, jour: 1,
-      ent: ent || '2020-01-01',
-      fin: '', urg: '', notes: ''
-    });
-    console.log('Added: ' + prenom + ' ' + nom + ' -> ' + lgNom);
-  });
-
-  sv('lc', lcs);
-  localStorage.setItem(marker, '1');
-  console.log('Locataires injected v2: ' + lcs.length + ' total');
-}
+var REAL_LCS=[
+  {id:"__LC_63__",   prenom:"Shadi",    nom:"SHUHDI",      tel:"0471/90.79.38",email:"",lgId:"__LG_63__",  jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6501__", prenom:"Hassein",  nom:"ALSALAMI",    tel:"",             email:"",lgId:"__LG_6501__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_45__",   prenom:"SAUD",     nom:"",            tel:"0498/78.22.37",email:"",lgId:"__LG_45__",  jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6511__", prenom:"Olivier",  nom:"BANZE",       tel:"0479/70.47.81",email:"",lgId:"__LG_6511__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6512__", prenom:"LI",       nom:"FUHAO",       tel:"",             email:"",lgId:"__LG_6512__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6513__", prenom:"Claude",   nom:"ROLIN",       tel:"0492/09.13.09",email:"",lgId:"__LG_6513__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6514__", prenom:"Leonardo", nom:"Wepierre",    tel:"0493/97.81.93",email:"",lgId:"__LG_6514__",jour:1,ent:"2024-04-18",fin:"",urg:"",notes:""},
+  {id:"__LC_6521__", prenom:"Alex",     nom:"BONSIGNORE",  tel:"0465/98.17.47",email:"",lgId:"__LG_6521__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6523__", prenom:"Sassi",    nom:"DHIAB",       tel:"0495/90.07.24",email:"",lgId:"__LG_6523__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6524__", prenom:"Saka",     nom:"YAROU LAFIA", tel:"0471/94.30.32",email:"",lgId:"__LG_6524__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6531__", prenom:"Lissa",    nom:"",            tel:"0471/13.99.24",email:"",lgId:"__LG_6531__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6532__", prenom:"Aya",      nom:"Chouiba",     tel:"0493/37.08.82",email:"",lgId:"__LG_6532__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""},
+  {id:"__LC_6533__", prenom:"Michel",   nom:"MONFORT",     tel:"0494/91.56.60",email:"",lgId:"__LG_6533__",jour:1,ent:"2020-01-01",fin:"",urg:"",notes:""}
+];
 
 function injectRealData(){
-  var existing=[];
-  try{existing=JSON.parse(localStorage.getItem(K.co)||'[]')}catch(e){}
-  var hasReal=existing.some(function(c){return c.id==='__EAU__';});
-  if(!hasReal){
+  // Inject compteurs
+  var existingCo=[];
+  try{existingCo=JSON.parse(localStorage.getItem(K.co)||'[]')}catch(e){}
+  if(!existingCo.some(function(c){return c.id==='__EAU__';})){
     cos=REAL_COS;sv('co',cos);
     rls=REAL_RLS;sv('rl',rls);
   }
+
+  // Inject bâtiment
+  if(!bats.some(function(b){return b.id==='__BAT_ADC__';})){
+    REAL_BATS.forEach(function(b){ if(!bats.find(function(x){return x.id===b.id;})) bats.push(b); });
+    sv('bt',bats);
+  }
+
+  // Inject logements (merge by id)
+  var lgChanged=false;
+  REAL_LGS.forEach(function(lg){
+    var idx=lgs.findIndex(function(x){return x.id===lg.id;});
+    if(idx<0){ lgs.push(lg); lgChanged=true; }
+    else {
+      // Update fields that might be missing
+      if(!lgs[idx].batId && lg.batId){ lgs[idx].batId=lg.batId; lgChanged=true; }
+      if(!lgs[idx].compteurs||!lgs[idx].compteurs.length){ lgs[idx].compteurs=lg.compteurs; lgChanged=true; }
+    }
+  });
+  if(lgChanged) sv('lg',lgs);
+
+  // Inject locataires (merge by id)
+  var lcChanged=false;
+  REAL_LCS.forEach(function(lc){
+    var idx=lcs.findIndex(function(x){return x.id===lc.id;});
+    if(idx<0){ lcs.push(lc); lcChanged=true; }
+    else {
+      if(!lcs[idx].tel && lc.tel){ lcs[idx].tel=lc.tel; lcChanged=true; }
+      if(!lcs[idx].prenom && lc.prenom){ lcs[idx].prenom=lc.prenom; lcChanged=true; }
+      if(!lcs[idx].nom && lc.nom){ lcs[idx].nom=lc.nom; lcChanged=true; }
+    }
+  });
+  if(lcChanged) sv('lc',lcs);
 }
 
 // ═══ NAVIGATION ═══
@@ -3315,7 +3346,6 @@ document.addEventListener('keydown', e=>{
 // ═══ INIT ═══
 document.getElementById('tdate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 injectRealData();
-injectLogementData();
 rDash();
 setTimeout(()=>{driveInit();addDriveMenuItem();},500);
 setTimeout(checkOnboarding, 1200);
