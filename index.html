@@ -15,8 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Keystone">
 <meta name="msapplication-TileColor" content="#2d5a3d">
 
-<!-- MANIFEST inline via blob (pas de serveur nécessaire) -->
-<link id="pwaManifest" rel="manifest">
+<!-- PWA manifest disabled - no blob support on GitHub Pages -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- ICONS inline SVG as data URI -->
@@ -394,6 +393,32 @@ tr:hover td{background:#fafaf8}
 ::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
 .top-menu-item:hover{background:var(--s2)}
 
+/* ── ONBOARDING ── */
+.ob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:16px}
+.ob-card{background:var(--sf);border-radius:16px;width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.ob-head{padding:20px 24px 0;text-align:center}
+.ob-ico{font-size:2.5rem;margin-bottom:8px}
+.ob-title{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.ob-sub{font-size:.78rem;color:var(--t2);margin-bottom:16px}
+.ob-progress{display:flex;gap:4px;justify-content:center;margin-bottom:16px}
+.ob-dot{width:28px;height:4px;border-radius:2px;background:var(--bd);transition:background .3s}
+.ob-dot.active{background:var(--ac)}
+.ob-dot.done{background:var(--ac2)}
+.ob-body{padding:0 24px 16px;overflow-y:auto;flex:1}
+.ob-foot{padding:12px 24px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:space-between;background:var(--sf)}
+.ob-field{margin-bottom:12px}
+.ob-field label{display:block;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:4px}
+.ob-field input,.ob-field select,.ob-field textarea{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;color:var(--tx);background:var(--sf);outline:none;transition:border-color .15s}
+.ob-field input:focus,.ob-field select:focus{border-color:var(--ac)}
+.ob-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ob-summary{background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:10px}
+.ob-summary-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd);font-size:.78rem}
+.ob-summary-item:last-child{border-bottom:none}
+.ob-check{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);margin-bottom:6px;cursor:pointer;transition:all .15s}
+.ob-check:hover{border-color:var(--ac);background:var(--acl)}
+.ob-check input{accent-color:var(--ac)}
+@media(max-width:700px){.ob-2col{grid-template-columns:1fr}.ob-card{max-height:95vh;border-radius:14px 14px 0 0;margin-top:auto}}
+
 /* ── DRIVE SYNC ── */
 #syncBar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1a1814;color:#fff;
   padding:8px 16px;font-size:.75rem;display:none;align-items:center;gap:10px;
@@ -470,10 +495,10 @@ tr:hover td{background:#fafaf8}
     </div>
     <div style="display:flex;align-items:center;gap:6px">
       <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
-      <button id="driveBtn" class="btn btn-s btn-sm" onclick="driveToken?syncNow():driveSignIn()" title="Google Drive" style="display:none">
-        <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Drive
+      <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
+        <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
       </button>
-      <button id="driveBtnConnect" class="btn btn-p btn-sm" onclick="driveSignIn()" title="Connecter Google Drive">
+      <button id="driveBtnConnect" class="btn btn-s btn-sm" onclick="driveSignIn()" title="Connecter Google Drive" style="display:none">
         🔗 Drive
       </button>
       <div style="position:relative;display:inline-block">
@@ -640,7 +665,10 @@ tr:hover td{background:#fafaf8}
 </div><!-- /main -->
 
 <!-- MODALS -->
-<div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Adresse *</label><input id="lAddr"></div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div></div>
+<div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Adresse *</label><input id="lAddr"></div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
+<div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
+<div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
+</div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mLoc"><div class="modal"><div class="mh"><span class="mtitle" id="mLocT">Ajouter un locataire</span><button class="mclose" onclick="closeM('mLoc')">✕</button></div><div class="mbody"><input type="hidden" id="locId"><div class="fr"><div class="fg"><label>Prénom *</label><input id="locPre"></div><div class="fg"><label>Nom *</label><input id="locNom"></div></div><div class="fr"><div class="fg"><label>Email</label><input id="locEmail" type="email"></div><div class="fg"><label>Téléphone</label><input id="locTel"></div></div><div class="fr"><div class="fg"><label>Logement *</label><select id="locLog"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Jour paiement</label><input id="locJour" type="number" min="1" max="28" value="1"></div></div><div class="fr"><div class="fg"><label>Date entrée *</label><input id="locEnt" type="date"></div><div class="fg"><label>Fin de bail</label><input id="locFin" type="date"></div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mComp"><div class="modal"><div class="mh"><span class="mtitle">Gérer les compteurs</span><button class="mclose" onclick="closeM('mComp')">✕</button></div><div class="mbody"><div id="compList" style="margin-bottom:14px"></div><div style="background:var(--s2);border-radius:var(--rs);padding:14px"><p style="font-size:.74rem;font-weight:700;margin-bottom:10px">＋ Nouveau compteur</p><div class="fr"><div class="fg"><label>Nom</label><input id="cNom"></div><div class="fg"><label>Type</label><select id="cType"><option value="eau">💧 Eau</option><option value="gaz">🔥 Gaz</option><option value="elec_mono">⚡ Électricité mono</option><option value="elec_bi">⚡ Élec. bihoraire HP/HC</option><option value="autre">📊 Autre</option></select></div></div><div class="fr"><div class="fg"><label>Unité</label><input id="cUnit" placeholder="kWh ou m³"></div><div class="fg"><label>Logement</label><select id="cLog"><option value="">Tous / Immeuble</option></select></div></div><button class="btn btn-p btn-sm" onclick="saveComp()">Ajouter</button></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mComp')">Fermer</button></div></div></div>
@@ -772,9 +800,30 @@ function openM(id){
     removePhoto();
     setTimeout(initPhotoDrop, 50);
   }
+  if(id==='mLog'){
+    setTimeout(()=>fillLogCompteurs([]), 10);
+  }
 }
 function closeM(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+function fillLogCompteurs(selectedIds){
+  const cont = document.getElementById('lCompteurs');
+  if(!cont) return;
+  cont.innerHTML = cos.map(comp => {
+    const checked = selectedIds && selectedIds.includes(comp.id) ? 'checked' : '';
+    const ico = {eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
+    return `<label style="display:flex;align-items:center;gap:5px;padding:4px 8px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;font-size:.76rem;background:var(--sf)">
+      <input type="checkbox" value="${comp.id}" ${checked} style="accent-color:var(--ac)"> ${ico} ${comp.nom}
+    </label>`;
+  }).join('');
+}
+
+function getSelectedCompteurs(){
+  const cont = document.getElementById('lCompteurs');
+  if(!cont) return [];
+  return [...cont.querySelectorAll('input[type=checkbox]:checked')].map(el=>el.value);
+}
+
 function fillSels(){
   ['locLog','entLog','rapLog','cLog'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
@@ -848,7 +897,9 @@ function editLg(id){
   document.getElementById('lAddr').value=l.addr;document.getElementById('lSurf').value=l.surf||'';
   document.getElementById('lLoyer').value=l.loyer||'';document.getElementById('lCh').value=l.ch||'';
   document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';
-  fillSels();document.getElementById('mLog').classList.add('open');
+  fillSels();
+  setTimeout(()=>fillLogCompteurs(l.compteurs||[]), 10);
+  document.getElementById('mLog').classList.add('open');
 }
 function saveLog(){
   const nom=document.getElementById('lNom').value.trim();
@@ -856,7 +907,7 @@ function saveLog(){
   const loyer=parseFloat(document.getElementById('lLoyer').value);
   if(!nom||!addr||isNaN(loyer)){alert('Champs * requis');return;}
   const eid=document.getElementById('lId').value;
-  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value};
+  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs()};
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
@@ -1408,7 +1459,8 @@ function rCharges(){
         ${(()=>{
           if(comp.type!=='eau')return'';
           // SWDE Wallonie 2026: {(m3*CVD)+(m3*CVA)+(20*CVD)+(30*CVA)+(m3*FSE)}*1.06
-          const CVD=3.24,CVA=2.748,FSE=0.0339,TVA=1.06,NB=14;
+          const CVD=3.24,CVA=2.748,FSE=0.0339,TVA=1.06,NB=lgs.length;
+          if(!NB)return'<div class="stat-pill" style="background:#e6eef5;border-color:#1a3a5c33"><span class="stat-pill-val" style="font-size:.75rem;color:#1a3a5c">—</span><span class="stat-pill-lbl">Encodez vos logements</span></div>';
           const allRls2=rls.filter(r=>r.coId===comp.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
           let annualM3=totalConso;
           if(allRls2.length>=2){
@@ -1449,7 +1501,9 @@ function rCharges(){
           const COTIS_GAZ=0.10577;
           const RACCORD_GAZ=0.0075;
           // Nb logements — 1 compteur gaz collectif = 14 logements
-          const NB_GAZ=14;
+          const linkedLgsGaz = lgs.filter(l=>l.compteurs&&l.compteurs.includes(comp.id));
+          const NB_GAZ = linkedLgsGaz.length || lgs.length;
+          if(!NB_GAZ)return'<div class="stat-pill" style="background:#fdecea;border-color:#c0392b33"><span class="stat-pill-val" style="font-size:.75rem;color:#c0392b">—</span><span class="stat-pill-lbl">Encodez vos logements</span></div>';
 
           // Projection annuelle par régression linéaire
           const allRls4=rls.filter(r=>r.coId===comp.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -1480,14 +1534,17 @@ function rCharges(){
             +'<span class="stat-pill-lbl">Coût MEGA /an</span></div>'
             +'<div class="stat-pill" style="background:#fdecea;border-color:#c0392b33">'
             +'<span class="stat-pill-val" style="font-size:.82rem;color:#c0392b">'+coutM+'€</span>'
-            +'<span class="stat-pill-lbl">Par logement /mois (14)</span></div>';
+            +'<span class="stat-pill-lbl">Par logement /mois ('+NB_GAZ+')</span></div>';
         })()}
         ${(()=>{
           // MEGA Smart Fixed 2Y — Wallonie 05/2026 (TVA 6% incluse)
           // Réseau RESA (Liège/Esneux)
           if(comp.type!=='elec_mono'&&comp.type!=='elec_bi')return'';
           const isBiC=comp.type==='elec_bi';
-          const NB_ELEC = isBiC ? 13 : 1; // bihoraire=13 logements, mono=1 logement
+          // Count logements linked to this compteur (or fallback)
+          const linkedLgs = lgs.filter(l=>l.compteurs&&l.compteurs.includes(comp.id));
+          const NB_ELEC = linkedLgs.length;
+          if(!NB_ELEC)return'<div class="stat-pill" style="background:#f0eafa;border-color:#5b2d8e33"><span class="stat-pill-val" style="font-size:.75rem;color:#5b2d8e">—</span><span class="stat-pill-lbl">Associez des logements</span></div>';
 
           // Tarifs MEGA Smart Fixed 1Y — contrat actuel (TVAC 6%)
           // Source: comparatif contrat reçu de MEGA
@@ -2578,8 +2635,13 @@ function driveInit(){
       document.getElementById('driveBtn').style.display='';
       document.getElementById('driveBtnConnect').style.display='none';
       driveLoad(); // load data on init
+    } else {
+      // Not connected — show connect button
+      document.getElementById('driveBtnConnect').style.display='';
     }
-  }catch(e){}
+  }catch(e){
+    document.getElementById('driveBtnConnect').style.display='';
+  }
 }
 
 function driveSignIn(){
@@ -2775,12 +2837,243 @@ function addDriveMenuItem(){
   menu.appendChild(item);
 }
 
+
+// ══════════════════════════════════════════════
+// ONBOARDING WIZARD
+// ══════════════════════════════════════════════
+let obStep = 0;
+let obData = {logements:[], locataire:null};
+let obCurrentLg = {};
+
+const OB_STEPS = [
+  {ico:'🏠', title:'Vos logements', sub:'Ajoutez vos biens immobiliers un par un'},
+  {ico:'👤', title:'Vos locataires', sub:'Associez un locataire à chaque logement'},
+  {ico:'⚡', title:'Les compteurs', sub:'Vérifiez les compteurs déjà configurés'},
+  {ico:'✅', title:'Tout est prêt !', sub:'Votre portefeuille est configuré'}
+];
+
+function obShow(){
+  document.getElementById('obOverlay').style.display='flex';
+  obStep=0;
+  obData={logements:[], locataire:null};
+  obRender();
+}
+
+function obClose(){
+  document.getElementById('obOverlay').style.display='none';
+}
+
+function obRender(){
+  const step = OB_STEPS[obStep];
+  document.getElementById('obIco').textContent = step.ico;
+  document.getElementById('obTitle').textContent = step.title;
+  document.getElementById('obSub').textContent = step.sub;
+
+  // Progress dots
+  document.getElementById('obProgress').innerHTML = OB_STEPS.map((_,i)=>
+    `<div class="ob-dot ${i<obStep?'done':i===obStep?'active':''}"></div>`
+  ).join('');
+
+  // Back button
+  document.getElementById('obBtnBack').style.display = obStep>0?'':'none';
+
+  // Render step content
+  const body = document.getElementById('obBody');
+  if(obStep===0) body.innerHTML = obStepLogement();
+  else if(obStep===1) body.innerHTML = obStepLocataire();
+  else if(obStep===2) body.innerHTML = obStepCompteurs();
+  else if(obStep===3) body.innerHTML = obStepDone();
+
+  // Next button label
+  const btn = document.getElementById('obBtnNext');
+  if(obStep===0) btn.textContent = 'Ajouter ce logement →';
+  else if(obStep===1) btn.textContent = 'Ajouter ce locataire →';
+  else if(obStep===2) btn.textContent = 'Terminer ✓';
+  else { btn.textContent = 'Fermer'; document.getElementById('obBtnSkip').style.display='none'; }
+}
+
+function obStepLogement(){
+  const existing = lgs.length ? `<div style="margin-bottom:12px">
+    <div style="font-size:.72rem;font-weight:700;color:var(--t2);margin-bottom:6px">LOGEMENTS DÉJÀ ENCODÉS (${lgs.length})</div>
+    ${lgs.map(l=>`<div style="display:flex;justify-content:space-between;padding:5px 8px;background:var(--acl);border-radius:var(--rs);margin-bottom:4px;font-size:.77rem">
+      <span>🏠 ${l.nom}</span><span style="color:var(--ac);font-weight:700">${fE(l.loyer+l.ch)}/mois</span>
+    </div>`).join('')}
+  </div>` : '';
+
+  return `${existing}
+  <div style="background:var(--s2);border-radius:var(--rs);padding:14px;margin-bottom:10px">
+    <div style="font-size:.77rem;font-weight:700;margin-bottom:10px">${lgs.length?'＋ Ajouter un autre logement':'Premier logement'}</div>
+    <div class="ob-2col">
+      <div class="ob-field"><label>Nom du logement *</label><input id="ob_lNom" placeholder="Ex: Apt 12 Rue des Fleurs"></div>
+      <div class="ob-field"><label>Type</label><select id="ob_lType">
+        <option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option>
+      </select></div>
+    </div>
+    <div class="ob-field"><label>Adresse *</label><input id="ob_lAddr" placeholder="Rue, numéro, ville"></div>
+    <div class="ob-2col">
+      <div class="ob-field"><label>Surface (m²)</label><input id="ob_lSurf" type="number" placeholder="65"></div>
+      <div class="ob-field"><label>Loyer HC (€) *</label><input id="ob_lLoyer" type="number" placeholder="750"></div>
+    </div>
+    <div class="ob-2col">
+      <div class="ob-field"><label>Charges (€/mois)</label><input id="ob_lCh" type="number" placeholder="100"></div>
+      <div class="ob-field"><label>Dépôt garantie (€)</label><input id="ob_lDep" type="number" placeholder="1500"></div>
+    </div>
+    <div class="ob-field"><label>Compteurs associés</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${cos.map(comp=>{
+        const ico={eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
+        return `<label class="ob-check"><input type="checkbox" value="${comp.id}"> ${ico} ${comp.nom}</label>`;
+      }).join('')}</div>
+    </div>
+  </div>
+  ${lgs.length?`<button class="btn btn-s" style="width:100%;justify-content:center" onclick="obNext()">Passer à l'étape suivante sans ajouter</button>`:''}`;
+}
+
+function obStepLocataire(){
+  return `<div style="margin-bottom:10px;font-size:.77rem;color:var(--t2)">Pour chaque logement, vous pouvez associer un locataire actuel.</div>
+  ${lgs.map((l,i)=>{
+    const existing=lcs.find(lc=>lc.lgId===l.id);
+    if(existing) return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--acl);border-radius:var(--rs);margin-bottom:6px;font-size:.77rem">
+      <span>🏠 <strong>${l.nom}</strong></span>
+      <span>👤 ${lcFull(existing)} <span class="badge bg">✓ Encodé</span></span>
+    </div>`;
+    return `<div style="background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:8px">
+      <div style="font-size:.77rem;font-weight:700;margin-bottom:8px">🏠 ${l.nom} <span style="font-size:.67rem;font-weight:400;color:var(--t3)">${fE(l.loyer+l.ch)}/mois</span></div>
+      <div class="ob-2col">
+        <div class="ob-field"><label>Prénom</label><input id="ob_pre_${i}" placeholder="Marie"></div>
+        <div class="ob-field"><label>Nom</label><input id="ob_nom_${i}" placeholder="Dupont"></div>
+      </div>
+      <div class="ob-2col">
+        <div class="ob-field"><label>Email</label><input id="ob_email_${i}" type="email" placeholder="marie@email.com"></div>
+        <div class="ob-field"><label>Téléphone</label><input id="ob_tel_${i}" placeholder="0470 12 34 56"></div>
+      </div>
+      <div class="ob-2col">
+        <div class="ob-field"><label>Date d'entrée</label><input id="ob_ent_${i}" type="date"></div>
+        <div class="ob-field"><label>Fin de bail</label><input id="ob_fin_${i}" type="date"></div>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function obStepCompteurs(){
+  return `<div style="font-size:.77rem;color:var(--t2);margin-bottom:10px">Vos compteurs sont déjà configurés avec vos relevés réels.</div>
+  ${cos.map(comp=>{
+    const ico={eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
+    const linkedLgs=lgs.filter(l=>l.compteurs&&l.compteurs.includes(comp.id));
+    const lastRel=rls.filter(r=>r.coId===comp.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--s2);border-radius:var(--rs);margin-bottom:6px">
+      <span style="font-size:1.3rem">${ico}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.82rem">${comp.nom}</div>
+        <div style="font-size:.68rem;color:var(--t2)">${rls.filter(r=>r.coId===comp.id).length} relevés · Dernier: ${lastRel?fD(lastRel.date):'—'}</div>
+        <div style="font-size:.68rem;color:${linkedLgs.length?'var(--ac)':'var(--wa)'}">${linkedLgs.length?'✓ Lié à: '+linkedLgs.map(l=>l.nom).join(', '):'⚠ Aucun logement associé — éditez vos logements'}</div>
+      </div>
+      <span class="badge ${rls.filter(r=>r.coId===comp.id).length>0?'bg':'bx'}">${rls.filter(r=>r.coId===comp.id).length>0?'✓ OK':'Vide'}</span>
+    </div>`;
+  }).join('')}`;
+}
+
+function obStepDone(){
+  const totalLoyer=lgs.reduce((a,l)=>a+l.loyer+l.ch,0);
+  return `<div style="text-align:center;padding:10px 0">
+    <div style="font-size:3rem;margin-bottom:12px">🎉</div>
+    <div class="ob-summary">
+      <div class="ob-summary-item"><span>Logements</span><strong>${lgs.length}</strong></div>
+      <div class="ob-summary-item"><span>Locataires</span><strong>${lcs.length}</strong></div>
+      <div class="ob-summary-item"><span>Revenus potentiels</span><strong>${fE(totalLoyer)}/mois</strong></div>
+      <div class="ob-summary-item"><span>Compteurs</span><strong>${cos.length} configurés</strong></div>
+      <div class="ob-summary-item"><span>Relevés</span><strong>${rls.length} encodés</strong></div>
+    </div>
+    <p style="font-size:.78rem;color:var(--t2);line-height:1.6">Tout est sauvegardé automatiquement sur Google Drive.<br>Vous pouvez maintenant enregistrer vos paiements mensuels et suivre vos compteurs.</p>
+  </div>`;
+}
+
+function obNext(){
+  if(obStep===3){ obClose(); rP(curP); return; }
+
+  if(obStep===0){
+    // Save logement if filled
+    const nom=document.getElementById('ob_lNom')?.value.trim();
+    const addr=document.getElementById('ob_lAddr')?.value.trim();
+    const loyer=parseFloat(document.getElementById('ob_lLoyer')?.value);
+    if(nom && addr && !isNaN(loyer)){
+      const compteurs=[...document.querySelectorAll('#obBody input[type=checkbox]:checked')].map(el=>el.value);
+      const lg={id:uid(),nom,type:document.getElementById('ob_lType').value,addr,
+        surf:parseFloat(document.getElementById('ob_lSurf')?.value)||0,
+        loyer,ch:parseFloat(document.getElementById('ob_lCh')?.value)||0,
+        dep:parseFloat(document.getElementById('ob_lDep')?.value)||0,
+        notes:'',compteurs};
+      lgs.push(lg);sv('lg',lgs);
+    }
+  }
+
+  if(obStep===1){
+    // Save locataires for each logement
+    lgs.forEach((l,i)=>{
+      const pre=document.getElementById('ob_pre_'+i)?.value.trim();
+      const nom=document.getElementById('ob_nom_'+i)?.value.trim();
+      const ent=document.getElementById('ob_ent_'+i)?.value;
+      if(pre && nom && ent){
+        lcs.push({id:uid(),prenom:pre,nom,
+          email:document.getElementById('ob_email_'+i)?.value||'',
+          tel:document.getElementById('ob_tel_'+i)?.value||'',
+          lgId:l.id,jour:1,ent,
+          fin:document.getElementById('ob_fin_'+i)?.value||'',
+          urg:'',notes:''});
+      }
+    });
+    sv('lc',lcs);
+  }
+
+  obStep++;
+  obRender();
+}
+
+function obBack(){
+  if(obStep>0){ obStep--; obRender(); }
+}
+
+function obSkip(){
+  if(obStep===3){ obClose(); return; }
+  // Ask if they want to add another logement (step 0)
+  if(obStep===0 && lgs.length>0){
+    obStep=1; obRender(); return;
+  }
+  obStep++;
+  obRender();
+}
+
+function checkOnboarding(){
+  // Show onboarding if no logements encoded yet
+  if(lgs.length===0){
+    setTimeout(obShow, 800);
+  }
+}
+
 // ═══ INIT ═══
 document.getElementById('tdate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 injectRealData();
 rDash();
 setTimeout(()=>{driveInit();addDriveMenuItem();},500);
+setTimeout(checkOnboarding, 1200);
 </script>
+
+<!-- ONBOARDING WIZARD -->
+<div class="ob-overlay" id="obOverlay" style="display:none">
+  <div class="ob-card">
+    <div class="ob-head">
+      <div class="ob-ico" id="obIco">🗝</div>
+      <div class="ob-title" id="obTitle">Bienvenue dans Keystone</div>
+      <div class="ob-sub" id="obSub">Configurons votre portefeuille en quelques étapes</div>
+      <div class="ob-progress" id="obProgress"></div>
+    </div>
+    <div class="ob-body" id="obBody"></div>
+    <div class="ob-foot">
+      <button class="btn btn-s" id="obBtnBack" onclick="obBack()" style="display:none">← Retour</button>
+      <button class="btn btn-s" id="obBtnSkip" onclick="obSkip()">Passer</button>
+      <button class="btn btn-p" id="obBtnNext" onclick="obNext()">Suivant →</button>
+    </div>
+  </div>
+</div>
 
 <div id="syncBar">
   <div class="sync-dot" id="syncDot"></div>
@@ -2795,38 +3088,7 @@ setTimeout(()=>{driveInit();addDriveMenuItem();},500);
 // PWA — MANIFEST + SERVICE WORKER
 // ══════════════════════════════════════
 
-// Generate inline manifest (no server needed)
-(function(){
-  const manifest = {
-    name: "Keystone",
-    short_name: "Keystone",
-    description: "Gérez vos logements, locataires, loyers et compteurs",
-    start_url: "./",
-    display: "standalone",
-    orientation: "any",
-    background_color: "#f4f2ef",
-    theme_color: "#2d5a3d",
-    lang: "fr",
-    icons: [
-      {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%232d5a3d'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white'%3E🗝%3C/text%3E%3C/svg%3E",
-        sizes: "512x512",
-        type: "image/svg+xml",
-        purpose: "any maskable"
-      }
-    ],
-    categories: ["finance", "productivity"],
-    shortcuts: [
-      {name:"Paiements", short_name:"Loyers", url:"./#paiements"},
-      {name:"Compteurs", short_name:"Compteurs", url:"./#charges"}
-    ]
-  };
-  // Manifest inline via data URI (no blob CORS issues)
-  try {
-    const mJson = encodeURIComponent(JSON.stringify(manifest));
-    document.getElementById('pwaManifest').href = 'data:application/json,' + mJson;
-  } catch(e){ /* silencieux */ }
-})();
+// PWA manifest JS removed
 
 // ── SERVICE WORKER — désactivé (blob CORS non supporté sur GitHub Pages) ──
 
