@@ -685,21 +685,21 @@ tr[onclick]{cursor:pointer}
 .pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:auto}
 .pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center}
 .pay-grid th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);width:80px;min-width:80px;max-width:80px}
-.pay-grid th:nth-child(2){text-align:left;position:sticky;left:80px;z-index:3;background:var(--s2);min-width:140px;border-right:2px solid var(--bd)}
+.pay-grid th:nth-child(2){text-align:left;position:sticky;left:80px;z-index:3;background:var(--s2);min-width:120px;max-width:140px;border-right:2px solid var(--bd)}
 .pay-grid td{padding:4px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle;white-space:nowrap}
 .pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 6px;width:80px;min-width:80px;max-width:80px}
-.pay-grid td:nth-child(2){text-align:left;position:sticky;left:80px;background:var(--sf);z-index:1;padding:5px 8px;min-width:140px;border-right:2px solid var(--bd)}
+.pay-grid td:nth-child(2){text-align:left;position:sticky;left:80px;background:var(--sf);z-index:1;padding:5px 6px;min-width:120px;max-width:140px;border-right:2px solid var(--bd)}
 .pay-grid tr:hover td{background:#fafaf8}
 .pay-grid tr:hover td:first-child,.pay-grid tr:hover td:nth-child(2){background:#f5f5f2}
-.pg-month-col{width:54px;min-width:50px}
-.pg-btn{width:34px;height:26px;border-radius:5px;border:none;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;justify-content:center}
+.pg-month-col{width:48px;min-width:44px;max-width:56px}
+.pg-btn{width:30px;height:24px;border-radius:5px;border:none;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;justify-content:center}
 .pg-btn:active{transform:scale(.85)}
 .pg-paid{background:#c8f0cc;color:#1a6b2a}
 .pg-late{background:#fdecea;color:#c62828}
 .pg-partial{background:#fff3e0;color:#e65100}
 .pg-empty{background:var(--s2);color:#ccc;border:1.5px dashed #e0e0e0}
 .pg-future{opacity:.25;pointer-events:none}
-.pg-name{font-weight:700;font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.pg-name{font-weight:700;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px}
 .pg-sub{font-size:.59rem;color:var(--t3)}
 #payViewGrid.active,#payViewList.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
 
@@ -815,7 +815,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.15</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:06</div></div>
+  <div class="sb-foot"><div>Keystone v1.17</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:15</div></div>
 </aside>
 
 <div id="main">
@@ -914,7 +914,7 @@ tr[onclick]{cursor:pointer}
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
           <button id="btnPayOld" class="btn btn-s btn-xs" onclick="togglePayOld()" style="margin-left:8px">👥 Afficher anciens</button>
         </div>
-        <div class="pay-grid-wrap" id="payGridWrap">
+        <div class="pay-grid-wrap" id="payGridWrap" style="touch-action:pan-y">
           <div id="payGrid"></div>
         </div>
       </div>
@@ -1792,7 +1792,7 @@ function renderPayGrid(){
     }
     const oldBadge = isOld ? ' <span class="badge bx" style="font-size:.55rem">ancien</span>' : '';
     const entFin = displayLc ? (displayLc.ent?fD(displayLc.ent).slice(0,5):'')+(displayLc.fin?' → '+fD(displayLc.fin).slice(0,5):'') : '';
-    const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.82rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
+    const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
     html += `<td style="min-width:110px;border-right:2px solid var(--bd)">${displayLc
       ?'<div style=\"display:flex;align-items:center;justify-content:space-between;gap:4px\">'
         +'<div class=\"pg-name\" style=\"font-size:.72rem\">'+lcFull(displayLc)+oldBadge+'</div>'
@@ -3561,15 +3561,19 @@ function driveInit(){
       driveFileId = saved.fileId||null;
       driveEmail  = saved.email||null;
       syncBarShow('Connecté — '+driveEmail);
-      document.getElementById('driveBtn').style.display='';
-      document.getElementById('driveBtnConnect').style.display='none';
+      const db = document.getElementById('driveBtn');
+      const dc = document.getElementById('driveBtnConnect');
+      if(db) db.style.display='';
+      if(dc) dc.style.display='none';
       driveLoad(); // load data on init
     } else {
       // Not connected — show connect button
-      document.getElementById('driveBtnConnect').style.display='';
+      const dc = document.getElementById('driveBtnConnect');
+      if(dc) dc.style.display='';
     }
   }catch(e){
-    document.getElementById('driveBtnConnect').style.display='';
+    const dc = document.getElementById('driveBtnConnect');
+    if(dc) dc.style.display='';
   }
 }
 
@@ -3592,8 +3596,11 @@ async function driveHandleRedirect(){
   // Check for OAuth token in URL hash after redirect
   const hash = location.hash.substring(1);
   const params = new URLSearchParams(hash);
-  if(params.get('access_token') && params.get('state')==='drive_auth'){
+  console.log('driveHandleRedirect hash:', hash.substring(0,50));
+  // Accept token even if state is missing (some browsers strip it)
+  if(params.get('access_token')){
     driveToken = params.get('access_token');
+    console.log('Drive token received, length:', driveToken.length);
     const expiry = Date.now() + parseInt(params.get('expires_in')||'3600')*1000;
     // Clean URL
     history.replaceState(null,'',location.pathname);
