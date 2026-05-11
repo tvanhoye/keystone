@@ -522,7 +522,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.9</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:39</div></div>
+  <div class="sb-foot"><div>Keystone v1.10</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:59</div></div>
 </aside>
 
 <div id="main">
@@ -597,8 +597,8 @@ tr[onclick]{cursor:pointer}
 
     <!-- LOCATAIRES -->
     <div class="page" id="page-locataires">
-      <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button class="btn btn-p" onclick="openM('mLoc')">＋ Ajouter</button></div></div>
-      <div class="card"><div class="tblw"><table><thead><tr><th>Nom</th><th>Logement</th><th>Loyer CC</th><th>Entrée</th><th>Fin bail</th><th>Bail</th><th>Actions</th></tr></thead><tbody id="lcTbl"></tbody></table></div></div>
+      <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button id="btnOldLc" class="btn btn-s" onclick="toggleOldLc()">👥 Anciens locataires</button><button class="btn btn-p" onclick="openM('mLoc')">＋ Ajouter</button></div></div>
+      <div class="card"><div class="tblw"><table><thead><tr><th>Nom</th><th>Logement</th><th>Loyer CC</th><th>Entrée</th><th>Fin bail</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="lcTbl"></tbody></table></div></div>
     </div>
 
     <!-- PAIEMENTS -->
@@ -1050,7 +1050,19 @@ function rDash(){
     '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
     '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>';
   const al=[];
-  tmP.filter(p=>p.stat==='retard').forEach(p=>{const l=gLc(p.lcId);if(l)al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l),s:p.mois+' · '+fE(p.du),p:'paiements'})});
+  // Count ALL unpaid months per locataire (not just current month)
+const retardsByLc={};
+pys.filter(p=>p.stat==='retard').forEach(p=>{
+  if(!retardsByLc[p.lcId])retardsByLc[p.lcId]=[];
+  retardsByLc[p.lcId].push(p);
+});
+Object.entries(retardsByLc).forEach(([lcId,pays])=>{
+  const l=gLc(lcId);
+  if(!l)return;
+  const nb=pays.length;
+  const total=pays.reduce((a,p)=>a+(p.du||0),0);
+  al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l)+(nb>1?' ('+nb+' mois)':''),s:fE(total)+' dus · '+pays.map(p=>p.mois).join(', '),p:'paiements'});
+});
   urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom,p:'entretien'}));
   lcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
@@ -1197,10 +1209,28 @@ function delLg(id){if(!confirm('Supprimer ce logement ?'))return;lgs=lgs.filter(
 
 // ═══ LOCATAIRES ═══
 let lcFilter='';
+let showOldLc = false;
+
+function toggleOldLc(){
+  showOldLc = !showOldLc;
+  const btn = document.getElementById('btnOldLc');
+  if(btn) btn.textContent = showOldLc ? '👥 Masquer anciens' : '👥 Anciens locataires';
+  rLcs(lcFilter);
+}
+
+function isActiveLc(l){
+  const now = new Date();
+  if(l.fin && new Date(l.fin) < now) return false;
+  return true;
+}
+
 function rLcs(f){
   if(f!==undefined)lcFilter=f;
-  const list=lcFilter?lcs.filter(l=>(lcFull(l)+gLg(l.lgId).nom).toLowerCase().includes(lcFilter.toLowerCase())):lcs;
-  document.getElementById('lcCnt').textContent=list.length+' locataire'+(list.length>1?'s':'');
+  let list = showOldLc ? lcs : lcs.filter(l=>isActiveLc(l));
+  if(lcFilter) list = list.filter(l=>(lcFull(l)+gLg(l.lgId).nom).toLowerCase().includes(lcFilter.toLowerCase()));
+  const totalActive = lcs.filter(l=>isActiveLc(l)).length;
+  const totalOld = lcs.length - totalActive;
+  document.getElementById('lcCnt').textContent=totalActive+' actif'+(totalActive>1?'s':'')+(totalOld?' · '+totalOld+' ancien'+(totalOld>1?'s':''):'');
   const tb=document.getElementById('lcTbl');
   if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:18px">Aucun locataire</td></tr>';return;}
   tb.innerHTML=list.map(l=>{
@@ -1283,37 +1313,90 @@ function renderPayGrid(){
   }
   document.getElementById('payGridLabel').textContent = cols[0].lbl+' → '+cols[cols.length-1].lbl;
 
-  const rows = lcs.map(lc=>({lc,lg:gLg(lc.lgId)})).sort((a,b)=>a.lg.nom.localeCompare(b.lg.nom));
+  // Build rows: all logements, with their CURRENT tenant
+  // Also handle historical tenants for past months
+  const rows = lgs.map(lg=>{
+    // Find tenant active during this period
+    // For now, find all tenants for this logement sorted by entry date
+    const lgLcs = lcs.filter(l=>l.lgId===lg.id).sort((a,b)=>new Date(a.ent)-new Date(b.ent));
+    return {lg, lgLcs};
+  }).sort((a,b)=>a.lg.nom.localeCompare(b.lg.nom));
 
   let html = '<table class="pay-grid"><thead><tr>';
-  html += '<th>Locataire</th>';
+  html += '<th style="min-width:90px">Logement</th>';
+  html += '<th style="min-width:110px;border-right:2px solid var(--bd)">Locataire</th>';
   cols.forEach(col=>{
     html += `<th class="pg-month-col${col.isFuture?' pg-future':''}">${col.lbl}</th>`;
   });
   html += '</tr></thead><tbody>';
 
-  rows.forEach(({lc,lg})=>{
+  rows.forEach(({lg, lgLcs})=>{
     html += '<tr>';
-    html += `<td><div class="pg-name">${lcFull(lc)}</div><div class="pg-sub">${lg.nom}</div></td>`;
+    // Two first columns: logement + current tenant
+    const nowD = new Date();
+    const currentLc = lgLcs.find(l=>{
+      const ent = l.ent ? new Date(l.ent) : null;
+      const fin = l.fin ? new Date(l.fin) : null;
+      return (!ent||ent<=nowD) && (!fin||fin>=nowD);
+    });
+    html += `<td style="min-width:90px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div></td>`;
+    html += `<td style="min-width:110px;border-right:2px solid var(--bd)"><div class="pg-name" style="font-size:.72rem">${currentLc?lcFull(currentLc):'<em style=\"color:var(--t3)\">Vacant</em>'}</div><div class="pg-sub">${currentLc?fE(lg.loyer)+'/mois':''}</div></td>`;
+
     cols.forEach(col=>{
-      if(col.isFuture){
-        html += `<td><span class="pg-btn pg-future">·</span></td>`;
+      // Find which tenant was active during this month
+      const colDate = new Date(col.key+'-15'); // mid-month
+      const activeLc = lgLcs.find(l=>{
+        const ent = l.ent ? new Date(l.ent) : null;
+        const fin = l.fin ? new Date(l.fin) : null;
+        return (!ent||ent<=new Date(col.key+'-28')) && (!fin||fin>=new Date(col.key+'-01'));
+      });
+
+      if(!activeLc){
+        // Vacant month
+        html += '<td><span class="pg-btn" style="background:var(--s2);color:#ccc;cursor:default;border:1px dashed #ddd">—</span></td>';
         return;
       }
-      const pay = pys.find(p=>p.lcId===lc.id&&p.mois===col.key);
-      let cls,lbl,title;
-      if(!pay){
-        cls='pg-empty'; lbl='?'; title='Cliquer = payé · Double-clic = partiel';
-      } else if(pay.stat==='payé'){
-        cls='pg-paid'; lbl='✓'; title=fE(pay.rec)+' · '+fD(pay.date);
-      } else if(pay.stat==='retard'){
-        cls='pg-late'; lbl='✗'; title='Impayé';
-      } else {
-        cls='pg-partial'; lbl='~'; title='Partiel: '+fE(pay.rec);
+
+      // Check if tenant was partial month (entry or exit mid-month)
+      const colStart = new Date(col.key+'-01');
+      const colEnd = new Date(new Date(col.key.split('-')[0], parseInt(col.key.split('-')[1]), 0));
+      const entDate = activeLc.ent ? new Date(activeLc.ent) : colStart;
+      const finDate = activeLc.fin ? new Date(activeLc.fin) : colEnd;
+      const isPartialEntry = entDate > colStart && entDate.getMonth()===colStart.getMonth() && entDate.getFullYear()===colStart.getFullYear();
+      const isPartialExit  = finDate < colEnd && finDate.getMonth()===colEnd.getMonth() && finDate.getFullYear()===colEnd.getFullYear();
+      const isPartialMonth = isPartialEntry || isPartialExit;
+
+      // Prorated loyer
+      const daysInMonth = colEnd.getDate();
+      let daysOccupied = daysInMonth;
+      if(isPartialEntry) daysOccupied = daysInMonth - entDate.getDate() + 1;
+      if(isPartialExit)  daysOccupied = Math.min(daysOccupied, finDate.getDate());
+      const proratedLoyer = isPartialMonth ? Math.round(lg.loyer*daysOccupied/daysInMonth) : lg.loyer;
+
+      if(col.isFuture){
+        html += '<td><span class="pg-btn pg-future">·</span></td>';
+        return;
       }
-      html += `<td><button class="pg-btn ${cls}" 
-        onclick="pgClick(event,'${lc.id}','${col.key}',${lg.loyer+lg.ch},'${pay?pay.id:''}')"
-        title="${title}">${lbl}</button></td>`;
+
+      const pay = pys.find(p=>p.lcId===activeLc.id&&p.mois===col.key);
+      let cls,lbl,title,payId=pay?pay.id:'';
+      const proTxt = isPartialMonth?` (${daysOccupied}j/${daysInMonth}j = ${fE(proratedLoyer)})`:'';
+
+      if(!pay){
+        cls='pg-empty'; lbl='?'; title='Cliquer = payé · Double-clic = partiel'+proTxt;
+      } else if(pay.stat==='payé'){
+        cls='pg-paid'; lbl='✓'; title=fE(pay.rec)+(isPartialMonth?' (proraté)':'')+' · '+fD(pay.date);
+      } else if(pay.stat==='retard'){
+        cls='pg-late'; lbl='✗'; title='Impayé · Dû: '+fE(proratedLoyer)+proTxt;
+      } else {
+        cls='pg-partial'; lbl='~'; title='Partiel: '+fE(pay.rec)+' / '+fE(proratedLoyer)+proTxt;
+      }
+
+      const cellStyle = isPartialMonth ? 'position:relative' : '';
+      const partialDot = isPartialMonth ? '<span style=\"position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:var(--go)\"></span>' : '';
+      html += `<td style="${cellStyle}"><button class="pg-btn ${cls}" 
+        onclick="pgClick(event,'${activeLc.id}','${col.key}',${proratedLoyer},'${payId}')"
+        title="${title}">${lbl}</button>${partialDot}</td>`;
     });
     html += '</tr>';
   });
@@ -1343,36 +1426,22 @@ function renderPayGrid(){
 
 
 function pgClick(evt, lcId, mois, loyer, existingPayId){
-  // Prevent double-trigger on mobile
-  if(evt && evt.detail===0) return; // synthetic event
-  
+  if(evt && evt.detail===0) return;
   const pay = existingPayId ? pys.find(p=>p.id===existingPayId) : null;
   const isDouble = evt && evt.detail >= 2;
-  const lc = gLc(lcId);
 
   if(!pay){
-    // No payment yet
     if(isDouble){
-      // Double click = partial — ask amount
-      const rec = parseFloat(prompt('Montant partiel reçu (€) — Loyer: '+fE(loyer), ''));
+      const rec = parseFloat(prompt('Montant partiel reçu (€) — Dû: '+fE(loyer),''));
       if(isNaN(rec)||rec<=0) return;
-      pys.push({id:uid(),lcId,mois,du:loyer,rec,date:tod(),mode:'Virement',notes:'',stat:'partiel'});
+      pys.push({id:uid(),lcId,mois,du:loyer,rec,date:tod(),mode:'Virement',notes:'',stat:rec>=loyer?'payé':'partiel'});
     } else {
-      // Single click = full payment
       pys.push({id:uid(),lcId,mois,du:loyer,rec:loyer,date:tod(),mode:'Virement',notes:'',stat:'payé'});
     }
   } else {
-    // Payment exists — cycle: payé→retard→(remove)
-    if(pay.stat==='payé'){
-      // Mark as unpaid
-      pay.stat='retard'; pay.rec=0;
-    } else if(pay.stat==='retard'){
-      // Remove entirely
-      pys = pys.filter(p=>p.id!==existingPayId);
-    } else {
-      // Partial → payé
-      pay.stat='payé'; pay.rec=pay.du;
-    }
+    if(pay.stat==='payé'){ pay.stat='retard'; pay.rec=0; }
+    else if(pay.stat==='retard'){ pys=pys.filter(p=>p.id!==existingPayId); }
+    else { pay.stat='payé'; pay.rec=pay.du; }
   }
   sv('py',pys);
   renderPayGrid();
