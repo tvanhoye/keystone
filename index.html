@@ -2974,6 +2974,8 @@ function obStepCompteurs(){
 
 function obStepDone(){
   const totalLoyer=lgs.reduce((a,l)=>a+l.loyer+l.ch,0);
+  // Force refresh from localStorage to get latest counts
+  lgs=ld('lg'); lcs=ld('lc');
   return `<div style="text-align:center;padding:10px 0">
     <div style="font-size:3rem;margin-bottom:12px">🎉</div>
     <div class="ob-summary">
@@ -3012,7 +3014,8 @@ function obNext(){
       const pre=document.getElementById('ob_pre_'+i)?.value.trim();
       const nom=document.getElementById('ob_nom_'+i)?.value.trim();
       const ent=document.getElementById('ob_ent_'+i)?.value;
-      if(pre && nom && ent){
+      // Only add if not already exists for this logement
+      if(pre && nom && ent && !lcs.find(x=>x.lgId===l.id)){
         lcs.push({id:uid(),prenom:pre,nom,
           email:document.getElementById('ob_email_'+i)?.value||'',
           tel:document.getElementById('ob_tel_'+i)?.value||'',
@@ -3025,7 +3028,7 @@ function obNext(){
   }
 
   obStep++;
-  obRender();
+  obRender(); // obStepDone now reads updated lcs
 }
 
 function obBack(){
