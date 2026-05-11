@@ -815,7 +815,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.17</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:15</div></div>
+  <div class="sb-foot"><div>Keystone v1.19</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:24</div></div>
 </aside>
 
 <div id="main">
@@ -3577,49 +3577,86 @@ function driveInit(){
   }
 }
 
+let _driveSignInPending = false;
+
 function driveSignIn(){
-  // Use redirect flow instead of popup — works on all browsers
+  if(_driveSignInPending){ showToast('Connexion en cours...'); return; }
+  if(typeof google === 'undefined' || !google.accounts){
+    showToast('Script Google non chargé — rechargez la page');
+    return;
+  }
+  _driveSignInPending = true;
+  const btn = document.getElementById('driveBtnConnect');
+  if(btn){ btn.textContent='⏳ Connexion...'; btn.disabled=true; }
+
+  try{
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope:     GDRIVE_SCOPE,
+      prompt:    '',
+      callback:  async (resp) => {
+        _driveSignInPending = false;
+        if(btn){ btn.textContent='🔗 Drive'; btn.disabled=false; }
+        if(resp.error){
+          syncBarError('Erreur: '+resp.error);
+          showToast('Erreur Drive: '+resp.error);
+          return;
+        }
+        driveToken = resp.access_token;
+        try{
+          const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+            {headers:{'Authorization':'Bearer '+driveToken}});
+          const ud = await ui.json();
+          driveEmail = ud.email||'';
+        }catch(e){}
+        sessionStorage.setItem('ks_drive', JSON.stringify({
+          token:driveToken, expiry:Date.now()+3500000, fileId:driveFileId, email:driveEmail
+        }));
+        syncBarShow('Connecté — '+driveEmail);
+        const db=document.getElementById('driveBtn');
+        const dc=document.getElementById('driveBtnConnect');
+        if(db)db.style.display=''; if(dc)dc.style.display='none';
+        await driveLoad();
+        showToast('✅ Google Drive connecté — '+driveEmail);
+      }
+    });
+    client.requestAccessToken();
+  }catch(e){
+    _driveSignInPending = false;
+    if(btn){ btn.textContent='🔗 Drive'; btn.disabled=false; }
+    showToast('Erreur: '+e.message);
+  }
+}
+
+async function driveHandleRedirect(){
+  // PKCE removed — using GIS popup instead
+  // Check for legacy implicit token in hash (just in case)
+  const hash = location.hash.substring(1);
+  const hp = new URLSearchParams(hash);
+  if(hp.get('access_token')){
+    history.replaceState(null,'',location.pathname);
+    driveToken = hp.get('access_token');
+    try{
+      const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+driveToken}});
+      const ud = await ui.json(); driveEmail=ud.email||'';
+    }catch(e){}
+    sessionStorage.setItem('ks_drive',JSON.stringify({token:driveToken,expiry:Date.now()+3500000,fileId:null,email:driveEmail}));
+    syncBarShow('Connecté — '+driveEmail);
+    const db=document.getElementById('driveBtn');const dc=document.getElementById('driveBtnConnect');
+    if(db)db.style.display='';if(dc)dc.style.display='none';
+    await driveLoad();
+  }
+}
+function driveSignInImplicit(){
+  // Fallback: implicit flow (older but simpler)
   const params = new URLSearchParams({
     client_id:     GDRIVE_CLIENT_ID,
     redirect_uri:  location.origin + location.pathname,
     response_type: 'token',
     scope:         GDRIVE_SCOPE,
-    include_granted_scopes: 'true',
-    state:         'drive_auth'
+    state:         'drive_implicit'
   });
-  // Save current page state so we can restore after redirect
-  sessionStorage.setItem('ks_drive_pending', '1');
-  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
-}
-
-async function driveHandleRedirect(){
-  // Check for OAuth token in URL hash after redirect
-  const hash = location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  console.log('driveHandleRedirect hash:', hash.substring(0,50));
-  // Accept token even if state is missing (some browsers strip it)
-  if(params.get('access_token')){
-    driveToken = params.get('access_token');
-    console.log('Drive token received, length:', driveToken.length);
-    const expiry = Date.now() + parseInt(params.get('expires_in')||'3600')*1000;
-    // Clean URL
-    history.replaceState(null,'',location.pathname);
-    // Get user info
-    try{
-      const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
-        {headers:{'Authorization':'Bearer '+driveToken}});
-      const ud = await ui.json();
-      driveEmail = ud.email||'';
-    }catch(e){}
-    sessionStorage.setItem('ks_drive', JSON.stringify({
-      token:driveToken, expiry, fileId:driveFileId, email:driveEmail
-    }));
-    syncBarShow('Connecté — '+driveEmail);
-    document.getElementById('driveBtn').style.display='';
-    document.getElementById('driveBtnConnect').style.display='none';
-    await driveLoad();
-    showToast('✅ Google Drive connecté — '+driveEmail);
-  }
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?'+params.toString();
 }
 
 function driveSignOut(){
@@ -4143,7 +4180,7 @@ document.getElementById('tdate').textContent=new Date().toLocaleDateString('fr-F
 injectRealData();
 rDash();
 setTimeout(async ()=>{
-  await driveHandleRedirect(); // Handle OAuth redirect first
+  await driveHandleRedirect();
   driveInit();
   addDriveMenuItem();
 },300);
