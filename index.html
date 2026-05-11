@@ -1,291 +1,6 @@
-<html lang="fr"><head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-      (function() {
-        const originalConsole = window.console;
-        window.console = {
-          log: (...args) => {
-            originalConsole.log(...args);
-            window.parent.postMessage({ type: 'console', message: args.join(' ') }, '*');
-          },
-          error: (...args) => {
-            originalConsole.error(...args);
-            window.parent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
-          },
-          warn: (...args) => {
-            originalConsole.warn(...args);
-            window.parent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
-          }
-        };
-
-        let requestId = 0;
-        let callbacksMap = new Map();
-        let streamControllers = new Map();
-        
-        window.claude = {
-          complete: (prompt) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
-            });
-          }
-        };
-
-        window.storage = {
-          get: (key, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageGet', id, key, shared }, '*');
-            });
-          },
-          set: (key, value, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
-            });
-          },
-          delete: (key, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
-            });
-          },
-          list: (prefix, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
-            });
-          }
-        };
-
-        let pendingBlobs = new Map();
-        URL.createObjectURL = (blob) => {
-          // Store the blob and create an ID and URL for it
-          const blobId = `blob-${Date.now()}-${Math.random()}`;
-          pendingBlobs.set(blobId, blob);
-          return `blob-request://${blobId}`;
-        };
-
-        URL.revokeObjectURL = (url) => {
-          // Remove the blob from our store
-          const blobId = url.replace("blob-request://", "");
-          pendingBlobs.delete(blobId);
-        };
-
-        const getBlobFromURL = (url) => {
-          const blobId = url.replace("blob-request://", "");
-          return pendingBlobs.get(blobId);
-        };
-
-        // Override global fetch with streaming support
-        window.fetch = (url, init = {}) => {
-          return new Promise((resolve, reject) => {
-            const id = requestId++;
-            const channelId = `fetch-${id}-${Date.now()}`;
-            
-            callbacksMap.set(id, { 
-              resolve: (response) => {
-                // Create a ReadableStream for the response body
-                const stream = new ReadableStream({
-                  start(controller) {
-                    streamControllers.set(channelId, controller);
-                  },
-                  cancel() {
-                    streamControllers.delete(channelId);
-                  }
-                });
-                
-                // Create and return the Response with the stream
-                resolve(new Response(stream, {
-                  status: response.status,
-                  statusText: response.statusText,
-                  headers: response.headers
-                }));
-              },
-              reject,
-              channelId
-            });
-            
-            window.parent.postMessage({
-              type: 'proxyFetch',
-              id,
-              url,
-              init,
-              channelId
-            }, '*');
-          });
-        };
-
-        window.addEventListener('message', async (event) => {
-          if (event.data.type === 'takeScreenshot') {
-            const rootElement = document.getElementById('artifacts-component-root-html');
-            if (!rootElement) {
-              window.parent.postMessage({
-                type: 'screenshotError',
-                error: new Error('Root element not found'),
-              }, '*');
-            }
-            const screenshot = await htmlToImage.toPng(rootElement, {
-              imagePlaceholder:
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
-            });
-            window.parent.postMessage({
-              type: 'screenshotData',
-              data: screenshot,
-            }, '*');
-          } else if (event.data.type === 'claudeComplete') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.completion);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'proxyFetchResponse') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-              callbacksMap.delete(event.data.id);
-            } else {
-              // Initial response with headers, status, etc.
-              callback.resolve({
-                status: event.data.status,
-                statusText: event.data.statusText,
-                headers: event.data.headers
-              });
-              // Don't delete the callback yet if streaming
-              if (!event.data.body) {
-                callbacksMap.delete(event.data.id);
-              }
-            }
-          } else if (event.data.type === 'proxyFetchStream') {
-            // Handle streaming data chunks
-            const controller = streamControllers.get(event.data.channelId);
-            if (controller) {
-              if (event.data.error) {
-                controller.error(new Error(event.data.error));
-                streamControllers.delete(event.data.channelId);
-              } else if (event.data.done) {
-                controller.close();
-                streamControllers.delete(event.data.channelId);
-                // Clean up the callback
-                const callback = Array.from(callbacksMap.entries()).find(
-                  ([_, value]) => value.channelId === event.data.channelId
-                );
-                if (callback) {
-                  callbacksMap.delete(callback[0]);
-                }
-              } else if (event.data.chunk) {
-                controller.enqueue(new Uint8Array(event.data.chunk));
-              }
-            }
-          } else if (event.data.type === 'storageGet') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageSet') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageDelete') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageList') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          }
-        });
-
-        window.addEventListener('click', (event) => {
-          const isEl = event.target instanceof HTMLElement;
-          if (!isEl) return;
-    
-          // find ancestor links
-          const linkEl = event.target.closest("a");
-          if (!linkEl || !linkEl.href) return;
-    
-          event.preventDefault();
-          event.stopImmediatePropagation();
-    
-          if (linkEl.href.startsWith("blob-request:")) {
-            const blob = getBlobFromURL(linkEl.href);
-            if (!blob) return;
-            void blob.arrayBuffer().then((data) => {
-              window.parent.postMessage({
-                type: "downloadFile",
-                filename: linkEl.download,
-                data,
-                mimeType: blob.type || "application/octet-stream",
-              });
-            });
-          } else if (linkEl.href.startsWith("data:")) {
-            const [header, base64Data] = linkEl.href.split(",");
-            const mimeMatch = header.match(/data:([^;]+)/);
-            const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
-            const binaryString = atob(base64Data);
-            const data = Uint8Array.from(binaryString, (c) =>
-              c.charCodeAt(0),
-            ).buffer;
-            window.parent.postMessage({
-              type: "downloadFile",
-              filename: linkEl.download,
-              data,
-              mimeType,
-            });
-          } else {
-            let linkUrl;
-            try {
-              linkUrl = new URL(linkEl.href);
-            } catch (error) {
-              return;
-            }
-    
-            if (linkUrl.hostname === window.location.hostname) return;
-      
-            window.parent.postMessage({
-              type: 'openExternal',
-              href: linkEl.href,
-            }, '*');
-          }
-      });
-
-        const originalOpen = window.open;
-        window.open = function (url) {
-          window.parent.postMessage({
-            type: "openExternal",
-            href: url,
-          }, "*");
-        };
-
-        window.addEventListener('error', (event) => {
-          window.parent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
-        });
-      })();
-    </script>
-  
+<!DOCTYPE html>
+<html lang="fr">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Keystone</title>
@@ -301,8 +16,8 @@
 <meta name="msapplication-TileColor" content="#2d5a3d">
 
 <!-- MANIFEST inline via blob (pas de serveur nécessaire) -->
-<link id="pwaManifest" rel="manifest" href="blob-request://blob-1778495524649-0.43661795424187444">
-<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
+<link id="pwaManifest" rel="manifest">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- ICONS inline SVG as data URI -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%232d5a3d'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white'%3E🗝%3C/text%3E%3C/svg%3E">
@@ -719,12 +434,8 @@ tr:hover td{background:#fafaf8}
 #photoZone.drag-over{border-color:var(--ac);background:var(--acl);transform:scale(1.01)}
 #photoZone.has-photo{border-style:solid;border-color:var(--ac)}
 </style>
-<style>
-  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-  @keyframes slideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(20px);opacity:0}}
-  #installBanner button:hover{opacity:.85}
-</style></head>
-<body id="artifacts-component-root-html">
+</head>
+<body>
 
 <aside id="sb">
   <div class="sb-logo">
@@ -758,7 +469,7 @@ tr:hover td{background:#fafaf8}
       <div id="ptitle">Tableau de bord</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <div id="tdate" style="font-size:.69rem;color:var(--t3)">lundi 11 mai 2026</div>
+      <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="driveToken?syncNow():driveSignIn()" title="Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Drive
       </button>
@@ -767,7 +478,7 @@ tr:hover td{background:#fafaf8}
       </button>
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
-      <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
+      <div id="topMenu" style="display:none;position:absolute;right:0;top:38px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shl);z-index:300;min-width:180px;overflow:hidden">
         <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
           ⬇️ Télécharger l'app
         </a>
@@ -777,7 +488,7 @@ tr:hover td{background:#fafaf8}
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
         </div>
-      <div class="top-menu-item drive-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);"><img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive</div></div>
+      </div>
     </div>
     </div>
   </div>
@@ -786,15 +497,15 @@ tr:hover td{background:#fafaf8}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">0</div><div class="kpi-sub">0 occupé</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">0€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">0%</div><div class="kpi-sub">0 vacant</div></div></div>
+      <div class="kpi-g" id="kpiG"></div>
       <div class="g21">
         <div>
-          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"><tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr></tbody></table></div></div>
+          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"></div></div>
+          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"></tbody></table></div></div>
         </div>
         <div>
-          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div></div></div>
+          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"></div></div>
+          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"></div></div>
         </div>
       </div>
     </div>
@@ -915,7 +626,9 @@ tr:hover td{background:#fafaf8}
 
         <!-- Input -->
         <div style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:flex-end;background:var(--s2);border-radius:0 0 var(--r) var(--r)">
-          <textarea id="aiInput" placeholder="Posez votre question…" rows="1" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s" onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <textarea id="aiInput" placeholder="Posez votre question…" rows="1"
+            style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s"
+            onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
           <button class="btn btn-p" id="aiSendBtn" onclick="sendMessage()" style="padding:9px 16px;flex-shrink:0">
             <span id="aiSendIcon">↑</span>
           </button>
@@ -953,7 +666,7 @@ tr:hover td{background:#fafaf8}
       <div id="photoPlaceholder" style="padding:14px;text-align:center;color:var(--t3);font-size:.75rem">
         Aucune photo sélectionnée
       </div>
-      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px">
+      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px"/>
       <div id="photoActions" style="display:none;padding:8px;display:none;gap:6px;justify-content:center;background:rgba(0,0,0,.03)">
         <button type="button" class="btn btn-p btn-sm" onclick="analyzePhoto(event)">🔍 Analyser</button>
         <button type="button" class="btn btn-s btn-sm" onclick="removePhoto(event)">✕ Retirer</button>
@@ -3108,21 +2821,14 @@ setTimeout(()=>{driveInit();addDriveMenuItem();},500);
       {name:"Compteurs", short_name:"Compteurs", url:"./#charges"}
     ]
   };
+  // Manifest inline via data URI (no blob CORS issues)
   try {
-    const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    document.getElementById('pwaManifest').href = url;
+    const mJson = encodeURIComponent(JSON.stringify(manifest));
+    document.getElementById('pwaManifest').href = 'data:application/json,' + mJson;
   } catch(e){ /* silencieux */ }
 })();
 
-// ── SERVICE WORKER ──
-// SW via blob ne fonctionne qu'en HTTPS avec URL fixe (GitHub Pages)
-// Sera activé automatiquement une fois déployé sur https://tvanhoye.github.io/keystone/
-if('serviceWorker' in navigator && location.protocol === 'https:'){
-  // On GitHub Pages, le SW sera un fichier séparé
-  // Pour l'instant on skip silencieusement
-  console.log('Keystone: HTTPS détecté, SW disponible après déploiement complet.');
-}
+// ── SERVICE WORKER — désactivé (blob CORS non supporté sur GitHub Pages) ──
 
 // ── INSTALL PROMPT (Android Chrome) ──
 let deferredPrompt = null;
@@ -3221,6 +2927,5 @@ if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.s
   document.documentElement.style.setProperty('--pwa-installed', '1');
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
