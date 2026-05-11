@@ -680,23 +680,27 @@ tr[onclick]{cursor:pointer}
 .top-menu-item:hover{background:var(--s2)}
 
 /* ── PAYMENT GRID ── */
-.pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:fixed}
-.pay-grid th{background:var(--s2);font-weight:700;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);padding:7px 4px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center}
-.pay-grid th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);min-width:120px;width:120px}
-.pay-grid td{padding:5px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle}
-.pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 8px}
+.pay-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;cursor:grab}
+.pay-grid-wrap:active{cursor:grabbing}
+.pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:auto}
+.pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center}
+.pay-grid th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);width:80px;min-width:80px;max-width:80px}
+.pay-grid th:nth-child(2){text-align:left;position:sticky;left:80px;z-index:3;background:var(--s2);min-width:140px;border-right:2px solid var(--bd)}
+.pay-grid td{padding:4px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle;white-space:nowrap}
+.pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 6px;width:80px;min-width:80px;max-width:80px}
+.pay-grid td:nth-child(2){text-align:left;position:sticky;left:80px;background:var(--sf);z-index:1;padding:5px 8px;min-width:140px;border-right:2px solid var(--bd)}
 .pay-grid tr:hover td{background:#fafaf8}
-.pay-grid tr:hover td:first-child{background:#fafaf8}
-.pg-month-col{width:72px;min-width:64px}
-.pg-btn{width:38px;height:28px;border-radius:6px;border:none;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center}
-.pg-btn:active{transform:scale(.88)}
+.pay-grid tr:hover td:first-child,.pay-grid tr:hover td:nth-child(2){background:#f5f5f2}
+.pg-month-col{width:54px;min-width:50px}
+.pg-btn{width:34px;height:26px;border-radius:5px;border:none;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;justify-content:center}
+.pg-btn:active{transform:scale(.85)}
 .pg-paid{background:#c8f0cc;color:#1a6b2a}
 .pg-late{background:#fdecea;color:#c62828}
 .pg-partial{background:#fff3e0;color:#e65100}
-.pg-empty{background:var(--s2);color:#bbb;border:1.5px dashed #ddd}
-.pg-future{opacity:.3;pointer-events:none}
-.pg-name{font-weight:700;font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
-.pg-sub{font-size:.6rem;color:var(--t3)}
+.pg-empty{background:var(--s2);color:#ccc;border:1.5px dashed #e0e0e0}
+.pg-future{opacity:.25;pointer-events:none}
+.pg-name{font-weight:700;font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.pg-sub{font-size:.59rem;color:var(--t3)}
 #payViewGrid.active,#payViewList.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
 
 /* ── MODAL NAV ── */
@@ -811,7 +815,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.12</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 15:12</div></div>
+  <div class="sb-foot"><div>Keystone v1.15</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:06</div></div>
 </aside>
 
 <div id="main">
@@ -910,7 +914,7 @@ tr[onclick]{cursor:pointer}
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
           <button id="btnPayOld" class="btn btn-s btn-xs" onclick="togglePayOld()" style="margin-left:8px">👥 Afficher anciens</button>
         </div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div class="pay-grid-wrap" id="payGridWrap">
           <div id="payGrid"></div>
         </div>
       </div>
@@ -1451,12 +1455,74 @@ function setLgView(v){
 function rLgs(){
   document.getElementById('lgCnt').textContent=lgs.length+' logement'+(lgs.length>1?'s':'');
   const g=document.getElementById('lgGrid');
-  if(!lgs.length){g.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Aucun logement.<br><br><button class="btn btn-p" onclick="openM(\'mLog\')">Ajouter</button></div></div>';return;}
-  g.innerHTML=lgs.map(l=>{
-    const lc=lcs.find(c=>c.lgId===l.id);const cc=pCol[l.type]||'#555';
-    return'<div class="pc" onclick="editLg(\''+ l.id +'\')" style="cursor:pointer"><div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div><div class="pb"><div class="pn">'+l.nom+'</div><div class="pa">📍 '+l.addr+'</div>'+(l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+'<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+'</div><div class="pf"><span class="pr">'+fE(l.loyer+l.ch)+'<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+(lc?'<span class="badge bg"><span class="dot"></span>occupé</span>':'<span class="badge bx"><span class="dot"></span>vacant</span>')+'</div><div style="display:flex;gap:5px;margin-top:7px"><button class="btn btn-s btn-xs" onclick="editLg(\''+l.id+'\')">✏ Modifier</button><button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></div></div></div>';
-  }).join('');
+  if(!lgs.length){
+    g.className='';
+    g.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Aucun logement.<br><br><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-p" onclick="obShow()">🧙 Assistant guidé</button><button class="btn btn-s" onclick="openM(\'mLog\')">＋ Ajouter manuellement</button></div></div></div>';
+    return;
+  }
+  const v = lgView || 'grid';
+
+  if(v==='list'){
+    g.className='card';
+    g.innerHTML = lgs.map(l=>{
+      const lc=lcs.find(x=>x.lgId===l.id);
+      const cc=pCol[l.type]||'#555';
+      return '<div class="lg-list-item" onclick="editLg(\''+l.id+'\')">'+
+        '<div class="lg-list-ico" style="background:linear-gradient(135deg,'+cc+','+cc+'88)">'+(pEmo[l.type]||'🏠')+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:700;font-size:.84rem">'+l.nom+'</div>'+
+          '<div style="font-size:.69rem;color:var(--t2)">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+(l.surf?' · 📐'+l.surf+'m²':'')+(l.batId?' · 🏗'+gBat(l.batId).nom:'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0">'+
+          '<div style="font-family:monospace;font-weight:800;font-size:.84rem;color:var(--ac)">'+(l.loyer+l.ch)+'€</div>'+
+          '<span class="badge '+(lc?'bg':'bx')+'" style="font-size:.6rem">'+(lc?'occupé':'vacant')+'</span>'+
+        '</div>'+
+        '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')" style="margin-left:8px">✕</button>'+
+      '</div>';
+    }).join('');
+  } else if(v==='compact'){
+    g.className='card';
+    g.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+
+      '<th>Logement</th><th>Locataire</th><th>Surface</th><th>Loyer CC</th><th>Statut</th><th></th>'+
+      '</tr></thead><tbody>'+
+      lgs.map(l=>{
+        const lc=lcs.find(x=>x.lgId===l.id);
+        return '<tr style="cursor:pointer" onclick="editLg(\''+l.id+'\')">'+
+          '<td><strong>'+l.nom+'</strong>'+(l.batId?'<div style="font-size:.62rem;color:var(--ac)">'+gBat(l.batId).nom+'</div>':'')+'</td>'+
+          '<td>'+(lc?lcFull(lc):'<em style="color:var(--t3)">Vacant</em>')+'</td>'+
+          '<td>'+(l.surf?l.surf+' m²':'—')+'</td>'+
+          '<td class="mono" style="font-weight:700">'+(l.loyer+l.ch)+'€</td>'+
+          '<td>'+(lc?'<span class="badge bg">occupé</span>':'<span class="badge bx">vacant</span>')+'</td>'+
+          '<td onclick="event.stopPropagation()"><button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table>';
+  } else {
+    // Grid view (default)
+    g.className='pg';
+    g.innerHTML=lgs.map(l=>{
+      const lc=lcs.find(x=>x.lgId===l.id);const cc=pCol[l.type]||'#555';
+      return '<div class="pc" onclick="editLg(\''+l.id+'\')" style="cursor:pointer">'+
+        '<div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div>'+
+        '<div class="pb">'+
+          '<div class="pn">'+l.nom+'</div>'+
+          '<div class="pa">📍 '+(l.addr||gBat(l.batId).addr||'—')+'</div>'+
+          (l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+
+          '<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+'</div>'+
+          (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏗 '+gBat(l.batId).nom+'</div>':'')+
+          '<div class="pf">'+
+            '<span class="pr">'+(l.loyer+l.ch)+'€<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+
+            (lc?'<span class="badge bg"><span class="dot"></span>occupé</span>':'<span class="badge bx"><span class="dot"></span>vacant</span>')+
+          '</div>'+
+          '<div style="display:flex;gap:5px;margin-top:7px;justify-content:flex-end">'+
+            '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')">✕</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
 }
+
 function editLg(id){
   const l=lgs.find(x=>x.id===id);if(!l)return;
   document.getElementById('mLogT').textContent='Modifier le logement';
@@ -1502,8 +1568,8 @@ let showOldLc = false;
 function toggleOldLc(){
   showOldLc = !showOldLc;
   const btn = document.getElementById('btnOldLc');
-  if(btn) btn.textContent = showOldLc ? '👥 Masquer anciens' : '👥 Anciens locataires';
-  rLcs(lcFilter);
+  if(btn){ btn.textContent = showOldLc ? '👥 Masquer anciens' : '👥 Anciens locataires'; btn.style.background=showOldLc?'var(--ac)':''; btn.style.color=showOldLc?'#fff':''; }
+  rLcs();
 }
 
 function isActiveLc(l){
@@ -1668,10 +1734,15 @@ function renderPayGrid(){
 
   // ── Summary row ──
   html += '<tr style="background:#1a1814;color:#fff">';
-  html += `<td colspan="2" style="padding:8px 10px;font-weight:700;font-size:.8rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
-  html += `<span>💰 Total attendu: <strong style="font-family:monospace">${fE(totalDu)}</strong></span>`;
-  html += ` &nbsp; <span style="color:${totalRecu>=totalDu?'#a8e6af':'#f4a4a4'}">Encaissé: <strong style="font-family:monospace">${fE(totalRecu)}</strong></span>`;
-  html += ` &nbsp; <span style="color:rgba(255,255,255,.5);font-size:.72rem">${Math.round(totalRecu/totalDu*100)||0}%</span>`;
+  // Monthly total expected (for current months shown)
+  const curMonthKey = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  const curMonthTot = mTotals[curMonthKey];
+  html += `<td colspan="2" style="padding:8px 10px;font-weight:700;font-size:.78rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
+  html += `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">`;
+  html += `<span>📋 Attendu période: <strong style="font-family:monospace">${fE(totalDu)}</strong></span>`;
+  html += `<span style="color:${totalRecu>=totalDu?'#a8e6af':'#f9a825'}">✓ Encaissé: <strong style="font-family:monospace">${fE(totalRecu)}</strong> <span style="font-size:.68rem;opacity:.7">${Math.round(totalRecu/(totalDu||1)*100)}%</span></span>`;
+  if(curMonthTot&&curMonthTot.du>0) html += `<span style="font-size:.7rem;color:rgba(255,255,255,.55)">Mois courant: <strong>${fE(curMonthTot.recu)}/${fE(curMonthTot.du)}</strong></span>`;
+  html += `</div>`;
   html += '</td>';
   cols.forEach(col=>{
     const m=mTotals[col.key]||{du:0,recu:0};
@@ -1808,22 +1879,23 @@ function renderPayGrid(){
   const grid = document.getElementById('payGrid');
   grid.innerHTML = html;
 
-  // Swipe on the wrapper div (not the table) for better mobile UX
-  const wrap = grid.parentElement;
-  if(!wrap._pgSwipe){
+  // Touch swipe (mobile)
+  const wrap = document.getElementById('payGridWrap');
+  if(wrap && !wrap._pgSwipe){
     wrap._pgSwipe=true;
-    let sx=0,sy=0,t0=0;
-    wrap.addEventListener('touchstart',e=>{
-      // Only swipe on the nav area, not the table cells
-      sx=e.touches[0].clientX;sy=e.touches[0].clientY;t0=Date.now();
-    },{passive:true});
+    let sx=0,sy=0,t0=0,mx=0;
+    // Touch swipe for month navigation
+    wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;t0=Date.now();},{passive:true});
     wrap.addEventListener('touchend',e=>{
       const dx=e.changedTouches[0].clientX-sx;
       const dy=Math.abs(e.changedTouches[0].clientY-sy);
       const dt=Date.now()-t0;
-      // Only swipe if fast horizontal movement (not scrolling table)
-      if(Math.abs(dx)>60&&dy<50&&dt<400) shiftPayGrid(dx<0?1:-1);
+      if(Math.abs(dx)>70&&dy<60&&dt<350&&Math.abs(dx)>Math.abs(dy)*1.5) shiftPayGrid(dx<0?1:-1);
     },{passive:true});
+    // Mouse drag to scroll horizontally
+    wrap.addEventListener('mousedown',e=>{mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;},{passive:true});
+    document.addEventListener('mousemove',e=>{if(!wrap._dragging)return;wrap.scrollLeft=wrap._scrollStart-(e.clientX-mx);},{passive:true});
+    document.addEventListener('mouseup',()=>{wrap._dragging=false;wrap.style.cursor='grab';},{passive:true});
   }
 }
 
@@ -3502,41 +3574,44 @@ function driveInit(){
 }
 
 function driveSignIn(){
-  // Check if Google GSI loaded
-  if(typeof google === 'undefined' || !google.accounts){
-    alert('Le script Google ne s\'est pas chargé. Vérifiez votre connexion internet et rechargez la page.');
-    return;
-  }
-  try{
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GDRIVE_CLIENT_ID,
-    scope:     GDRIVE_SCOPE,
-    prompt:    'consent',
-    callback:  async (resp) => {
-      if(resp.error){ syncBarError('Erreur connexion: '+resp.error); alert('Erreur Google: '+resp.error); return; }
-      driveToken = resp.access_token;
-      // Get user info
-      try{
-        const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
-          {headers:{'Authorization':'Bearer '+driveToken}});
-        const ud = await ui.json();
-        driveEmail = ud.email||'';
-      }catch(e){}
-      // Save token (expires in ~1h)
-      sessionStorage.setItem('ks_drive', JSON.stringify({
-        token: driveToken, expiry: Date.now()+3500000,
-        fileId: driveFileId, email: driveEmail
-      }));
-      syncBarShow('Connecté — '+driveEmail);
-      document.getElementById('driveBtn').style.display='';
-      document.getElementById('driveBtnConnect').style.display='none';
-      await driveLoad();
-    }
+  // Use redirect flow instead of popup — works on all browsers
+  const params = new URLSearchParams({
+    client_id:     GDRIVE_CLIENT_ID,
+    redirect_uri:  location.origin + location.pathname,
+    response_type: 'token',
+    scope:         GDRIVE_SCOPE,
+    include_granted_scopes: 'true',
+    state:         'drive_auth'
   });
-  client.requestAccessToken();
-  }catch(e){
-    alert('Erreur initialisation Google: '+e.message);
-    console.error('driveSignIn error:', e);
+  // Save current page state so we can restore after redirect
+  sessionStorage.setItem('ks_drive_pending', '1');
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+async function driveHandleRedirect(){
+  // Check for OAuth token in URL hash after redirect
+  const hash = location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  if(params.get('access_token') && params.get('state')==='drive_auth'){
+    driveToken = params.get('access_token');
+    const expiry = Date.now() + parseInt(params.get('expires_in')||'3600')*1000;
+    // Clean URL
+    history.replaceState(null,'',location.pathname);
+    // Get user info
+    try{
+      const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+        {headers:{'Authorization':'Bearer '+driveToken}});
+      const ud = await ui.json();
+      driveEmail = ud.email||'';
+    }catch(e){}
+    sessionStorage.setItem('ks_drive', JSON.stringify({
+      token:driveToken, expiry, fileId:driveFileId, email:driveEmail
+    }));
+    syncBarShow('Connecté — '+driveEmail);
+    document.getElementById('driveBtn').style.display='';
+    document.getElementById('driveBtnConnect').style.display='none';
+    await driveLoad();
+    showToast('✅ Google Drive connecté — '+driveEmail);
   }
 }
 
@@ -4041,23 +4116,30 @@ function initModalSwipe(modalId){
 // Keyboard arrows
 document.addEventListener('keydown', e=>{
   if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-  // Find open modal
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  // Modal navigation takes priority
   const openModal = Object.keys(MODAL_NAV).find(id=>{
     const el = document.getElementById(id);
     return el && el.classList.contains('open');
   });
-  if(!openModal) return;
-  // Don't intercept when focus is on an input
-  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
-  e.preventDefault();
-  modalNavGo(openModal, e.key === 'ArrowRight' ? 1 : -1);
+  if(openModal){ e.preventDefault(); modalNavGo(openModal, e.key==='ArrowRight'?1:-1); return; }
+  // Payment grid navigation (when on paiements page)
+  if(curP==='paiements' && payView==='grid'){
+    e.preventDefault();
+    shiftPayGrid(e.key==='ArrowRight'?1:-1);
+    return;
+  }
 });
 
 // ═══ INIT ═══
 document.getElementById('tdate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 injectRealData();
 rDash();
-setTimeout(()=>{driveInit();addDriveMenuItem();},500);
+setTimeout(async ()=>{
+  await driveHandleRedirect(); // Handle OAuth redirect first
+  driveInit();
+  addDriveMenuItem();
+},300);
 setTimeout(checkOnboarding, 1200);
 </script>
 
