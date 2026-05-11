@@ -1,6 +1,291 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
+<html lang="fr"><head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      (function() {
+        const originalConsole = window.console;
+        window.console = {
+          log: (...args) => {
+            originalConsole.log(...args);
+            window.parent.postMessage({ type: 'console', message: args.join(' ') }, '*');
+          },
+          error: (...args) => {
+            originalConsole.error(...args);
+            window.parent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
+          },
+          warn: (...args) => {
+            originalConsole.warn(...args);
+            window.parent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
+          }
+        };
+
+        let requestId = 0;
+        let callbacksMap = new Map();
+        let streamControllers = new Map();
+        
+        window.claude = {
+          complete: (prompt) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
+            });
+          }
+        };
+
+        window.storage = {
+          get: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'storageGet', id, key, shared }, '*');
+            });
+          },
+          set: (key, value, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
+            });
+          },
+          delete: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
+            });
+          },
+          list: (prefix, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
+            });
+          }
+        };
+
+        let pendingBlobs = new Map();
+        URL.createObjectURL = (blob) => {
+          // Store the blob and create an ID and URL for it
+          const blobId = `blob-${Date.now()}-${Math.random()}`;
+          pendingBlobs.set(blobId, blob);
+          return `blob-request://${blobId}`;
+        };
+
+        URL.revokeObjectURL = (url) => {
+          // Remove the blob from our store
+          const blobId = url.replace("blob-request://", "");
+          pendingBlobs.delete(blobId);
+        };
+
+        const getBlobFromURL = (url) => {
+          const blobId = url.replace("blob-request://", "");
+          return pendingBlobs.get(blobId);
+        };
+
+        // Override global fetch with streaming support
+        window.fetch = (url, init = {}) => {
+          return new Promise((resolve, reject) => {
+            const id = requestId++;
+            const channelId = `fetch-${id}-${Date.now()}`;
+            
+            callbacksMap.set(id, { 
+              resolve: (response) => {
+                // Create a ReadableStream for the response body
+                const stream = new ReadableStream({
+                  start(controller) {
+                    streamControllers.set(channelId, controller);
+                  },
+                  cancel() {
+                    streamControllers.delete(channelId);
+                  }
+                });
+                
+                // Create and return the Response with the stream
+                resolve(new Response(stream, {
+                  status: response.status,
+                  statusText: response.statusText,
+                  headers: response.headers
+                }));
+              },
+              reject,
+              channelId
+            });
+            
+            window.parent.postMessage({
+              type: 'proxyFetch',
+              id,
+              url,
+              init,
+              channelId
+            }, '*');
+          });
+        };
+
+        window.addEventListener('message', async (event) => {
+          if (event.data.type === 'takeScreenshot') {
+            const rootElement = document.getElementById('artifacts-component-root-html');
+            if (!rootElement) {
+              window.parent.postMessage({
+                type: 'screenshotError',
+                error: new Error('Root element not found'),
+              }, '*');
+            }
+            const screenshot = await htmlToImage.toPng(rootElement, {
+              imagePlaceholder:
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
+            });
+            window.parent.postMessage({
+              type: 'screenshotData',
+              data: screenshot,
+            }, '*');
+          } else if (event.data.type === 'claudeComplete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.completion);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'proxyFetchResponse') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+              callbacksMap.delete(event.data.id);
+            } else {
+              // Initial response with headers, status, etc.
+              callback.resolve({
+                status: event.data.status,
+                statusText: event.data.statusText,
+                headers: event.data.headers
+              });
+              // Don't delete the callback yet if streaming
+              if (!event.data.body) {
+                callbacksMap.delete(event.data.id);
+              }
+            }
+          } else if (event.data.type === 'proxyFetchStream') {
+            // Handle streaming data chunks
+            const controller = streamControllers.get(event.data.channelId);
+            if (controller) {
+              if (event.data.error) {
+                controller.error(new Error(event.data.error));
+                streamControllers.delete(event.data.channelId);
+              } else if (event.data.done) {
+                controller.close();
+                streamControllers.delete(event.data.channelId);
+                // Clean up the callback
+                const callback = Array.from(callbacksMap.entries()).find(
+                  ([_, value]) => value.channelId === event.data.channelId
+                );
+                if (callback) {
+                  callbacksMap.delete(callback[0]);
+                }
+              } else if (event.data.chunk) {
+                controller.enqueue(new Uint8Array(event.data.chunk));
+              }
+            }
+          } else if (event.data.type === 'storageGet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageSet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageDelete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageList') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          }
+        });
+
+        window.addEventListener('click', (event) => {
+          const isEl = event.target instanceof HTMLElement;
+          if (!isEl) return;
+    
+          // find ancestor links
+          const linkEl = event.target.closest("a");
+          if (!linkEl || !linkEl.href) return;
+    
+          event.preventDefault();
+          event.stopImmediatePropagation();
+    
+          if (linkEl.href.startsWith("blob-request:")) {
+            const blob = getBlobFromURL(linkEl.href);
+            if (!blob) return;
+            void blob.arrayBuffer().then((data) => {
+              window.parent.postMessage({
+                type: "downloadFile",
+                filename: linkEl.download,
+                data,
+                mimeType: blob.type || "application/octet-stream",
+              });
+            });
+          } else if (linkEl.href.startsWith("data:")) {
+            const [header, base64Data] = linkEl.href.split(",");
+            const mimeMatch = header.match(/data:([^;]+)/);
+            const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+            const binaryString = atob(base64Data);
+            const data = Uint8Array.from(binaryString, (c) =>
+              c.charCodeAt(0),
+            ).buffer;
+            window.parent.postMessage({
+              type: "downloadFile",
+              filename: linkEl.download,
+              data,
+              mimeType,
+            });
+          } else {
+            let linkUrl;
+            try {
+              linkUrl = new URL(linkEl.href);
+            } catch (error) {
+              return;
+            }
+    
+            if (linkUrl.hostname === window.location.hostname) return;
+      
+            window.parent.postMessage({
+              type: 'openExternal',
+              href: linkEl.href,
+            }, '*');
+          }
+      });
+
+        const originalOpen = window.open;
+        window.open = function (url) {
+          window.parent.postMessage({
+            type: "openExternal",
+            href: url,
+          }, "*");
+        };
+
+        window.addEventListener('error', (event) => {
+          window.parent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
+        });
+      })();
+    </script>
+  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Keystone</title>
@@ -16,7 +301,7 @@
 <meta name="msapplication-TileColor" content="#2d5a3d">
 
 <!-- PWA manifest disabled - no blob support on GitHub Pages -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
 
 <!-- ICONS inline SVG as data URI -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%232d5a3d'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white'%3E🗝%3C/text%3E%3C/svg%3E">
@@ -496,8 +781,12 @@ tr[onclick]{cursor:pointer}
 #photoZone.drag-over{border-color:var(--ac);background:var(--acl);transform:scale(1.01)}
 #photoZone.has-photo{border-style:solid;border-color:var(--ac)}
 </style>
-</head>
-<body>
+<style>
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes slideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(20px);opacity:0}}
+  #installBanner button:hover{opacity:.85}
+</style></head>
+<body id="artifacts-component-root-html">
 
 <aside id="sb">
   <div class="sb-logo">
@@ -522,7 +811,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.10</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:59</div></div>
+  <div class="sb-foot"><div>Keystone v1.12</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 15:12</div></div>
 </aside>
 
 <div id="main">
@@ -532,16 +821,16 @@ tr[onclick]{cursor:pointer}
       <div id="ptitle">Tableau de bord</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
+      <div id="tdate" style="font-size:.69rem;color:var(--t3)">lundi 11 mai 2026</div>
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
       </button>
-      <button id="driveBtnConnect" class="btn btn-s btn-sm" onclick="driveSignIn()" title="Connecter Google Drive" style="display:none">
+      <button id="driveBtnConnect" class="btn btn-s btn-sm" onclick="driveSignIn()" title="Connecter Google Drive" style="">
         🔗 Drive
       </button>
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
-      <div id="topMenu" style="display:none;position:absolute;right:0;top:38px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shl);z-index:300;min-width:180px;overflow:hidden">
+      <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
         <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
           ⬇️ Télécharger l'app
         </a>
@@ -551,7 +840,7 @@ tr[onclick]{cursor:pointer}
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
         </div>
-      </div>
+      <div class="top-menu-item drive-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);"><img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive</div></div>
     </div>
     </div>
   </div>
@@ -560,15 +849,15 @@ tr[onclick]{cursor:pointer}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="kpi-g" id="kpiG"></div>
+      <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
       <div class="g21">
         <div>
-          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"></div></div>
-          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"></tbody></table></div></div>
+          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div></div></div>
+          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"><tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr></tbody></table></div></div>
         </div>
         <div>
-          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"></div></div>
-          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"></div></div>
+          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div></div></div>
+          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div></div></div>
         </div>
       </div>
     </div>
@@ -619,6 +908,7 @@ tr[onclick]{cursor:pointer}
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(-1)">‹ Préc.</button>
           <span id="payGridLabel" style="font-size:.78rem;font-weight:700;color:var(--t2)"></span>
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
+          <button id="btnPayOld" class="btn btn-s btn-xs" onclick="togglePayOld()" style="margin-left:8px">👥 Afficher anciens</button>
         </div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
           <div id="payGrid"></div>
@@ -728,9 +1018,7 @@ tr[onclick]{cursor:pointer}
 
         <!-- Input -->
         <div style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:flex-end;background:var(--s2);border-radius:0 0 var(--r) var(--r)">
-          <textarea id="aiInput" placeholder="Posez votre question…" rows="1"
-            style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s"
-            onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <textarea id="aiInput" placeholder="Posez votre question…" rows="1" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s" onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
           <button class="btn btn-p" id="aiSendBtn" onclick="sendMessage()" style="padding:9px 16px;flex-shrink:0">
             <span id="aiSendIcon">↑</span>
           </button>
@@ -782,7 +1070,7 @@ tr[onclick]{cursor:pointer}
       <div id="photoPlaceholder" style="padding:14px;text-align:center;color:var(--t3);font-size:.75rem">
         Aucune photo sélectionnée
       </div>
-      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px"/>
+      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px">
       <div id="photoActions" style="display:none;padding:8px;display:none;gap:6px;justify-content:center;background:rgba(0,0,0,.03)">
         <button type="button" class="btn btn-p btn-sm" onclick="analyzePhoto(event)">🔍 Analyser</button>
         <button type="button" class="btn btn-s btn-sm" onclick="removePhoto(event)">✕ Retirer</button>
@@ -1274,6 +1562,7 @@ function delLc(id){if(!confirm('Supprimer ?'))return;lcs=lcs.filter(l=>l.id!==id
 // ═══ PAIEMENTS ═══
 // ═══ PAIEMENTS GRID ═══
 let payGridOffset = 0; // months offset from today
+let payGridShowOld = false; // show old tenants
 let payView = localStorage.getItem('ks_payview') || 'grid';
 
 function setPayView(v){
@@ -1300,6 +1589,15 @@ function shiftPayGrid(dir){
   renderPayGrid();
 }
 
+function togglePayOld(){
+  payGridShowOld = !payGridShowOld;
+  const btn = document.getElementById('btnPayOld');
+  if(btn) btn.textContent = payGridShowOld ? '👥 Masquer anciens' : '👥 Afficher anciens';
+  if(btn) btn.style.background = payGridShowOld ? 'var(--ac)' : '';
+  if(btn) btn.style.color = payGridShowOld ? '#fff' : '';
+  renderPayGrid();
+}
+
 function renderPayGrid(){
   const MONTHS = 6;
   const now = new Date();
@@ -1313,43 +1611,148 @@ function renderPayGrid(){
   }
   document.getElementById('payGridLabel').textContent = cols[0].lbl+' → '+cols[cols.length-1].lbl;
 
-  // Build rows: all logements, with their CURRENT tenant
-  // Also handle historical tenants for past months
-  const rows = lgs.map(lg=>{
-    // Find tenant active during this period
-    // For now, find all tenants for this logement sorted by entry date
+  // Build rows per logement
+  // Each logement shows ALL its tenants (current + old if toggled)
+  const rows = [];
+  lgs.slice().sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(lg=>{
     const lgLcs = lcs.filter(l=>l.lgId===lg.id).sort((a,b)=>new Date(a.ent)-new Date(b.ent));
-    return {lg, lgLcs};
-  }).sort((a,b)=>a.lg.nom.localeCompare(b.lg.nom));
+    const now2 = new Date();
+    
+    if(payGridShowOld){
+      // Show one sub-row per tenant (current + old)
+      lgLcs.forEach((lc,idx)=>{
+        const isOld = lc.fin && new Date(lc.fin) < now2;
+        rows.push({lg, lgLcs, activeLcOverride: lc, isOld, isFirst: idx===0, lgRowSpan: lgLcs.length});
+      });
+      if(lgLcs.length===0) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
+    } else {
+      // Only show current tenant row
+      rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
+    }
+  });
 
-  let html = '<table class="pay-grid"><thead><tr>';
+  // Pre-compute monthly totals
+  const mTotals = {}; // key -> {du, recu, nb}
+  cols.forEach(col=>{
+    let du=0, recu=0, nb=0;
+    lgs.forEach(lg=>{
+      const lgLcs2 = lcs.filter(l=>l.lgId===lg.id);
+      const activeLc2 = lgLcs2.find(l=>{
+        const ent=l.ent?new Date(l.ent):null;
+        const fin=l.fin?new Date(l.fin):null;
+        return (!ent||ent<=new Date(col.key+'-28'))&&(!fin||fin>=new Date(col.key+'-01'));
+      });
+      if(!activeLc2) return;
+      // Prorated
+      const colStart=new Date(col.key+'-01');
+      const colEnd=new Date(col.key.split('-')[0],parseInt(col.key.split('-')[1]),0);
+      const entD=activeLc2.ent?new Date(activeLc2.ent):colStart;
+      const finD=activeLc2.fin?new Date(activeLc2.fin):colEnd;
+      const daysInMonth=colEnd.getDate();
+      let daysOcc=daysInMonth;
+      if(entD>colStart&&entD.getMonth()===colStart.getMonth()) daysOcc=daysInMonth-entD.getDate()+1;
+      if(finD<colEnd&&finD.getMonth()===colEnd.getMonth()) daysOcc=Math.min(daysOcc,finD.getDate());
+      const prorated=Math.round((lg.loyer+lg.ch)*daysOcc/daysInMonth);
+      du+=prorated; nb++;
+      const pay=pys.find(p=>p.lcId===activeLc2.id&&p.mois===col.key);
+      if(pay&&pay.rec>0) recu+=pay.rec;
+    });
+    mTotals[col.key]={du,recu,nb};
+  });
+
+  // Global totals
+  const totalDu = Object.values(mTotals).reduce((a,m)=>a+m.du,0);
+  const totalRecu = Object.values(mTotals).reduce((a,m)=>a+m.recu,0);
+
+  let html = '<table class="pay-grid"><thead>';
+
+  // ── Summary row ──
+  html += '<tr style="background:#1a1814;color:#fff">';
+  html += `<td colspan="2" style="padding:8px 10px;font-weight:700;font-size:.8rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
+  html += `<span>💰 Total attendu: <strong style="font-family:monospace">${fE(totalDu)}</strong></span>`;
+  html += ` &nbsp; <span style="color:${totalRecu>=totalDu?'#a8e6af':'#f4a4a4'}">Encaissé: <strong style="font-family:monospace">${fE(totalRecu)}</strong></span>`;
+  html += ` &nbsp; <span style="color:rgba(255,255,255,.5);font-size:.72rem">${Math.round(totalRecu/totalDu*100)||0}%</span>`;
+  html += '</td>';
+  cols.forEach(col=>{
+    const m=mTotals[col.key]||{du:0,recu:0};
+    const pct=m.du?Math.round(m.recu/m.du*100):0;
+    const ok=m.recu>=m.du;
+    const colBg=col.isFuture?'rgba(255,255,255,.05)':ok&&m.du>0?'rgba(76,175,80,.25)':m.recu>0?'rgba(255,152,0,.25)':'rgba(244,67,54,.15)';
+    html += `<td style="padding:6px 4px;text-align:center;background:${colBg};border-right:1px solid rgba(255,255,255,.08)">`;
+    if(m.du>0){
+      html += `<div style="font-family:monospace;font-weight:800;font-size:.78rem;color:${ok?'#a8e6af':'#f9a825'}">${fE(m.recu)}</div>`;
+      html += `<div style="font-size:.58rem;color:rgba(255,255,255,.4)">${fE(m.du)} · ${pct}%</div>`;
+    } else {
+      html += `<div style="color:rgba(255,255,255,.2);font-size:.7rem">—</div>`;
+    }
+    html += '</td>';
+  });
+  html += '</tr>';
+
+  // ── Column header row ──
+  html += '<tr>';
   html += '<th style="min-width:90px">Logement</th>';
-  html += '<th style="min-width:110px;border-right:2px solid var(--bd)">Locataire</th>';
+  html += '<th style="min-width:130px;border-right:2px solid var(--bd)">Locataire · Loyer</th>';
   cols.forEach(col=>{
     html += `<th class="pg-month-col${col.isFuture?' pg-future':''}">${col.lbl}</th>`;
   });
   html += '</tr></thead><tbody>';
 
-  rows.forEach(({lg, lgLcs})=>{
-    html += '<tr>';
-    // Two first columns: logement + current tenant
+  let prevLgId = null;
+  rows.forEach(({lg, lgLcs, activeLcOverride, isOld, isFirst, lgRowSpan})=>{
+    const rowStyle = isOld ? 'opacity:.5;background:#f9f9f7' : '';
+    html += `<tr style="${rowStyle}">`;
+    
+    // Logement column — only show for first row of this logement
+    if(isFirst){
+      const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
+      html += `<td ${rsAttr} style="min-width:90px;vertical-align:top;padding-top:8px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div></td>`;
+    }
+
+    // Locataire column
     const nowD = new Date();
-    const currentLc = lgLcs.find(l=>{
-      const ent = l.ent ? new Date(l.ent) : null;
-      const fin = l.fin ? new Date(l.fin) : null;
-      return (!ent||ent<=nowD) && (!fin||fin>=nowD);
-    });
-    html += `<td style="min-width:90px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div></td>`;
-    html += `<td style="min-width:110px;border-right:2px solid var(--bd)"><div class="pg-name" style="font-size:.72rem">${currentLc?lcFull(currentLc):'<em style=\"color:var(--t3)\">Vacant</em>'}</div><div class="pg-sub">${currentLc?fE(lg.loyer)+'/mois':''}</div></td>`;
+    let displayLc = activeLcOverride;
+    if(!displayLc){
+      displayLc = lgLcs.find(l=>{
+        const ent = l.ent ? new Date(l.ent) : null;
+        const fin = l.fin ? new Date(l.fin) : null;
+        return (!ent||ent<=nowD) && (!fin||fin>=nowD);
+      });
+    }
+    const oldBadge = isOld ? ' <span class="badge bx" style="font-size:.55rem">ancien</span>' : '';
+    const entFin = displayLc ? (displayLc.ent?fD(displayLc.ent).slice(0,5):'')+(displayLc.fin?' → '+fD(displayLc.fin).slice(0,5):'') : '';
+    const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.82rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
+    html += `<td style="min-width:110px;border-right:2px solid var(--bd)">${displayLc
+      ?'<div style=\"display:flex;align-items:center;justify-content:space-between;gap:4px\">'
+        +'<div class=\"pg-name\" style=\"font-size:.72rem\">'+lcFull(displayLc)+oldBadge+'</div>'
+        +loyerStr
+        +'</div>'
+        +(entFin?'<div class=\"pg-sub\">'+entFin+'</div>':'')
+      :'<em style=\"color:var(--t3)\">Vacant</em>'}</td>`;
 
     cols.forEach(col=>{
       // Find which tenant was active during this month
-      const colDate = new Date(col.key+'-15'); // mid-month
-      const activeLc = lgLcs.find(l=>{
-        const ent = l.ent ? new Date(l.ent) : null;
-        const fin = l.fin ? new Date(l.fin) : null;
-        return (!ent||ent<=new Date(col.key+'-28')) && (!fin||fin>=new Date(col.key+'-01'));
-      });
+      let activeLc;
+      if(activeLcOverride){
+        // Override: use the specific tenant for this row
+        activeLc = activeLcOverride;
+        // But check if they were actually active this month
+        const ent = activeLc.ent ? new Date(activeLc.ent) : null;
+        const fin = activeLc.fin ? new Date(activeLc.fin) : null;
+        const colStart2 = new Date(col.key+'-01');
+        const colEnd2 = new Date(col.key.split('-')[0], parseInt(col.key.split('-')[1]), 0);
+        if((ent&&ent>colEnd2)||(fin&&fin<colStart2)){
+          // Tenant was NOT active this month — show greyed cell
+          html += '<td style="background:var(--s2)"></td>';
+          return;
+        }
+      } else {
+        activeLc = lgLcs.find(l=>{
+          const ent = l.ent ? new Date(l.ent) : null;
+          const fin = l.fin ? new Date(l.fin) : null;
+          return (!ent||ent<=new Date(col.key+'-28')) && (!fin||fin>=new Date(col.key+'-01'));
+        });
+      }
 
       if(!activeLc){
         // Vacant month
@@ -3790,5 +4193,6 @@ if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.s
   document.documentElement.style.setProperty('--pwa-installed', '1');
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
