@@ -394,6 +394,28 @@ tr[onclick]{cursor:pointer}
 ::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
 .top-menu-item:hover{background:var(--s2)}
 
+/* ── PAYMENT GRID ── */
+.pay-grid{display:grid;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;font-size:.72rem;background:var(--sf)}
+.pay-grid-header{display:contents}
+.pay-grid-header .pg-cell{background:var(--s2);font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);padding:8px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;top:0;z-index:2}
+.pay-grid-header .pg-cell:first-child{text-align:left;position:sticky;left:0;z-index:3;min-width:130px}
+.pg-row{display:contents}
+.pg-cell{padding:7px 6px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);vertical-align:middle;text-align:center}
+.pg-cell:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;font-weight:600;min-width:130px;max-width:160px}
+.pg-row:hover .pg-cell{background:#fafaf8}
+.pg-row:hover .pg-cell:first-child{background:#fafaf8}
+.pg-pay-cell{cursor:pointer;padding:4px;transition:background .12s}
+.pg-pay-cell:hover{background:var(--acl)!important}
+.pg-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.75rem;font-weight:700;transition:transform .1s}
+.pg-badge:active{transform:scale(.9)}
+.pg-paid{background:#e8f5e9;color:#2e7d32}
+.pg-late{background:#fdecea;color:#c62828}
+.pg-partial{background:#fff3e0;color:#e65100}
+.pg-empty{background:var(--s2);color:var(--t3)}
+.pg-future{opacity:.35}
+
+#payViewGrid.active,#payViewList.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
+
 /* ── MODAL NAV ── */
 .modal-nav{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--s2);border-bottom:1px solid var(--bd);font-size:.72rem;color:var(--t2)}
 .modal-nav-btn{background:none;border:1px solid var(--bd);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:.8rem;color:var(--t2);font-family:inherit;transition:all .15s}
@@ -426,6 +448,15 @@ tr[onclick]{cursor:pointer}
 .ob-check:hover{border-color:var(--ac);background:var(--acl)}
 .ob-check input{accent-color:var(--ac)}
 @media(max-width:700px){.ob-2col{grid-template-columns:1fr}.ob-card{max-height:95vh;border-radius:14px 14px 0 0;margin-top:auto}}
+
+/* ── LOGEMENT LIST VIEW ── */
+.lg-list-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s}
+.lg-list-item:hover{background:var(--s2)}
+.lg-list-item:last-child{border-bottom:none}
+.lg-list-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.lg-compact-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:.78rem;transition:background .15s}
+.lg-compact-item:hover{background:var(--s2)}
+#lgViewGrid.active,#lgViewList.active,#lgViewCompact.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
 
 /* ── DRIVE SYNC ── */
 #syncBar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1a1814;color:#fff;
@@ -493,7 +524,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.6</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:09</div></div>
+  <div class="sb-foot"><div>Keystone v1.8</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 14:32</div></div>
 </aside>
 
 <div id="main">
@@ -552,7 +583,17 @@ tr[onclick]{cursor:pointer}
 
     <!-- LOGEMENTS -->
     <div class="page" id="page-logements">
-      <div class="sh-row"><div><h2>Logements</h2><p id="lgCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mLog')">＋ Ajouter</button></div></div>
+      <div class="sh-row">
+  <div><h2>Logements</h2><p id="lgCnt"></p></div>
+  <div class="sh-right">
+    <div style="display:flex;gap:2px;background:var(--s2);padding:3px;border-radius:var(--rs);border:1px solid var(--bd)">
+      <button id="lgViewGrid" class="btn btn-xs active" onclick="setLgView('grid')" title="Grille" style="padding:4px 9px">⊞</button>
+      <button id="lgViewList" class="btn btn-xs" onclick="setLgView('list')" title="Liste" style="padding:4px 9px">☰</button>
+      <button id="lgViewCompact" class="btn btn-xs" onclick="setLgView('compact')" title="Compact" style="padding:4px 9px">▤</button>
+    </div>
+    <button class="btn btn-p" onclick="openM('mLog')">＋ Ajouter</button>
+  </div>
+</div>
       <div class="pg" id="lgGrid"></div>
     </div>
 
@@ -564,9 +605,32 @@ tr[onclick]{cursor:pointer}
 
     <!-- PAIEMENTS -->
     <div class="page" id="page-paiements">
-      <div class="sh-row"><div><h2>Paiements</h2></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mPay')">＋ Enregistrer</button></div></div>
-      <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
-      <div class="card"><div class="tblw"><table><thead><tr><th>Locataire</th><th>Logement</th><th>Mois</th><th>Dû</th><th>Reçu</th><th>Date</th><th>Mode</th><th>Statut</th><th></th></tr></thead><tbody id="payTbl"></tbody></table></div></div>
+      <div class="sh-row">
+        <div><h2>Paiements</h2></div>
+        <div class="sh-right">
+          <div style="display:flex;gap:2px;background:var(--s2);padding:3px;border-radius:var(--rs);border:1px solid var(--bd)">
+            <button id="payViewGrid" class="btn btn-xs active" onclick="setPayView('grid')" title="Grille">⊞ Grille</button>
+            <button id="payViewList" class="btn btn-xs" onclick="setPayView('list')" title="Liste">☰ Liste</button>
+          </div>
+          <button class="btn btn-p" onclick="openM('mPay')">＋ Enregistrer</button>
+        </div>
+      </div>
+      <!-- Grid view -->
+      <div id="payGridView">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn btn-s btn-xs" onclick="shiftPayGrid(-1)">‹ Préc.</button>
+          <span id="payGridLabel" style="font-size:.78rem;font-weight:700;color:var(--t2)"></span>
+          <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <div id="payGrid"></div>
+        </div>
+      </div>
+      <!-- List view -->
+      <div id="payListView" style="display:none">
+        <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
+        <div class="card"><div class="tblw"><table><thead><tr><th>Locataire</th><th>Logement</th><th>Mois</th><th>Dû</th><th>Reçu</th><th>Date</th><th>Mode</th><th>Statut</th><th></th></tr></thead><tbody id="payTbl"></tbody></table></div></div>
+      </div>
     </div>
 
     <!-- CHARGES & COMPTEURS -->
@@ -881,8 +945,17 @@ function rP(p){
   else if(p==='batiments')rBats();
   else if(p==='logements')rLgs();
   else if(p==='locataires')rLcs();
-  else if(p==='paiements')rPays(payF);
+  else if(p==='paiements'){
+    setPayView(payView);
+  }
   else if(p==='charges')rCharges();
+  else if(p==='logements'){
+    // Restore view toggle
+    ['Grid','List','Compact'].forEach(v=>{
+      const btn=document.getElementById('lgView'+v);
+      if(btn)btn.classList.toggle('active',lgView===v.toLowerCase());
+    });
+  }
   else if(p==='entretien')rEnts(entF);
   else if(p==='documents')rDocs(docF);
   else if(p==='rappels')rRaps();
@@ -1060,6 +1133,18 @@ function delBat(id){
 // ═══ LOGEMENTS ═══
 const pEmo={Appartement:'🏠',Studio:'🏡',Maison:'🏡',Commerce:'🏪',Garage:'🅿️'};
 const pCol={Appartement:'#2d5a3d',Studio:'#1a3a5c',Maison:'#5b2d8e',Commerce:'#b5780a',Garage:'#444'};
+let lgView = localStorage.getItem('ks_lgview') || 'grid';
+
+function setLgView(v){
+  lgView = v;
+  localStorage.setItem('ks_lgview', v);
+  ['grid','list','compact'].forEach(x=>{
+    const btn = document.getElementById('lgView'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(btn) btn.classList.toggle('active', x===v);
+  });
+  rLgs();
+}
+
 function rLgs(){
   document.getElementById('lgCnt').textContent=lgs.length+' logement'+(lgs.length>1?'s':'');
   const g=document.getElementById('lgGrid');
@@ -1154,6 +1239,130 @@ function saveLoc(){
 function delLc(id){if(!confirm('Supprimer ?'))return;lcs=lcs.filter(l=>l.id!==id);sv('lc',lcs);rLcs();}
 
 // ═══ PAIEMENTS ═══
+// ═══ PAIEMENTS GRID ═══
+let payGridOffset = 0; // months offset from today
+let payView = localStorage.getItem('ks_payview') || 'grid';
+
+function setPayView(v){
+  payView = v;
+  localStorage.setItem('ks_payview', v);
+  document.getElementById('payGridView').style.display = v==='grid' ? '' : 'none';
+  document.getElementById('payListView').style.display = v==='list' ? '' : 'none';
+  document.getElementById('payViewGrid').classList.toggle('active', v==='grid');
+  document.getElementById('payViewList').classList.toggle('active', v==='list');
+  if(v==='grid') renderPayGrid();
+  else rPays(payF);
+}
+
+function shiftPayGrid(dir){
+  payGridOffset += dir;
+  renderPayGrid();
+}
+
+function renderPayGrid(){
+  const MONTHS = 6; // show 6 months
+  const now = new Date();
+  // Build month columns: from (now - 5 + offset) to (now + offset)
+  const cols = [];
+  for(let i=0; i<MONTHS; i++){
+    const d = new Date(now.getFullYear(), now.getMonth() - (MONTHS-1) + i + payGridOffset, 1);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const lbl = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+    cols.push({key, lbl, date:d});
+  }
+
+  // Label
+  document.getElementById('payGridLabel').textContent = cols[0].lbl + ' → ' + cols[cols.length-1].lbl;
+
+  // Rows: one per locataire (with logement)
+  const rows = lcs.map(lc => {
+    const lg = gLg(lc.lgId);
+    return {lc, lg};
+  }).sort((a,b) => a.lg.nom.localeCompare(b.lg.nom));
+
+  // Grid template columns: name + MONTHS cols
+  const colTemplate = '160px ' + Array(MONTHS).fill('1fr').join(' ');
+
+  let html = `<div class="pay-grid" style="grid-template-columns:${colTemplate}">`;
+
+  // Header row
+  html += '<div class="pay-grid-header">';
+  html += '<div class="pg-cell">Locataire</div>';
+  cols.forEach(col => {
+    const isFuture = col.date > now;
+    html += `<div class="pg-cell" style="${isFuture?'opacity:.5':''}">${col.lbl}</div>`;
+  });
+  html += '</div>';
+
+  // Data rows
+  rows.forEach(({lc, lg}) => {
+    html += '<div class="pg-row">';
+    // Name cell
+    html += `<div class="pg-cell" title="${lcFull(lc)} — ${lg.nom}">
+      <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${lcFull(lc)}</div>
+      <div style="font-size:.62rem;color:var(--t3)">${lg.nom}</div>
+    </div>`;
+
+    // Month cells
+    cols.forEach(col => {
+      const isFuture = col.date > now;
+      const pay = pys.find(p => p.lcId===lc.id && p.mois===col.key);
+      let badge='', cls='pg-empty', title='Cliquer pour enregistrer';
+
+      if(pay){
+        if(pay.stat==='payé')     { cls='pg-paid';    badge='✓'; title=fE(pay.rec)+' — '+fD(pay.date); }
+        else if(pay.stat==='retard')  { cls='pg-late';    badge='✗'; title='Impayé — dû: '+fE(pay.du); }
+        else if(pay.stat==='partiel') { cls='pg-partial'; badge='~'; title='Partiel: '+fE(pay.rec)+'/'+fE(pay.du); }
+      } else {
+        badge = isFuture ? '·' : '?';
+        if(isFuture) cls='pg-empty pg-future';
+      }
+
+      html += `<div class="pg-cell pg-pay-cell${isFuture?' pg-future':''}" 
+        onclick="payGridClick('${lc.id}','${col.key}',${lg.loyer+lg.ch},'${pay?pay.id:''}')"
+        title="${title}">
+        <span class="pg-badge ${cls}">${badge}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += '</div>';
+  document.getElementById('payGrid').innerHTML = html;
+
+  // Swipe support
+  const grid = document.getElementById('payGrid');
+  if(!grid._swipe){
+    grid._swipe=true;
+    let sx=0,sy=0;
+    grid.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+    grid.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-sx;
+      const dy=Math.abs(e.changedTouches[0].clientY-sy);
+      if(Math.abs(dx)>50&&dy<80) shiftPayGrid(dx<0?1:-1);
+    },{passive:true});
+  }
+}
+
+function payGridClick(lcId, mois, loyer, existingPayId){
+  // If payment exists — open edit
+  if(existingPayId){
+    editPay(existingPayId);
+    return;
+  }
+  // Quick-add payment dialog
+  const lc = gLc(lcId);
+  const lg = gLg(lc.lgId);
+  const msg='Enregistrer paiement '+mois+' pour '+lcFull(lc)+' — Du: '+fE(loyer);
+  const rec=parseFloat(prompt(msg,loyer));
+  if(isNaN(rec)||rec<0) return;
+  const stat = rec<=0?'retard':rec<loyer?'partiel':'payé';
+  pys.push({id:uid(),lcId,mois,du:loyer,rec,date:tod(),mode:'Virement',notes:'',stat});
+  sv('py',pys);
+  renderPayGrid();
+  showToast(stat==='payé'?'✅ Paiement enregistré':'⚠️ Paiement partiel enregistré');
+}
+
 function rPays(f){
   payF=f;
   let list=pys.slice().reverse();
@@ -3264,6 +3473,8 @@ const MODAL_NAV = {
 };
 
 function injectModalNav(modalId){
+  // Capture original values for dirty detection
+  setTimeout(()=>modalCaptureOriginal(modalId), 100);
   const cfg = MODAL_NAV[modalId];
   if(!cfg) return;
   
@@ -3298,9 +3509,57 @@ function injectModalNav(modalId){
   initModalSwipe(modalId);
 }
 
+// Track original form values to detect changes
+let _modalOrigValues = {};
+
+function modalCaptureOriginal(modalId){
+  const modal = document.getElementById(modalId);
+  if(!modal) return;
+  const fields = modal.querySelectorAll('input, select, textarea');
+  _modalOrigValues = {};
+  fields.forEach(f=>{ if(f.id) _modalOrigValues[f.id] = f.value; });
+}
+
+function modalIsDirty(modalId){
+  const modal = document.getElementById(modalId);
+  if(!modal) return false;
+  const fields = modal.querySelectorAll('input, select, textarea');
+  for(const f of fields){
+    if(f.id && _modalOrigValues[f.id] !== undefined){
+      if(f.value !== _modalOrigValues[f.id]) return true;
+    }
+  }
+  return false;
+}
+
 function modalNavGo(modalId, dir){
   const cfg = MODAL_NAV[modalId];
   if(!cfg) return;
+
+  // Check for unsaved changes
+  if(modalIsDirty(modalId)){
+    const saveMap = {
+      mLog:'saveLog', mLoc:'saveLoc', mPay:'savePay',
+      mEnt:'saveEnt', mDoc:'saveDoc', mRap:'saveRap', mBat:'saveBat'
+    };
+    const choice = confirm('Des modifications non enregistrées seront perdues.\n\nCliquez OK pour enregistrer, Annuler pour ignorer.');
+    if(choice){
+      // Save current form
+      const saveFn = saveMap[modalId];
+      if(saveFn && window[saveFn]) window[saveFn]();
+      // After save, navigate
+      setTimeout(()=>{
+        const list2 = cfg.list();
+        const currentId2 = cfg.getId();
+        const idx2 = list2.findIndex(x=>x.id===currentId2);
+        const newIdx2 = idx2 + dir;
+        if(newIdx2 >= 0 && newIdx2 < list2.length) cfg.open(list2[newIdx2].id);
+      }, 100);
+      return;
+    }
+    // Ignored — navigate without saving
+  }
+
   const list = cfg.list();
   const currentId = cfg.getId();
   const idx = list.findIndex(x=>x.id===currentId);
