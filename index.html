@@ -845,7 +845,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.51</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:29</div></div>
+  <div class="sb-foot"><div>Keystone v1.52</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:52</div></div>
 </aside>
 
 <div id="main">
@@ -4169,18 +4169,37 @@ function driveInit(){
 }
 
 function driveSignIn(){
-  // Direct redirect — no popup, works on all browsers/security policies
-  const state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem('ks_oauth_state', state);
-  const params = new URLSearchParams({
-    client_id:     GDRIVE_CLIENT_ID,
-    redirect_uri:  'https://tvanhoye.github.io/keystone/',
-    response_type: 'token',
-    scope:         GDRIVE_SCOPE,
-    state:         state,
-    include_granted_scopes: 'true'
-  });
-  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  // Try GIS popup (works when popups allowed)
+  if(typeof google !== 'undefined' && google.accounts && google.accounts.oauth2){
+    try{
+      google.accounts.oauth2.initTokenClient({
+        client_id: GDRIVE_CLIENT_ID,
+        scope: GDRIVE_SCOPE,
+        callback: async (resp) => {
+          if(resp.error || !resp.access_token){
+            showToast('Erreur Drive: '+(resp.error||'token manquant'));
+            return;
+          }
+          driveToken = resp.access_token;
+          try{
+            const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+driveToken}});
+            const ud=await ui.json(); driveEmail=ud.email||'';
+          }catch(e){}
+          localStorage.setItem('ks_drive',JSON.stringify({token:driveToken,expiry:Date.now()+3500000,fileId:driveFileId,email:driveEmail}));
+          syncBarShow('Connecté — '+driveEmail);
+          const lbl=document.getElementById('menuDriveLbl');
+          if(lbl)lbl.textContent='↕ Synchroniser Drive';
+          await driveLoad();
+          showToast('✅ Google Drive connecté — '+driveEmail);
+        }
+      }).requestAccessToken();
+      return;
+    }catch(e){ console.warn('GIS popup failed:', e.message); }
+  }
+  // Fallback: alert user to allow popups
+  if(confirm('Google Drive nécessite un popup.\n\nAutorisez les popups pour tvanhoye.github.io dans les paramètres Chrome, puis cliquez OK pour réessayer.\n\n(Chrome → Paramètres → Confidentialité → Paramètres des sites → Fenêtres contextuelles)')){
+    driveSignIn();
+  }
 }
 
 async function driveHandleRedirect(){
