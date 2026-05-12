@@ -559,7 +559,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.25</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 12:55</div></div>
+  <div class="sb-foot"><div>Keystone v1.26</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 13:14</div></div>
 </aside>
 
 <div id="main">
@@ -997,6 +997,11 @@ function injectRealData(){
     }
   });
   if(lcChanged) sv('lc',lcs);
+  // If data was injected, trigger Drive save to update the cloud file
+  if(lgChanged||lcChanged||batChanged){
+    console.log('Real data injected — scheduling Drive save');
+    setTimeout(function(){ if(typeof driveSave==='function') driveSave(true); }, 2000);
+  }
 }
 
 // ═══ NAVIGATION ═══
@@ -3662,6 +3667,8 @@ async function driveLoad(){
     if(data.releves){rls=data.releves;sv('rl',rls);}
     const ts=data.savedAt?new Date(data.savedAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
     syncBarShow('Synchronisé'+(ts?' — '+ts:''));
+    // Re-inject real data (fixed IDs) in case Drive had empty arrays
+    injectRealData();
     // Refresh current page
     rP(curP);
     showToast('✅ Données chargées depuis Google Drive');
