@@ -845,7 +845,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.48</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:16</div></div>
+  <div class="sb-foot"><div>Keystone v1.51</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:29</div></div>
 </aside>
 
 <div id="main">
@@ -866,7 +866,7 @@ tr[onclick]{cursor:pointer}
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
       <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
-        <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer" href="blob-request://blob-1778613491010-0.8875913259753976">
+        <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
           ⬇️ Télécharger l'app
         </a>
         <div class="top-menu-item" onclick="exportData();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
@@ -875,7 +875,7 @@ tr[onclick]{cursor:pointer}
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
         </div>
-        <div id="menuDrive" class="top-menu-item" onclick="closeTopMenu();driveToken?syncNow():driveSignIn()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
+        <div id="menuDrive" class="top-menu-item" onclick="closeTopMenu();(driveToken&amp;&amp;localStorage.getItem('ks_drive'))?syncNow():driveSignIn()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
           <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> <span id="menuDriveLbl">Google Drive</span>
         </div>
         <div id="menuProfiles" class="top-menu-item" onclick="closeTopMenu();showProfileManager()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
@@ -884,7 +884,7 @@ tr[onclick]{cursor:pointer}
         <div class="top-menu-item" onclick="closeTopMenu();logout()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:#c0392b;cursor:pointer">
           🚪 Se déconnecter
         </div>
-      <div class="top-menu-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);">👥 Gérer les profils</div><div class="top-menu-item drive-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);"><img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive</div></div>
+      </div>
     </div>
     </div>
   </div>
@@ -4140,7 +4140,7 @@ let pendingSync   = false;
 
 // ── Token management ──
 function driveInit(){
-  // Restore token from sessionStorage (survives page reload, not tab close)
+  // Restore token from localStorage
   try{
     const saved = JSON.parse(localStorage.getItem('ks_drive')||'null');
     if(saved && saved.token && saved.expiry > Date.now()){
@@ -4152,6 +4152,8 @@ function driveInit(){
       const dc = document.getElementById('driveBtnConnect');
       if(db) db.style.display='';
       if(dc) dc.style.display='none';
+      const lbl=document.getElementById('menuDriveLbl');
+      if(lbl) lbl.textContent='↕ Synchroniser Drive';
       driveLoad(); // load data on init
     } else {
       // Not connected — show connect button
@@ -4250,6 +4252,7 @@ function syncBarShow(msg, status){
   const bar=document.getElementById('syncBar');
   const dot=document.getElementById('syncDot');
   const msgEl=document.getElementById('syncMsg');
+  if(!bar) return;
   bar.classList.add('show');
   msgEl.textContent=msg||'Google Drive';
   dot.className='sync-dot'+(status?' '+status:'');
@@ -4364,7 +4367,15 @@ function driveTriggerSave(){
 }
 
 async function syncNow(){
-  if(!driveToken){driveSignIn();return;}
+  // Check if token is still valid
+  const saved = JSON.parse(localStorage.getItem('ks_drive')||'null');
+  if(!driveToken || !saved || saved.expiry < Date.now()){
+    // Token expired or missing — re-authenticate
+    driveToken = null;
+    localStorage.removeItem('ks_drive');
+    driveSignIn();
+    return;
+  }
   await driveLoad();
 }
 
@@ -4376,31 +4387,7 @@ const sv2=(k,d)=>{_origSv(k,d);driveTriggerSave();};
 const _svOrig=(k,d)=>localStorage.setItem(K[k],JSON.stringify(d));
 
 // Add Drive connect button to top menu
-function addDriveMenuItem(){
-  const menu=document.getElementById('topMenu');
-  if(!menu||menu.querySelector('.drive-item'))return;
-  const item=document.createElement('div');
-  item.className='top-menu-item drive-item';
-  item.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)';
-  item.innerHTML='<img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive';
-  // Add profile manager item
-  const pItem=document.createElement('div');
-  pItem.className='top-menu-item';
-  pItem.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)';
-  pItem.innerHTML='👥 Gérer les profils';
-  pItem.onclick=()=>{closeTopMenu();showProfileManager();};
-  // Only show for admin
-  if(!currentProfile||currentProfile.role==='admin') menu.appendChild(pItem);
-  item.onclick=()=>{
-    closeTopMenu();
-    if(driveToken){ syncNow(); }
-    else{
-      showToast('Connexion Google Drive...');
-      setTimeout(driveSignIn, 100);
-    }
-  };
-  if(!currentProfile||currentProfile.role==='admin') menu.appendChild(item);
-}
+
 
 
 // ══════════════════════════════════════════════
@@ -5776,7 +5763,11 @@ rDash();
 setTimeout(async ()=>{
   await driveHandleRedirect();
   driveInit();
-  addDriveMenuItem();
+  // Update menu visibility for admin items
+  const md=document.getElementById('menuDrive');
+  const mp=document.getElementById('menuProfiles');
+  if(md) md.style.display='flex'; // shown for admin by default, toggleTopMenu hides for others
+  if(mp) mp.style.display='flex';
   checkLogin();
 },300);
 setTimeout(checkOnboarding, 1200);
