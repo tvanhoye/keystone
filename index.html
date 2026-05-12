@@ -845,7 +845,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.47</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:10</div></div>
+  <div class="sb-foot"><div>Keystone v1.48</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:16</div></div>
 </aside>
 
 <div id="main">
@@ -866,20 +866,23 @@ tr[onclick]{cursor:pointer}
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
       <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
-        <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
+        <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer" href="blob-request://blob-1778613491010-0.8875913259753976">
           ⬇️ Télécharger l'app
         </a>
         <div class="top-menu-item" onclick="exportData();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           📤 Exporter mes données
         </div>
-        <div class="top-menu-item" onclick="closeTopMenu();showProfileManager()" id="menuProfiles" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
-          👥 Gérer les profils
-        </div>
-        <div class="top-menu-item" onclick="closeTopMenu();logout()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:#c0392b;cursor:pointer;border-top:1px solid var(--bd)">
-          🚪 Se déconnecter
-        </div>
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
+        </div>
+        <div id="menuDrive" class="top-menu-item" onclick="closeTopMenu();driveToken?syncNow():driveSignIn()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
+          <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> <span id="menuDriveLbl">Google Drive</span>
+        </div>
+        <div id="menuProfiles" class="top-menu-item" onclick="closeTopMenu();showProfileManager()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
+          👥 Gérer les profils
+        </div>
+        <div class="top-menu-item" onclick="closeTopMenu();logout()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:#c0392b;cursor:pointer">
+          🚪 Se déconnecter
         </div>
       <div class="top-menu-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);">👥 Gérer les profils</div><div class="top-menu-item drive-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);"><img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive</div></div>
     </div>
@@ -4139,7 +4142,7 @@ let pendingSync   = false;
 function driveInit(){
   // Restore token from sessionStorage (survives page reload, not tab close)
   try{
-    const saved = JSON.parse(sessionStorage.getItem('ks_drive')||'null');
+    const saved = JSON.parse(localStorage.getItem('ks_drive')||'null');
     if(saved && saved.token && saved.expiry > Date.now()){
       driveToken  = saved.token;
       driveFileId = saved.fileId||null;
@@ -4209,7 +4212,7 @@ async function driveHandleRedirect(){
   }catch(e){}
 
   // Save to session
-  sessionStorage.setItem('ks_drive', JSON.stringify({
+  localStorage.setItem('ks_drive', JSON.stringify({
     token:driveToken, expiry, fileId:null, email:driveEmail
   }));
 
@@ -4237,7 +4240,7 @@ function driveSignInImplicit(){
 
 function driveSignOut(){
   driveToken=null; driveFileId=null; driveEmail=null;
-  sessionStorage.removeItem('ks_drive');
+  localStorage.removeItem('ks_drive');
   document.getElementById('syncBar').classList.remove('show');
   showToast('Déconnecté de Google Drive');
 }
@@ -5754,7 +5757,7 @@ function startDemoMode(){
   dcs  = []; cos = DEMO_DATA.cos||[]; rls = DEMO_DATA.rls||[];
   crs  = DEMO_DATA.crs||[]; chs = DEMO_DATA.chs||[]; dps = DEMO_DATA.dps||[];
   driveToken=null; driveFileId=null; driveEmail=null;
-  sessionStorage.removeItem('ks_drive');
+  localStorage.removeItem('ks_drive');
   ['driveBtn','driveBtnConnect','syncBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   const bar=document.getElementById('syncBar');
   if(bar){
