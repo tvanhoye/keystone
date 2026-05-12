@@ -560,7 +560,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.42</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 14:16</div></div>
+  <div class="sb-foot"><div>Keystone v1.44</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 14:27</div></div>
 </aside>
 
 <div id="main">
@@ -5460,3 +5460,72 @@ const DEMO_DATA = {
     {id:'__DRL166__', coId:'__DCO_ELEC2__', date:'2026-02-05', hp:298768, hc:392024, notes:''},
     {id:'__DRL167__', coId:'__DCO_ELEC2__', date:'2026-03-05', hp:300188, hc:393960, notes:''},
     {id:'__DRL168__', coId:'__DCO_ELEC2__', date:'2026-04-05', hp:301670, hc:396240, notes:''}
+  ],
+  ens: [
+    {id:'__DEN1__', lgId:'__DLG1__', tit:'Remplacement robinet cuisine', prio:'terminé', date:'2026-03-15', prest:'Plombier Dubuis', cout:180, desc:'Robinet qui fuyait'},
+    {id:'__DEN2__', lgId:'__DLG3__', tit:'Peinture salon', prio:'en cours', date:'2026-05-20', prest:'', cout:0, desc:'À planifier'},
+    {id:'__DEN3__', lgId:'__DLG8__', tit:'Chauffe-eau HS', prio:'urgent', date:'2026-05-12', prest:'', cout:0, desc:'À remplacer rapidement'}
+  ],
+  rps: [
+    {id:'__DRP1__', tit:'Révision loyers annuelle', cat:'Administratif', lgId:'', date:'2026-09-01', stat:'prévu', notes:'Indice santé belge'},
+    {id:'__DRP2__', tit:'Contrôle chaudière Parc', cat:'Entretien', lgId:'__DLG3__', date:'2026-06-15', stat:'prévu', notes:'Annuel obligatoire'}
+  ],
+  crs: [
+    {id:'__DCR1__', nom:'Crédit immo Cerisiers', batId:'__DEMO_BAT1__', capital:280000, reste:245000, mens:1420, taux:2.85, debut:'2018-09-01', fin:'2043-09-01', duree:300, notes:'ING Banque'},
+    {id:'__DCR2__', nom:'Crédit immo Résidence du Parc', batId:'__DEMO_BAT2__', capital:850000, reste:780000, mens:4250, taux:3.10, debut:'2019-03-01', fin:'2049-03-01', duree:360, notes:'BNP Paribas Fortis'}
+  ],
+  chs: [
+    {id:'__DCH1__', nom:'Assurance omnium Cerisiers', batId:'__DEMO_BAT1__', montant:580, freq:'annuel', cat:'Assurance', paye:'oui', notes:'AG Insurance'},
+    {id:'__DCH2__', nom:'Assurance omnium Parc', batId:'__DEMO_BAT2__', montant:1850, freq:'annuel', cat:'Assurance', paye:'oui', notes:'Ethias'},
+    {id:'__DCH3__', nom:'Syndic Résidence du Parc', batId:'__DEMO_BAT2__', montant:320, freq:'mensuel', cat:'Syndic', paye:'oui', notes:''},
+    {id:'__DCH4__', nom:'Précompte immobilier Cerisiers', batId:'__DEMO_BAT1__', montant:1240, freq:'annuel', cat:'Taxe', paye:'non', notes:'SPF Finances'},
+    {id:'__DCH5__', nom:'Précompte immobilier Parc', batId:'__DEMO_BAT2__', montant:4800, freq:'annuel', cat:'Taxe', paye:'non', notes:'SPF Finances'},
+    {id:'__DCH6__', nom:'Gestion locative', batId:'', montant:180, freq:'mensuel', cat:'Gestion', paye:'oui', notes:'5% des loyers'}
+  ],
+  dps: [
+    {id:'__DDP1__', nom:'Ravalement façade Cerisiers', batId:'__DEMO_BAT1__', montant:8500, date:'2024-06-15', cat:'Travaux', paye:'oui', notes:'Entreprise Dubois SPRL'},
+    {id:'__DDP2__', nom:'Remplacement chaudière Parc 2/03', batId:'__DEMO_BAT2__', montant:3200, date:'2024-11-20', cat:'Travaux', paye:'oui', notes:''},
+    {id:'__DDP3__', nom:'Précompte immobilier Cerisiers 2024', batId:'__DEMO_BAT1__', montant:1240, date:'2024-07-31', cat:'Précompte immobilier', paye:'oui', notes:''},
+    {id:'__DDP4__', nom:'Précompte immobilier Parc 2024', batId:'__DEMO_BAT2__', montant:4800, date:'2024-07-31', cat:'Précompte immobilier', paye:'oui', notes:''},
+    {id:'__DDP5__', nom:'Honoraires comptable 2024', batId:'', montant:950, date:'2025-01-15', cat:'Honoraires', paye:'oui', notes:'Fiduciaire Martin'},
+    {id:'__DDP6__', nom:'Peinture cage escalier Parc', batId:'__DEMO_BAT2__', montant:2100, date:'2025-03-10', cat:'Travaux', paye:'oui', notes:''},
+    {id:'__DDP7__', nom:'Remplacement chauffe-eau Parc 2/06', batId:'__DEMO_BAT2__', montant:1800, date:'2026-05-12', cat:'Travaux', paye:'non', notes:'Urgent'}
+  ]
+};
+
+let isDemoMode = false;
+
+function startDemoMode(){
+  isDemoMode = true;
+  bats = DEMO_DATA.bats; lgs = DEMO_DATA.lgs; lcs = DEMO_DATA.lcs;
+  pys  = DEMO_DATA.pys;  ens = DEMO_DATA.ens||[]; rps = DEMO_DATA.rps||[];
+  dcs  = []; cos = DEMO_DATA.cos||[]; rls = DEMO_DATA.rls||[];
+  crs  = DEMO_DATA.crs||[]; chs = DEMO_DATA.chs||[]; dps = DEMO_DATA.dps||[];
+  driveToken=null; driveFileId=null; driveEmail=null;
+  sessionStorage.removeItem('ks_drive');
+  ['driveBtn','driveBtnConnect','syncBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const bar=document.getElementById('syncBar');
+  if(bar){
+    bar.classList.add('show'); bar.style.background='#b5780a';
+    document.getElementById('syncMsg').textContent='🎭 MODE DÉMO — Aucune donnée réelle visible — Modifications non sauvegardées';
+    document.getElementById('syncDot').style.background='#fff';
+    document.querySelectorAll('.drive-btn').forEach(b=>b.style.display='none');
+  }
+  document.getElementById('loginScreen').style.display='none';
+  rDash(); showToast('🎭 Mode démo activé');
+}
+
+// ═══ INIT ═══
+injectRealData();
+rDash();
+setTimeout(async ()=>{
+  await driveHandleRedirect();
+  driveInit();
+  addDriveMenuItem();
+  checkLogin();
+},300);
+setTimeout(checkOnboarding, 1200);
+
+</script>
+</body>
+</html>
