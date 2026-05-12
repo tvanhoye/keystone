@@ -560,7 +560,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.45</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 14:29</div></div>
+  <div class="sb-foot"><div>Keystone v1.46</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 14:33</div></div>
 </aside>
 
 <div id="main">
@@ -586,6 +586,12 @@ tr[onclick]{cursor:pointer}
         </a>
         <div class="top-menu-item" onclick="exportData();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           📤 Exporter mes données
+        </div>
+        <div class="top-menu-item" onclick="closeTopMenu();showProfileManager()" id="menuProfiles" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
+          👥 Gérer les profils
+        </div>
+        <div class="top-menu-item" onclick="closeTopMenu();logout()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:#c0392b;cursor:pointer;border-top:1px solid var(--bd)">
+          🚪 Se déconnecter
         </div>
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
@@ -3801,6 +3807,9 @@ function autoResize(el){
 
 // ── TOP MENU ──
 function toggleTopMenu(){
+  // Show/hide admin-only items
+  const mp=document.getElementById('menuProfiles');
+  if(mp) mp.style.display=(!currentProfile||currentProfile.role==='admin')?'flex':'none';
   const m=document.getElementById('topMenu');
   m.style.display=m.style.display==='none'?'block':'none';
 }
