@@ -1,291 +1,6 @@
-<html lang="fr"><head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-      (function() {
-        const originalConsole = window.console;
-        window.console = {
-          log: (...args) => {
-            originalConsole.log(...args);
-            window.parent.postMessage({ type: 'console', message: args.join(' ') }, '*');
-          },
-          error: (...args) => {
-            originalConsole.error(...args);
-            window.parent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
-          },
-          warn: (...args) => {
-            originalConsole.warn(...args);
-            window.parent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
-          }
-        };
-
-        let requestId = 0;
-        let callbacksMap = new Map();
-        let streamControllers = new Map();
-        
-        window.claude = {
-          complete: (prompt) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
-            });
-          }
-        };
-
-        window.storage = {
-          get: (key, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageGet', id, key, shared }, '*');
-            });
-          },
-          set: (key, value, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
-            });
-          },
-          delete: (key, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
-            });
-          },
-          list: (prefix, shared = false) => {
-            return new Promise((resolve, reject) => {
-              const id = requestId++;
-              callbacksMap.set(id, { resolve, reject });
-              window.parent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
-            });
-          }
-        };
-
-        let pendingBlobs = new Map();
-        URL.createObjectURL = (blob) => {
-          // Store the blob and create an ID and URL for it
-          const blobId = `blob-${Date.now()}-${Math.random()}`;
-          pendingBlobs.set(blobId, blob);
-          return `blob-request://${blobId}`;
-        };
-
-        URL.revokeObjectURL = (url) => {
-          // Remove the blob from our store
-          const blobId = url.replace("blob-request://", "");
-          pendingBlobs.delete(blobId);
-        };
-
-        const getBlobFromURL = (url) => {
-          const blobId = url.replace("blob-request://", "");
-          return pendingBlobs.get(blobId);
-        };
-
-        // Override global fetch with streaming support
-        window.fetch = (url, init = {}) => {
-          return new Promise((resolve, reject) => {
-            const id = requestId++;
-            const channelId = `fetch-${id}-${Date.now()}`;
-            
-            callbacksMap.set(id, { 
-              resolve: (response) => {
-                // Create a ReadableStream for the response body
-                const stream = new ReadableStream({
-                  start(controller) {
-                    streamControllers.set(channelId, controller);
-                  },
-                  cancel() {
-                    streamControllers.delete(channelId);
-                  }
-                });
-                
-                // Create and return the Response with the stream
-                resolve(new Response(stream, {
-                  status: response.status,
-                  statusText: response.statusText,
-                  headers: response.headers
-                }));
-              },
-              reject,
-              channelId
-            });
-            
-            window.parent.postMessage({
-              type: 'proxyFetch',
-              id,
-              url,
-              init,
-              channelId
-            }, '*');
-          });
-        };
-
-        window.addEventListener('message', async (event) => {
-          if (event.data.type === 'takeScreenshot') {
-            const rootElement = document.getElementById('artifacts-component-root-html');
-            if (!rootElement) {
-              window.parent.postMessage({
-                type: 'screenshotError',
-                error: new Error('Root element not found'),
-              }, '*');
-            }
-            const screenshot = await htmlToImage.toPng(rootElement, {
-              imagePlaceholder:
-                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
-            });
-            window.parent.postMessage({
-              type: 'screenshotData',
-              data: screenshot,
-            }, '*');
-          } else if (event.data.type === 'claudeComplete') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.completion);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'proxyFetchResponse') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-              callbacksMap.delete(event.data.id);
-            } else {
-              // Initial response with headers, status, etc.
-              callback.resolve({
-                status: event.data.status,
-                statusText: event.data.statusText,
-                headers: event.data.headers
-              });
-              // Don't delete the callback yet if streaming
-              if (!event.data.body) {
-                callbacksMap.delete(event.data.id);
-              }
-            }
-          } else if (event.data.type === 'proxyFetchStream') {
-            // Handle streaming data chunks
-            const controller = streamControllers.get(event.data.channelId);
-            if (controller) {
-              if (event.data.error) {
-                controller.error(new Error(event.data.error));
-                streamControllers.delete(event.data.channelId);
-              } else if (event.data.done) {
-                controller.close();
-                streamControllers.delete(event.data.channelId);
-                // Clean up the callback
-                const callback = Array.from(callbacksMap.entries()).find(
-                  ([_, value]) => value.channelId === event.data.channelId
-                );
-                if (callback) {
-                  callbacksMap.delete(callback[0]);
-                }
-              } else if (event.data.chunk) {
-                controller.enqueue(new Uint8Array(event.data.chunk));
-              }
-            }
-          } else if (event.data.type === 'storageGet') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageSet') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageDelete') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          } else if (event.data.type === 'storageList') {
-            const callback = callbacksMap.get(event.data.id);
-            if (event.data.error) {
-              callback.reject(new Error(event.data.error));
-            } else {
-              callback.resolve(event.data.result);
-            }
-            callbacksMap.delete(event.data.id);
-          }
-        });
-
-        window.addEventListener('click', (event) => {
-          const isEl = event.target instanceof HTMLElement;
-          if (!isEl) return;
-    
-          // find ancestor links
-          const linkEl = event.target.closest("a");
-          if (!linkEl || !linkEl.href) return;
-    
-          event.preventDefault();
-          event.stopImmediatePropagation();
-    
-          if (linkEl.href.startsWith("blob-request:")) {
-            const blob = getBlobFromURL(linkEl.href);
-            if (!blob) return;
-            void blob.arrayBuffer().then((data) => {
-              window.parent.postMessage({
-                type: "downloadFile",
-                filename: linkEl.download,
-                data,
-                mimeType: blob.type || "application/octet-stream",
-              });
-            });
-          } else if (linkEl.href.startsWith("data:")) {
-            const [header, base64Data] = linkEl.href.split(",");
-            const mimeMatch = header.match(/data:([^;]+)/);
-            const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
-            const binaryString = atob(base64Data);
-            const data = Uint8Array.from(binaryString, (c) =>
-              c.charCodeAt(0),
-            ).buffer;
-            window.parent.postMessage({
-              type: "downloadFile",
-              filename: linkEl.download,
-              data,
-              mimeType,
-            });
-          } else {
-            let linkUrl;
-            try {
-              linkUrl = new URL(linkEl.href);
-            } catch (error) {
-              return;
-            }
-    
-            if (linkUrl.hostname === window.location.hostname) return;
-      
-            window.parent.postMessage({
-              type: 'openExternal',
-              href: linkEl.href,
-            }, '*');
-          }
-      });
-
-        const originalOpen = window.open;
-        window.open = function (url) {
-          window.parent.postMessage({
-            type: "openExternal",
-            href: url,
-          }, "*");
-        };
-
-        window.addEventListener('error', (event) => {
-          window.parent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
-        });
-      })();
-    </script>
-  
+<!DOCTYPE html>
+<html lang="fr">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Keystone</title>
@@ -301,7 +16,7 @@
 <meta name="msapplication-TileColor" content="#2d5a3d">
 
 <!-- PWA manifest disabled - no blob support on GitHub Pages -->
-<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- ICONS inline SVG as data URI -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%232d5a3d'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='white'%3E🗝%3C/text%3E%3C/svg%3E">
@@ -710,6 +425,39 @@ tr[onclick]{cursor:pointer}
 .modal-nav-btn:disabled{opacity:.3;cursor:default}
 .modal-nav-info{font-size:.71rem;color:var(--t3)}
 
+/* ── LOGIN / PROFILES ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--sf);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.18);text-align:center}
+.login-logo{font-size:2.8rem;margin-bottom:8px}
+.login-title{font-size:1.3rem;font-weight:800;margin-bottom:4px}
+.login-sub{font-size:.78rem;color:var(--t2);margin-bottom:24px}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.profile-btn{background:var(--s2);border:2px solid var(--bd);border-radius:12px;padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center}
+.profile-btn:hover{border-color:var(--ac);background:var(--acl)}
+.profile-btn.selected{border-color:var(--ac);background:var(--acl)}
+.profile-avatar{font-size:1.6rem;margin-bottom:6px}
+.profile-name{font-weight:700;font-size:.82rem}
+.profile-role{font-size:.62rem;color:var(--t2);margin-top:2px}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd);background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--ac);border-color:var(--ac)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto}
+.pin-key{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit}
+.pin-key:hover{background:var(--ac);color:#fff;border-color:var(--ac)}
+.pin-key:active{transform:scale(.92)}
+.pin-error{color:#c0392b;font-size:.75rem;margin-top:8px;min-height:18px}
+.profile-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;font-size:.62rem;font-weight:700}
+.role-admin{background:#e8f5e9;color:#1a6b2a}
+.role-gestionnaire{background:#e3f2fd;color:#1a3a8c}
+.role-lecture{background:#f3e5f5;color:#6b1a8c}
+
+/* ── DASHBOARD CHARTS ── */
+.dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.dash-chart-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.dash-chart-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.dash-chart-svg{width:100%;overflow:visible}
+@media(max-width:700px){.dash-charts{grid-template-columns:1fr}}
+
 /* ── ONBOARDING ── */
 .ob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:16px}
 .ob-card{background:var(--sf);border-radius:16px;width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
@@ -785,12 +533,8 @@ tr[onclick]{cursor:pointer}
 #photoZone.drag-over{border-color:var(--ac);background:var(--acl);transform:scale(1.01)}
 #photoZone.has-photo{border-style:solid;border-color:var(--ac)}
 </style>
-<style>
-  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-  @keyframes slideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(20px);opacity:0}}
-  #installBanner button:hover{opacity:.85}
-</style></head>
-<body id="artifacts-component-root-html">
+</head>
+<body>
 
 <aside id="sb">
   <div class="sb-logo">
@@ -815,7 +559,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.21</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 11/05/2026 à 20:39</div></div>
+  <div class="sb-foot"><div>Keystone v1.25</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 12:55</div></div>
 </aside>
 
 <div id="main">
@@ -825,7 +569,7 @@ tr[onclick]{cursor:pointer}
       <div id="ptitle">Tableau de bord</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <div id="tdate" style="font-size:.69rem;color:var(--t3)">lundi 11 mai 2026</div>
+      <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
       </button>
@@ -834,7 +578,7 @@ tr[onclick]{cursor:pointer}
       </button>
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
-      <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
+      <div id="topMenu" style="display:none;position:absolute;right:0;top:38px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shl);z-index:300;min-width:180px;overflow:hidden">
         <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
           ⬇️ Télécharger l'app
         </a>
@@ -844,7 +588,7 @@ tr[onclick]{cursor:pointer}
         <div class="top-menu-item" onclick="openDataMgr();closeTopMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer">
           ⚙️ Gérer les données
         </div>
-      <div class="top-menu-item drive-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; color: var(--tx); cursor: pointer; border-top: 1px solid var(--bd);"><img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive</div></div>
+      </div>
     </div>
     </div>
   </div>
@@ -853,15 +597,15 @@ tr[onclick]{cursor:pointer}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
+      <div class="kpi-g" id="kpiG"></div>
       <div class="g21">
         <div>
-          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"><tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr></tbody></table></div></div>
+          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"></div></div>
+          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"></tbody></table></div></div>
         </div>
         <div>
-          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div></div></div>
+          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"></div></div>
+          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"></div></div>
         </div>
       </div>
     </div>
@@ -1022,7 +766,9 @@ tr[onclick]{cursor:pointer}
 
         <!-- Input -->
         <div style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:flex-end;background:var(--s2);border-radius:0 0 var(--r) var(--r)">
-          <textarea id="aiInput" placeholder="Posez votre question…" rows="1" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s" onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <textarea id="aiInput" placeholder="Posez votre question…" rows="1"
+            style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s"
+            onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
           <button class="btn btn-p" id="aiSendBtn" onclick="sendMessage()" style="padding:9px 16px;flex-shrink:0">
             <span id="aiSendIcon">↑</span>
           </button>
@@ -1034,6 +780,46 @@ tr[onclick]{cursor:pointer}
 </div><!-- /main -->
 
 <!-- MODALS -->
+<div class="overlay" id="mProfiles"><div class="modal" style="max-width:560px"><div class="mh"><span class="mtitle">👥 Gestion des utilisateurs</span><button class="mclose" onclick="closeM('mProfiles')">✕</button></div><div class="mbody">
+  
+  <!-- Tabs -->
+  <div class="tabs" style="margin-bottom:14px">
+    <button class="tab active" onclick="profileTab('users',this)">Utilisateurs</button>
+    <button class="tab" onclick="profileTab('perms',this)">Permissions</button>
+  </div>
+
+  <!-- Users tab -->
+  <div id="profileTabUsers">
+    <div id="profileManagerList"></div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+      <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase">＋ Nouvel utilisateur</div>
+      <div class="fr">
+        <div class="fg"><label>Nom *</label><input id="newProfileName" placeholder="Ex: Marie"></div>
+        <div class="fg"><label>Avatar</label><input id="newProfileAvatar" placeholder="😊" maxlength="2"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Rôle</label><select id="newProfileRole">
+          <option value="gestionnaire">🔧 Gestionnaire</option>
+          <option value="lecture">👁 Lecture seule</option>
+        </select></div>
+        <div class="fg"><label>PIN (4 chiffres) *</label><input id="newProfilePin" type="password" maxlength="4" placeholder="1234" inputmode="numeric"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="saveNewProfile()">＋ Créer l'utilisateur</button>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
+      <button class="btn btn-s btn-xs" onclick="logout()">🚪 Se déconnecter</button>
+    </div>
+  </div>
+
+  <!-- Permissions tab -->
+  <div id="profileTabPerms" style="display:none">
+    <div style="font-size:.74rem;color:var(--t2);margin-bottom:12px">Définissez ce que chaque rôle peut faire.</div>
+    <div id="permsGrid"></div>
+    <button class="btn btn-p" style="width:100%;margin-top:14px" onclick="savePermissions()">💾 Enregistrer les permissions</button>
+  </div>
+
+</div></div></div>
+
 <div class="overlay" id="mBat"><div class="modal" style="max-width:480px"><div class="mh"><span class="mtitle" id="mBatT">Ajouter un bâtiment</span><button class="mclose" onclick="closeM('mBat')">✕</button></div><div class="mbody"><input type="hidden" id="batId"><div class="fg"><label>Nom *</label><input id="batNom" placeholder="Ex: Résidence Les Acacias"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label><input id="batAddr" placeholder="Rue, numéro, ville"></div><div class="fr"><div class="fg"><label>Nb logements prévus</label><input id="batNbLg" type="number" placeholder="12"></div><div class="fg"><label>Année construction</label><input id="batAnnee" type="number" placeholder="1985"></div></div><div class="fg"><label>Notes</label><textarea id="batNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mBat')">Annuler</button><button class="btn btn-p" onclick="saveBat()">Enregistrer</button></div></div></div>
 
 <div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Bâtiment</label><select id="lBat"><option value="">Aucun / Maison individuelle</option></select></div><div class="fr"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label>
@@ -1074,7 +860,7 @@ tr[onclick]{cursor:pointer}
       <div id="photoPlaceholder" style="padding:14px;text-align:center;color:var(--t3);font-size:.75rem">
         Aucune photo sélectionnée
       </div>
-      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px">
+      <img id="photoPreview" style="display:none;width:100%;max-height:220px;object-fit:contain;border-radius:4px"/>
       <div id="photoActions" style="display:none;padding:8px;display:none;gap:6px;justify-content:center;background:rgba(0,0,0,.03)">
         <button type="button" class="btn btn-p btn-sm" onclick="analyzePhoto(event)">🔍 Analyser</button>
         <button type="button" class="btn btn-s btn-sm" onclick="removePhoto(event)">✕ Retirer</button>
@@ -1430,6 +1216,131 @@ function delBat(id){
   bats=bats.filter(b=>b.id!==id);
   lgs.forEach(l=>{if(l.batId===id)delete l.batId;});
   sv('bt',bats);sv('lg',lgs);rBats();
+}
+
+// ══════════════════════════════════════════════
+// DASHBOARD CHARTS
+// ══════════════════════════════════════════════
+function renderDashCharts(){
+  const cont = document.getElementById('dashCharts');
+  if(!cont) return;
+
+  // ── Build last 6 months data ──
+  const now = new Date();
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const lbl = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][d.getMonth()];
+    // Expected: sum of active tenant rents
+    let expected = 0;
+    lcs.forEach(lc=>{
+      const lg = gLg(lc.lgId);
+      const ent = lc.ent ? new Date(lc.ent) : null;
+      const fin = lc.fin ? new Date(lc.fin) : null;
+      const mEnd = new Date(d.getFullYear(), d.getMonth()+1, 0);
+      if((!ent||ent<=mEnd)&&(!fin||fin>=d)) expected += lg.loyer+lg.ch;
+    });
+    // Received
+    const received = pys.filter(p=>p.mois===key&&p.stat==='payé').reduce((a,p)=>a+p.rec,0);
+    months.push({key, lbl, expected, received});
+  }
+
+  // ── Chart 1: Encaissements vs Attendus ──
+  const maxVal = Math.max(...months.map(m=>Math.max(m.expected,m.received)), 1);
+  const W=320, H=140, PL=8, PR=8, PT=10, PB=24;
+  const cW=W-PL-PR, cH=H-PT-PB;
+  const bw=Math.floor(cW/months.length);
+  const barW=Math.floor(bw*0.35);
+
+  let bars1='', bars2='';
+  months.forEach((m,i)=>{
+    const x=PL+i*bw+bw/2;
+    const hE=Math.max(2,(m.expected/maxVal)*cH);
+    const hR=Math.max(2,(m.received/maxVal)*cH);
+    const yE=PT+cH-hE, yR=PT+cH-hR;
+    bars1+=`<rect x="${x-barW-1}" y="${yE}" width="${barW}" height="${hE}" fill="#e0e8f0" rx="3"/>`;
+    bars2+=`<rect x="${x+1}" y="${yR}" width="${barW}" height="${hR}" fill="${m.received>=m.expected&&m.expected>0?'#2d5a3d':'#c0392b'}" rx="3" opacity="0.85"/>`;
+    if(hR>16) bars2+=`<text x="${x+1+barW/2}" y="${yR+10}" text-anchor="middle" font-size="6.5" fill="white" font-weight="700">${Math.round(m.received/100)*100>999?Math.round(m.received/1000)+'k':Math.round(m.received)}</text>`;
+    bars1+=`<text x="${x}" y="${PT+cH+14}" text-anchor="middle" font-size="8" fill="var(--t2)">${m.lbl}</text>`;
+  });
+
+  const chart1=`<svg class="dash-chart-svg" viewBox="0 0 ${W} ${H}">
+    <line x1="${PL}" y1="${PT+cH}" x2="${W-PR}" y2="${PT+cH}" stroke="var(--bd)" stroke-width="1"/>
+    ${bars1}${bars2}
+    <rect x="${PL}" y="${H-12}" width="10" height="6" fill="#e0e8f0" rx="1"/>
+    <text x="${PL+13}" y="${H-6}" font-size="7.5" fill="var(--t2)">Attendu</text>
+    <rect x="${PL+60}" y="${H-12}" width="10" height="6" fill="#2d5a3d" rx="1"/>
+    <text x="${PL+73}" y="${H-6}" font-size="7.5" fill="var(--t2)">Encaissé</text>
+  </svg>`;
+
+  // ── Chart 2: Taux d'occupation ──
+  const totalLgs = lgs.length || 1;
+  let occ2='';
+  months.forEach((m,i)=>{
+    const d2 = new Date(m.key+'-15');
+    const occupied = lcs.filter(lc=>{
+      const ent=lc.ent?new Date(lc.ent):null;
+      const fin=lc.fin?new Date(lc.fin):null;
+      return (!ent||ent<=d2)&&(!fin||fin>=d2);
+    }).length;
+    const pct=Math.round(occupied/totalLgs*100);
+    const x=PL+i*bw+bw/2;
+    const hB=Math.max(2,(pct/100)*cH);
+    const col=pct>=90?'#2d5a3d':pct>=70?'#b5780a':'#c0392b';
+    occ2+=`<rect x="${x-barW/2}" y="${PT+cH-hB}" width="${barW+2}" height="${hB}" fill="${col}" rx="3" opacity="0.85"/>`;
+    occ2+=`<text x="${x}" y="${PT+cH-hB-3}" text-anchor="middle" font-size="7" fill="${col}" font-weight="700">${pct}%</text>`;
+    occ2+=`<text x="${x}" y="${PT+cH+14}" text-anchor="middle" font-size="8" fill="var(--t2)">${m.lbl}</text>`;
+  });
+  const chart2=`<svg class="dash-chart-svg" viewBox="0 0 ${W} ${H}">
+    <line x1="${PL}" y1="${PT+cH}" x2="${W-PR}" y2="${PT+cH}" stroke="var(--bd)" stroke-width="1"/>
+    <line x1="${PL}" y1="${PT}" x2="${W-PR}" y2="${PT}" stroke="var(--bd)" stroke-width="0.5" stroke-dasharray="3,2"/>
+    ${occ2}
+  </svg>`;
+
+  // ── Chart 3: Répartition loyers (donut) ──
+  const totalLoyer = lgs.reduce((a,l)=>a+(l.loyer+l.ch),0)||1;
+  const CX=80, CY=65, R=50, r=30;
+  const colors=['#2d5a3d','#1a3a5c','#b5780a','#c0392b','#6b3fa0','#1a7a6e','#3d5a2d','#5a1a3c','#2d4a6b','#7a4a1a','#1a5a4a','#4a2d5a','#5a3d1a','#1a4a3d'];
+  let slices='', legendItems='';
+  let startAngle=0;
+  const topLgs = lgs.slice().sort((a,b)=>(b.loyer+b.ch)-(a.loyer+a.ch)).slice(0,8);
+  topLgs.forEach((lg,i)=>{
+    const pct=(lg.loyer+lg.ch)/totalLoyer;
+    const angle=pct*2*Math.PI;
+    const x1=CX+R*Math.sin(startAngle), y1=CY-R*Math.cos(startAngle);
+    const x2=CX+R*Math.sin(startAngle+angle), y2=CY-R*Math.cos(startAngle+angle);
+    const large=angle>Math.PI?1:0;
+    const xi1=CX+r*Math.sin(startAngle), yi1=CY-r*Math.cos(startAngle);
+    const xi2=CX+r*Math.sin(startAngle+angle), yi2=CY-r*Math.cos(startAngle+angle);
+    slices+=`<path d="M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${r},${r} 0 ${large},0 ${xi1},${yi1}" fill="${colors[i%colors.length]}" opacity="0.88"/>`;
+    legendItems+=`<g transform="translate(170,${15+i*16})">
+      <rect width="8" height="8" fill="${colors[i%colors.length]}" rx="1"/>
+      <text x="12" y="7.5" font-size="8" fill="var(--tx)">${lg.nom.replace('ADC ','')}</text>
+      <text x="140" y="7.5" text-anchor="end" font-size="8" fill="var(--t2)" font-weight="700">${lg.loyer+lg.ch}€</text>
+    </g>`;
+    startAngle+=angle;
+  });
+  const chart3=`<svg class="dash-chart-svg" viewBox="0 0 320 140">
+    ${slices}
+    <text x="${CX}" y="${CY+4}" text-anchor="middle" font-size="9" fill="var(--t2)" font-weight="700">${fE(totalLoyer)}</text>
+    <text x="${CX}" y="${CY+14}" text-anchor="middle" font-size="7" fill="var(--t3)">/mois</text>
+    ${legendItems}
+  </svg>`;
+
+  cont.innerHTML=`
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">📈 Encaissements vs Attendus</div>
+      ${chart1}
+    </div>
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">🏠 Taux d'occupation</div>
+      ${chart2}
+    </div>
+    <div class="dash-chart-card" style="grid-column:1/-1">
+      <div class="dash-chart-title">💰 Répartition des loyers</div>
+      ${chart3}
+    </div>`;
 }
 
 // ═══ LOGEMENTS ═══
@@ -3580,7 +3491,47 @@ function driveInit(){
 }
 
 function driveSignIn(){
-  // Full redirect — no popup, works even with strict security policies
+  // Try GIS popup first (works on most browsers)
+  // If popup blocked, fall back to redirect
+  if(typeof google !== 'undefined' && google.accounts){
+    try{
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GDRIVE_CLIENT_ID,
+        scope:     GDRIVE_SCOPE,
+        prompt:    '',
+        error_callback: (err) => {
+          console.log('GIS error, trying redirect:', err);
+          driveSignInRedirect();
+        },
+        callback: async (resp) => {
+          if(resp.error){ driveSignInRedirect(); return; }
+          driveToken = resp.access_token;
+          try{
+            const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+              {headers:{'Authorization':'Bearer '+driveToken}});
+            const ud = await ui.json(); driveEmail = ud.email||'';
+          }catch(e){}
+          sessionStorage.setItem('ks_drive', JSON.stringify({
+            token:driveToken, expiry:Date.now()+3500000, fileId:driveFileId, email:driveEmail
+          }));
+          syncBarShow('Connecté — '+driveEmail);
+          const db=document.getElementById('driveBtn');
+          const dc=document.getElementById('driveBtnConnect');
+          if(db)db.style.display=''; if(dc)dc.style.display='none';
+          await driveLoad();
+          showToast('✅ Google Drive connecté — '+driveEmail);
+        }
+      });
+      client.requestAccessToken();
+      // If popup doesn't open within 2s, try redirect
+      setTimeout(()=>{ if(!driveToken) driveSignInRedirect(); }, 2000);
+      return;
+    }catch(e){ console.log('GIS failed:', e); }
+  }
+  driveSignInRedirect();
+}
+
+function driveSignInRedirect(){
   const state = Math.random().toString(36).slice(2);
   sessionStorage.setItem('ks_oauth_state', state);
   const params = new URLSearchParams({
@@ -3794,6 +3745,13 @@ function addDriveMenuItem(){
   item.className='top-menu-item drive-item';
   item.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)';
   item.innerHTML='<img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> Google Drive';
+  // Add profile manager item
+  const pItem=document.createElement('div');
+  pItem.className='top-menu-item';
+  pItem.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)';
+  pItem.innerHTML='👥 Gérer les profils';
+  pItem.onclick=()=>{closeTopMenu();showProfileManager();};
+  menu.appendChild(pItem);
   item.onclick=()=>{
     closeTopMenu();
     if(driveToken){ syncNow(); }
@@ -4167,6 +4125,290 @@ document.addEventListener('keydown', e=>{
   }
 });
 
+
+// ══════════════════════════════════════════════
+// PROFILES & AUTH
+// ══════════════════════════════════════════════
+const ROLE_ICONS = {admin:'👑', gestionnaire:'🔧', lecture:'👁'};
+const ROLE_LABELS = {admin:'Administrateur', gestionnaire:'Gestionnaire', lecture:'Lecture seule'};
+const ROLE_COLORS = {admin:'role-admin', gestionnaire:'role-gestionnaire', lecture:'role-lecture'};
+
+// Default admin profile (always exists)
+function getProfiles(){
+  try{ return JSON.parse(localStorage.getItem('ks_profiles')||'null') || [
+    {id:'admin_default', name:'Admin', role:'admin', pin:'0000', avatar:'👑', color:'#2d5a3d'}
+  ]; }catch(e){ return [{id:'admin_default', name:'Admin', role:'admin', pin:'0000', avatar:'👑', color:'#2d5a3d'}]; }
+}
+
+function saveProfiles(profiles){ localStorage.setItem('ks_profiles', JSON.stringify(profiles)); }
+
+// Default permissions per role
+const DEFAULT_PERMS = {
+  gestionnaire: {
+    canAdd: true, canEdit: true, canDelete: false,
+    seeLogements: true, seeLocataires: true, seePaiements: true,
+    seeCharges: true, seeEntretien: true, seeDocuments: true,
+    seeRappels: true, seeTableauAnnuel: true, seeAssistantIA: true,
+    seeBatiments: true
+  },
+  lecture: {
+    canAdd: false, canEdit: false, canDelete: false,
+    seeLogements: true, seeLocataires: true, seePaiements: true,
+    seeCharges: true, seeEntretien: true, seeDocuments: true,
+    seeRappels: true, seeTableauAnnuel: true, seeAssistantIA: false,
+    seeBatiments: true
+  }
+};
+
+const PERM_LABELS = {
+  canAdd: 'Ajouter des éléments',
+  canEdit: 'Modifier des éléments',
+  canDelete: 'Supprimer des éléments',
+  seeLogements: 'Voir Logements',
+  seeLocataires: 'Voir Locataires',
+  seePaiements: 'Voir Paiements',
+  seeCharges: 'Voir Charges & Compteurs',
+  seeEntretien: 'Voir Entretien',
+  seeDocuments: 'Voir Documents',
+  seeRappels: 'Voir Rappels',
+  seeTableauAnnuel: 'Voir Tableau annuel',
+  seeAssistantIA: 'Accès Assistant IA',
+  seeBatiments: 'Voir Bâtiments'
+};
+
+function getPermissions(){
+  try{ return JSON.parse(localStorage.getItem('ks_permissions')||'null') || DEFAULT_PERMS; }
+  catch(e){ return DEFAULT_PERMS; }
+}
+
+function savePermissions(){
+  const perms = getPermissions();
+  ['gestionnaire','lecture'].forEach(role=>{
+    Object.keys(PERM_LABELS).forEach(key=>{
+      const cb = document.getElementById('perm_'+role+'_'+key);
+      if(cb) perms[role][key] = cb.checked;
+    });
+  });
+  localStorage.setItem('ks_permissions', JSON.stringify(perms));
+  showToast('✅ Permissions enregistrées');
+  closeM('mProfiles');
+  applyRoleRestrictions();
+}
+
+function renderPermsGrid(){
+  const perms = getPermissions();
+  const cont = document.getElementById('permsGrid');
+  if(!cont) return;
+  const roles = ['gestionnaire','lecture'];
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:.75rem">';
+  html += '<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--bd)">Permission</th>';
+  roles.forEach(r=>{ html+=`<th style="text-align:center;padding:6px 8px;border-bottom:2px solid var(--bd)">${ROLE_ICONS[r]} ${ROLE_LABELS[r]}</th>`; });
+  html += '</tr></thead><tbody>';
+  Object.entries(PERM_LABELS).forEach(([key,lbl])=>{
+    html += `<tr><td style="padding:6px 8px;border-bottom:1px solid var(--bd)">${lbl}</td>`;
+    roles.forEach(r=>{
+      const checked = perms[r]?.[key]!==false ? 'checked' : '';
+      html += `<td style="text-align:center;padding:6px;border-bottom:1px solid var(--bd)"><input type="checkbox" id="perm_${r}_${key}" ${checked} style="accent-color:var(--ac);width:16px;height:16px"></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+function profileTab(tab, btn){
+  document.querySelectorAll('#mProfiles .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('profileTabUsers').style.display = tab==='users'?'':'none';
+  document.getElementById('profileTabPerms').style.display = tab==='perms'?'':'none';
+  if(tab==='perms') renderPermsGrid();
+}
+
+let currentProfile = null;
+let loginSelectedProfile = null;
+let pinEntry = '';
+
+function checkLogin(){
+  const profiles = getProfiles();
+  // Auto-login if only one profile with no PIN (or PIN = 0000 and not set up)
+  const saved = sessionStorage.getItem('ks_current_profile');
+  if(saved){
+    try{ currentProfile = JSON.parse(saved); applyRoleRestrictions(); return; }catch(e){}
+  }
+  // Show login screen
+  showLoginScreen();
+}
+
+function showLoginScreen(){
+  const screen = document.getElementById('loginScreen');
+  if(screen) screen.style.display='flex';
+  renderProfileGrid();
+}
+
+function renderProfileGrid(){
+  const profiles = getProfiles();
+  const grid = document.getElementById('profileGrid');
+  if(!grid) return;
+  grid.style.gridTemplateColumns = profiles.length<=2 ? '1fr 1fr' : profiles.length<=3 ? '1fr 1fr 1fr' : '1fr 1fr';
+  grid.innerHTML = profiles.map(p=>`
+    <div class="profile-btn" onclick="selectProfile('${p.id}')" id="pbtn_${p.id}">
+      <div class="profile-avatar">${p.avatar||ROLE_ICONS[p.role]||'👤'}</div>
+      <div class="profile-name">${p.name}</div>
+      <div class="profile-role">${ROLE_LABELS[p.role]||p.role}</div>
+    </div>`).join('');
+}
+
+function selectProfile(id){
+  loginSelectedProfile = getProfiles().find(p=>p.id===id);
+  document.querySelectorAll('.profile-btn').forEach(b=>b.classList.remove('selected'));
+  const btn = document.getElementById('pbtn_'+id);
+  if(btn) btn.classList.add('selected');
+}
+
+function loginSelectProfile(){
+  if(!loginSelectedProfile){ showToast('Choisissez un profil'); return; }
+  // If no PIN set or PIN is default 0000, skip PIN
+  if(!loginSelectedProfile.pin || loginSelectedProfile.pin===''){
+    doLogin(loginSelectedProfile);
+    return;
+  }
+  // Show PIN entry
+  document.getElementById('loginStep1').style.display='none';
+  document.getElementById('loginStep2').style.display='';
+  document.getElementById('loginProfileName').textContent = loginSelectedProfile.avatar+' '+loginSelectedProfile.name;
+  pinEntry='';
+  updatePinDots();
+}
+
+function pinKey(k){
+  if(k==='back'){ pinEntry=pinEntry.slice(0,-1); updatePinDots(); return; }
+  if(k==='ok'){ checkPin(); return; }
+  if(pinEntry.length>=4) return;
+  pinEntry+=String(k);
+  updatePinDots();
+  if(pinEntry.length===4) setTimeout(checkPin,200);
+}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    if(d) d.classList.toggle('filled', i<pinEntry.length);
+  }
+}
+
+function checkPin(){
+  if(pinEntry===loginSelectedProfile.pin){
+    doLogin(loginSelectedProfile);
+  } else {
+    document.getElementById('pinError').textContent='Code incorrect — réessayez';
+    pinEntry='';
+    updatePinDots();
+    setTimeout(()=>{ const e=document.getElementById('pinError'); if(e)e.textContent=''; },2000);
+  }
+}
+
+function loginBack(){
+  document.getElementById('loginStep1').style.display='';
+  document.getElementById('loginStep2').style.display='none';
+  pinEntry=''; loginSelectedProfile=null;
+}
+
+function doLogin(profile){
+  currentProfile = profile;
+  sessionStorage.setItem('ks_current_profile', JSON.stringify(profile));
+  const screen = document.getElementById('loginScreen');
+  if(screen) screen.style.display='none';
+  applyRoleRestrictions();
+  showToast('Bienvenue, '+profile.name+' !');
+}
+
+function applyRoleRestrictions(){
+  if(!currentProfile) return;
+  const role = currentProfile.role;
+  if(role==='admin') return; // Admin: no restrictions
+
+  const perms = getPermissions()[role] || {};
+
+  // Apply sidebar visibility
+  const pagePerms = {
+    batiments:'seeBatiments', logements:'seeLogements', locataires:'seeLocataires',
+    paiements:'seePaiements', charges:'seeCharges', entretien:'seeEntretien',
+    documents:'seeDocuments', rappels:'seeRappels', tableau:'seeTableauAnnuel',
+    assistant:'seeAssistantIA'
+  };
+  document.querySelectorAll('.sb-item[data-p]').forEach(item=>{
+    const p = item.dataset.p;
+    const permKey = pagePerms[p];
+    if(permKey && perms[permKey]===false) item.style.display='none';
+  });
+
+  // Hide add/edit/delete buttons
+  if(!perms.canDelete) document.querySelectorAll('.btn-d').forEach(b=>b.style.display='none');
+  if(!perms.canAdd) document.querySelectorAll('[onclick*="openM("]').forEach(b=>{ if(b.textContent.includes('＋')||b.textContent.includes('Ajouter')) b.style.display='none'; });
+  if(!perms.canEdit) document.querySelectorAll('.btn-s.btn-xs').forEach(b=>{ if(b.textContent.includes('✏')) b.style.display='none'; });
+
+  // Show profile badge in topbar
+  const tdate = document.getElementById('tdate');
+  if(tdate){
+    const badge=`<span class="profile-badge ${ROLE_COLORS[role]||''}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Options">${currentProfile.avatar||ROLE_ICONS[role]} ${currentProfile.name}</span>`;
+    tdate.innerHTML=(tdate.textContent||'')+badge;
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('ks_current_profile');
+  currentProfile=null;
+  location.reload();
+}
+
+// ── Profile Manager (accessible to admin) ──
+function showProfileManager(){
+  if(!currentProfile){ return; }
+  // Show manage modal
+  openM('mProfiles');
+  renderProfileManager();
+}
+
+function renderProfileManager(){
+  const profiles = getProfiles();
+  const cont = document.getElementById('profileManagerList');
+  if(!cont) return;
+  cont.innerHTML = profiles.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <span style="font-size:1.2rem">${p.avatar||ROLE_ICONS[p.role]||'👤'}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.82rem">${p.name}</div>
+        <div class="profile-badge ${ROLE_COLORS[p.role]||''}" style="margin-top:2px">${ROLE_LABELS[p.role]||p.role}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        ${currentProfile&&currentProfile.role==='admin'?`<button class="btn btn-s btn-xs" onclick="editProfile('${p.id}')">✏</button>`:''}
+        ${currentProfile&&currentProfile.role==='admin'&&p.id!=='admin_default'?`<button class="btn btn-d btn-xs" onclick="deleteProfile('${p.id}')">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function saveNewProfile(){
+  const name=document.getElementById('newProfileName')?.value.trim();
+  const role=document.getElementById('newProfileRole')?.value;
+  const pin=document.getElementById('newProfilePin')?.value.trim();
+  const avatar=document.getElementById('newProfileAvatar')?.value.trim()||ROLE_ICONS[role]||'👤';
+  if(!name){ alert('Nom requis'); return; }
+  if(pin&&pin.length!==4){ alert('Le PIN doit être 4 chiffres'); return; }
+  const profiles=getProfiles();
+  profiles.push({id:uid(), name, role, pin:pin||'', avatar});
+  saveProfiles(profiles);
+  renderProfileManager();
+  ['newProfileName','newProfilePin','newProfileAvatar'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  showToast('Profil créé — '+name);
+}
+
+function deleteProfile(id){
+  if(!confirm('Supprimer ce profil ?')) return;
+  const profiles=getProfiles().filter(p=>p.id!==id);
+  saveProfiles(profiles);
+  renderProfileManager();
+}
+
 // ═══ INIT ═══
 document.getElementById('tdate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 injectRealData();
@@ -4175,9 +4417,51 @@ setTimeout(async ()=>{
   await driveHandleRedirect();
   driveInit();
   addDriveMenuItem();
+  checkLogin();
 },300);
 setTimeout(checkOnboarding, 1200);
 </script>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">🗝</div>
+    <div class="login-title">Keystone</div>
+    <div class="login-sub">Gestion locative</div>
+    <div id="loginStep1">
+      <div style="font-size:.72rem;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Choisir un profil</div>
+      <div class="profile-grid" id="profileGrid"></div>
+      <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="loginSelectProfile()">Continuer →</button>
+      <div style="font-size:.65rem;color:var(--t3);margin-top:8px">Keystone v — Sélectionnez votre profil</div>
+    </div>
+    <div id="loginStep2" style="display:none">
+      <div id="loginProfileName" style="font-weight:700;font-size:.9rem;margin-bottom:4px"></div>
+      <div style="font-size:.72rem;color:var(--t2);margin-bottom:16px">Entrez votre code PIN</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinKey(1)">1</button>
+        <button class="pin-key" onclick="pinKey(2)">2</button>
+        <button class="pin-key" onclick="pinKey(3)">3</button>
+        <button class="pin-key" onclick="pinKey(4)">4</button>
+        <button class="pin-key" onclick="pinKey(5)">5</button>
+        <button class="pin-key" onclick="pinKey(6)">6</button>
+        <button class="pin-key" onclick="pinKey(7)">7</button>
+        <button class="pin-key" onclick="pinKey(8)">8</button>
+        <button class="pin-key" onclick="pinKey(9)">9</button>
+        <button class="pin-key" onclick="pinKey('back')" style="font-size:.8rem">⌫</button>
+        <button class="pin-key" onclick="pinKey(0)">0</button>
+        <button class="pin-key" onclick="pinKey('ok')" style="background:var(--ac);color:#fff;border-color:var(--ac)">OK</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+      <button class="btn btn-s" style="margin-top:12px;width:100%" onclick="loginBack()">← Retour</button>
+    </div>
+  </div>
+</div>
 
 <!-- ONBOARDING WIZARD -->
 <div class="ob-overlay" id="obOverlay" style="display:none">
@@ -4312,6 +4596,5 @@ if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.s
   document.documentElement.style.setProperty('--pwa-installed', '1');
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
