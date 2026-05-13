@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.60</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 15:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.61</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 16:00</div></div>
 </aside>
 
 <div id="main">
@@ -4901,9 +4901,9 @@ function applyRoleRestrictions(){
 }
 
 function logout(){
+  sessionStorage.setItem('ks_logout_pending','1');
   sessionStorage.removeItem('ks_current_profile');
   currentProfile = null;
-  // Reload the page — cleanest way to show login screen without async conflicts
   location.reload();
 }
 
@@ -5580,6 +5580,12 @@ function startDemoMode(){
 injectRealData();
 rDash();
 setTimeout(async ()=>{
+  // If logout was requested, skip auto-login and show login screen immediately
+  if(sessionStorage.getItem('ks_logout_pending')){
+    sessionStorage.removeItem('ks_logout_pending');
+    showLoginScreen();
+    return;
+  }
   await driveHandleRedirect();
   driveInit();
   // Update menu visibility for admin items
