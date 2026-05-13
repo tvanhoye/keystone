@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.66</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 20:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.67</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 21:00</div></div>
 </aside>
 
 <div id="main">
@@ -582,7 +582,7 @@ tr[onclick]{cursor:pointer}
       </button>
       <div style="position:relative;display:inline-block">
       <button class="btn btn-s btn-sm" onclick="toggleTopMenu()" title="Menu" id="topMenuBtn" style="gap:3px">💾 <span style="font-size:.6rem">▾</span></button>
-      <div id="topMenu" style="display: block; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
+      <div id="topMenu" style="display:none; position: absolute; right: 0px; top: 38px; background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); box-shadow: var(--shl); z-index: 300; min-width: 180px; overflow: hidden;">
         <a id="downloadLink" download="keystone.html" class="top-menu-item" onclick="prepareDownload()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);text-decoration:none;cursor:pointer">
           ⬇️ Télécharger l'app
         </a>
@@ -3912,6 +3912,11 @@ let pendingSync   = false;
 
 // ── Token management ──
 function driveInit(){
+  if(window._ksIsolated){
+    ['driveBtnConnect','driveBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    const md=document.getElementById('menuDrive');if(md)md.style.display='none';
+    return;
+  }
   // Restore token from localStorage
   try{
     const saved = JSON.parse(localStorage.getItem('ks_drive')||'null');
@@ -4877,6 +4882,7 @@ function doLogin(profile){
   const lb=document.getElementById('logoutBtn');
   if(lb) lb.style.display='';
   showToast('Bienvenue, '+profile.name+' !');
+  if(profile.role==='masteradmin'&&typeof driveInit==='function')setTimeout(driveInit,400);
 }
 
 function applyRoleRestrictions(){
@@ -5715,11 +5721,12 @@ function activateDemo(){
   window._ksIsolated=true;
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
-  bats=[{id:'bat_demo',nom:'Résidence Démo',addr:'12 rue Fictive, Paris'}];
-  lgs=[{id:'lg_d1',batId:'bat_demo',nom:'Apt 101',loyer:800,ch:50,type:'F2'},{id:'lg_d2',batId:'bat_demo',nom:'Apt 102',loyer:950,ch:60,type:'F3'}];
-  lcs=[{id:'lc_d1',lgId:'lg_d1',nom:'Jean Martin',email:'jean@demo.fr',ent:'2023-01-01',fin:'2025-12-31'},{id:'lc_d2',lgId:'lg_d2',nom:'Sophie Durand',email:'sophie@demo.fr',ent:'2022-06-01',fin:'2025-05-31'}];
-  pys=[{id:'py_d1',lcId:'lc_d1',mois:'2026-04',rec:800,du:800,stat:'payé'},{id:'py_d2',lcId:'lc_d2',mois:'2026-04',rec:0,du:950,stat:'retard'}];
-  ens=[];dcs=[];rps=[];cos=[];rls=[];
+  bats=[{id:'bat_d1',nom:'Résidence Les Acacias',addr:'15 rue des Acacias, Liège'},{id:'bat_d2',nom:'Appartements du Parc',addr:'8 allée du Parc, Seraing'}];
+  lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'}];
+  lcs=[{id:'lc_d1',lgId:'lg_d1',prenom:'Thomas',nom:'MARTIN',tel:'04/221.33.44',email:'t.martin@demo.be',jour:1,ent:'2022-03-01',fin:'2025-02-28',urg:'',notes:''},{id:'lc_d2',lgId:'lg_d2',prenom:'Isabelle',nom:'DUPONT',tel:'04/332.44.55',email:'i.dupont@demo.be',jour:1,ent:'2021-09-01',fin:'',urg:'',notes:''},{id:'lc_d3',lgId:'lg_d3',prenom:'Marc',nom:'LEJEUNE',tel:'04/443.55.66',email:'',jour:5,ent:'2023-01-01',fin:'',urg:'',notes:''},{id:'lc_d4',lgId:'lg_d5',prenom:'Sophie',nom:'RENARD',tel:'04/554.66.77',email:'s.renard@demo.be',jour:1,ent:'2020-06-01',fin:'',urg:'',notes:''}];
+  pys=[{id:'py_d1',lcId:'lc_d1',mois:'2026-04',rec:830,du:830,stat:'payé'},{id:'py_d2',lcId:'lc_d2',mois:'2026-04',rec:0,du:1000,stat:'retard'},{id:'py_d3',lcId:'lc_d3',mois:'2026-04',rec:720,du:720,stat:'payé'},{id:'py_d4',lcId:'lc_d4',mois:'2026-04',rec:910,du:910,stat:'payé'},{id:'py_d5',lcId:'lc_d1',mois:'2026-03',rec:830,du:830,stat:'payé'},{id:'py_d6',lcId:'lc_d2',mois:'2026-03',rec:0,du:1000,stat:'retard'}];
+  ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'}];
+  dcs=[];rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''}];cos=[];rls=[];
   const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
   doLogin(p);
   setTimeout(()=>{rDash();nav('dashboard');},50);
