@@ -60,7 +60,7 @@ body{display:flex;overflow:hidden}
 #sb.collapsed .sb-lbl{opacity:0;width:0}
 .sb-badge{background:var(--wa);color:#fff;font-size:.56rem;padding:1px 5px;border-radius:10px;font-weight:700;flex-shrink:0}
 #sb.collapsed .sb-badge{position:absolute;top:4px;right:4px}
-.sb-foot{padding:10px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:.62rem;color:rgba(255,255,255,.55);margin-top:auto;transition:opacity .2s}
+.sb-foot{padding:10px 16px 54px;border-top:1px solid rgba(255,255,255,.07);font-size:.62rem;color:rgba(255,255,255,.55);margin-top:auto;transition:opacity .2s}
 #sb.collapsed .sb-foot{opacity:0}
 #sb.collapsed .sb-item::after{content:attr(data-tip);position:absolute;left:58px;background:#333;color:#fff;font-size:.72rem;padding:4px 10px;border-radius:5px;white-space:nowrap;pointer-events:none;opacity:0;transform:translateX(-4px);transition:opacity .15s,transform .15s;z-index:999}
 #sb.collapsed .sb-item:hover::after{opacity:1;transform:translateX(0)}
@@ -3863,15 +3863,17 @@ document.addEventListener('click',e=>{
 
 // ── DOWNLOAD APP ──
 function prepareDownload(){
-  // Get current page HTML and create download link
   const html = document.documentElement.outerHTML;
   const blob = new Blob([html], {type:'text/html'});
   const url = URL.createObjectURL(blob);
-  const link = document.getElementById('downloadLink');
-  link.href = url;
-  closeTopMenu();
-  // Clean up after download
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'keystone.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  closeTopMenu();
 }
 
 
