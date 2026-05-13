@@ -570,7 +570,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" data-p="paiements" data-tip="Loyers"><span class="sb-icon">💶</span><span class="sb-lbl">Loyers</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
     <div class="sb-sec">Suivi</div>
     <div class="sb-item" data-p="charges" data-tip="Charges &amp; Compteurs"><span class="sb-icon">⚡</span><span class="sb-lbl">Charges &amp; Compteurs</span></div>
-    <div class="sb-item" data-p="banque" data-tip="Banque &amp; Crédits"><span class="sb-icon">🏦</span><span class="sb-lbl">Banque</span></div>
+    <div class="sb-item" data-p="banque" data-tip="Banque &amp; Crédits"><span class="sb-icon">💶</span><span class="sb-lbl">Finances</span></div>
     <div class="sb-item" data-p="entretien" data-tip="Entretien"><span class="sb-icon">🔧</span><span class="sb-lbl">Entretien</span><span class="sb-badge" id="bUrg" style="display:none">0</span></div>
     <div class="sb-item" data-p="documents" data-tip="Documents"><span class="sb-icon">📄</span><span class="sb-lbl">Documents</span></div>
     <div class="sb-item" data-p="rappels" data-tip="Rappels"><span class="sb-icon">🔔</span><span class="sb-lbl">Rappels</span></div>
@@ -579,7 +579,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.78</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 21:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.79</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 22:00</div></div>
 </aside>
 
 <div id="main">
@@ -728,8 +728,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- BANQUE -->
     <div class="page" id="page-banque">
-      <div class="sh-row"><div><h2>Banque &amp; Crédits</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Crédit</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
-      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='flex';})()">🧸 Dépenses</button></div>
+      <div class="sh-row"><div><h2>Finances &amp; Dépenses</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Emprunt</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
+      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🏗 Emprunts</button><button class="tab" onclick="tabBanque('charges',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🔄 Charges récurrentes</button><button class="tab" onclick="tabBanque('depenses',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='flex';})()">🧸 Dépenses</button></div>
     <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
         <button class="btn btn-xs btn-s active" onclick="filterDepCat('',this)">Tout</button>
         <button class="btn btn-xs btn-s" onclick="filterDepCat('energies',this)">⚡ Énergies</button>
@@ -1912,7 +1912,7 @@ function renderPayGrid(){
     const _lcName=_dispLc?(_dispLc.prenom+' '+_dispLc.nom).trim():'Vacant';
     if(isFirst){
       const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
-      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
+      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_dispLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
     }
 
     // Locataire column
@@ -1931,7 +1931,7 @@ function renderPayGrid(){
       (displayLc.fin&&new Date(displayLc.fin)<new Date()?' → '+fD(displayLc.fin).slice(0,5)+' ✓':'') 
       : '';
     const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
-    html += `<td style="min-width:60px;border-right:2px solid var(--bd);text-align:center;font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac);vertical-align:top;padding-top:8px">${_dispLc?(lg.loyer+lg.ch)+'€':'<em style=\"color:var(--t3);font-weight:400;font-size:.65rem\">—</em>'}</td>`;
+    html += `<td style="display:none">${_dispLc?(lg.loyer+lg.ch)+'€':'<em style=\"color:var(--t3);font-weight:400;font-size:.65rem\">—</em>'}</td>`;
 
     cols.forEach(col=>{
       // Find which tenant was active during this month
