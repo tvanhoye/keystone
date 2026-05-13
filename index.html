@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.63</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 18:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.64</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 19:00</div></div>
 </aside>
 
 <div id="main">
@@ -4810,6 +4810,7 @@ function loginNewEmpty(){
   bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];
   const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
   doLogin(p);
+  setTimeout(()=>{rDash();nav('dashboard');},50);
   showToast('📂 Application vide — aucune donnée du projet principal');
 }
 function loginNewCode(){
@@ -4827,6 +4828,7 @@ function loginNewCode(){
     if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
     const p={id:'proj_'+Date.now(),name:cfg.nom||'Projet',role:cfg.role||'gestionnaire',avatar:'🏗',pin:''};
     doLogin(p);
+    setTimeout(()=>{rDash();nav('dashboard');},50);
     showToast('✅ Projet '+p.name+' chargé (🔒 isolé)');
   }catch(e){showToast('Code incorrect ou corrompu');}
 }
@@ -5711,6 +5713,7 @@ function activateDemo(){
   ens=[];dcs=[];rps=[];cos=[];rls=[];
   const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
   doLogin(p);
+  setTimeout(()=>{rDash();nav('dashboard');},50);
   showToast('🎭 Mode démo — données fictives uniquement');
 }
 
