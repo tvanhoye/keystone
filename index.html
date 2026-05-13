@@ -845,7 +845,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.52</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 19:52</div></div>
+  <div class="sb-foot"><div>Keystone v1.57</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 23:00</div></div>
 </aside>
 
 <div id="main">
@@ -893,6 +893,13 @@ tr[onclick]{cursor:pointer}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:.72rem;color:var(--t2);font-weight:600">📊 Vue :</span>
+        <select id="dashBatFilter" onchange="rDash()" style="padding:5px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.78rem;background:var(--sf);cursor:pointer;outline:none">
+          <option value="">Tous les bâtiments</option>
+        </select>
+        <div id="dashBatKpi" style="display:none;font-size:.72rem;color:var(--ac);font-weight:700;padding:4px 10px;background:var(--acl);border-radius:20px"></div>
+      </div>
       <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
       <div class="g21">
         <div>
@@ -1465,13 +1472,40 @@ function sBadge(s){const m={payé:'bg',retard:'br',partiel:'bo'};return'<span cl
 
 // ═══ DASHBOARD ═══
 function rDash(){
+  // ── Populate building filter ──
+  const dashBatSel = document.getElementById('dashBatFilter');
+  if(dashBatSel){
+    const cv = dashBatSel.value;
+    dashBatSel.innerHTML = '<option value="">Tous les bâtiments</option>' +
+      bats.map(b=>'<option value="'+b.id+'">'+(b.nom.length>28?b.nom.slice(0,28)+'…':b.nom)+'</option>').join('');
+    if(cv) dashBatSel.value = cv;
+  }
+  const selBatId = dashBatSel ? dashBatSel.value : '';
+  const dashBatKpiEl = document.getElementById('dashBatKpi');
+
+  // ── Filter data by selected building ──
+  let visLgs = selBatId ? lgs.filter(l=>l.batId===selBatId) : lgs;
+  const visLgIds = new Set(visLgs.map(l=>l.id));
+  let visLcs = lcs.filter(l=>visLgIds.has(l.lgId));
+  const visLcIds = new Set(visLcs.map(l=>l.id));
+
+  if(dashBatKpiEl){
+    if(selBatId){
+      const bat = bats.find(b=>b.id===selBatId);
+      dashBatKpiEl.textContent = bat ? '🏗 '+bat.nom : '';
+      dashBatKpiEl.style.display = 'block';
+    } else {
+      dashBatKpiEl.style.display = 'none';
+    }
+  }
+
   const tm=tmth();
-  const tmP=pys.filter(p=>p.mois===tm);
-  const tot=lgs.length,occ=lcs.length;
-  const totL=lgs.reduce((a,l)=>a+l.loyer+l.ch,0);
+  const tmP=pys.filter(p=>p.mois===tm && visLcIds.has(p.lcId));
+  const tot=visLgs.length, occ=visLcs.length;
+  const totL=visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
   const ret=tmP.filter(p=>p.stat==='retard').length;
-  const urg=ens.filter(e=>e.prio==='urgent');
+  const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
   const br=document.getElementById('bRet');br.textContent=ret;br.style.display=ret?'':'none';
   const bu=document.getElementById('bUrg');bu.textContent=urg.length;bu.style.display=urg.length?'':'none';
   document.getElementById('kpiG').innerHTML=
@@ -1480,9 +1514,9 @@ function rDash(){
     '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
     '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>';
   const al=[];
-  // Count ALL unpaid months per locataire (not just current month)
+  // Count ALL unpaid months per locataire filtered by building
 const retardsByLc={};
-pys.filter(p=>p.stat==='retard').forEach(p=>{
+pys.filter(p=>p.stat==='retard' && visLcIds.has(p.lcId)).forEach(p=>{
   if(!retardsByLc[p.lcId])retardsByLc[p.lcId]=[];
   retardsByLc[p.lcId].push(p);
 });
@@ -1494,13 +1528,13 @@ Object.entries(retardsByLc).forEach(([lcId,pays])=>{
   al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l)+(nb>1?' ('+nb+' mois)':''),s:fE(total)+' dus · '+pays.map(p=>p.mois).join(', '),p:'paiements'});
 });
   urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom,p:'entretien'}));
-  lcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
+  visLcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
   ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'" style="cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'""><span>'+a.i+'</span><div><strong>'+a.ti+'</strong><br><span style="opacity:.8">'+a.s+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
   const pr=rps.filter(r=>r.stat!=='fait').sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
   document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editRap(\''+r.id+'\')"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+r.tit+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
-  const rec=pys.slice(-8).reverse();
-  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+lcFull(l)+'</td><td class="mono">'+p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
+  const rec = selBatId ? pys.filter(p=>visLcIds.has(p.lcId)).slice(-8).reverse() : pys.slice(-8).reverse();
+  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+lcFull(l)+'</td><td class="mono">'+ p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
   document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+'</div></div><button class="btn btn-xs btn-s" onclick="event.stopPropagation();doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
 }
 
@@ -4169,17 +4203,18 @@ function driveInit(){
 }
 
 function driveSignIn(){
-  // Try GIS popup (works when popups allowed)
+  // Try GIS popup first (fast, no page reload)
   if(typeof google !== 'undefined' && google.accounts && google.accounts.oauth2){
     try{
-      google.accounts.oauth2.initTokenClient({
+      const client = google.accounts.oauth2.initTokenClient({
         client_id: GDRIVE_CLIENT_ID,
         scope: GDRIVE_SCOPE,
+        error_callback: (err) => {
+          console.warn('GIS error:', err.type);
+          driveSignInRedirect();
+        },
         callback: async (resp) => {
-          if(resp.error || !resp.access_token){
-            showToast('Erreur Drive: '+(resp.error||'token manquant'));
-            return;
-          }
+          if(resp.error || !resp.access_token){ driveSignInRedirect(); return; }
           driveToken = resp.access_token;
           try{
             const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+driveToken}});
@@ -4187,66 +4222,21 @@ function driveSignIn(){
           }catch(e){}
           localStorage.setItem('ks_drive',JSON.stringify({token:driveToken,expiry:Date.now()+3500000,fileId:driveFileId,email:driveEmail}));
           syncBarShow('Connecté — '+driveEmail);
-          const lbl=document.getElementById('menuDriveLbl');
-          if(lbl)lbl.textContent='↕ Synchroniser Drive';
+          const db=document.getElementById('driveBtn');const dc=document.getElementById('driveBtnConnect');
+          if(db) db.style.display='';if(dc) dc.style.display='none';
+          const lbl=document.getElementById('menuDriveLbl');if(lbl)lbl.textContent='↕ Synchroniser Drive';
           await driveLoad();
           showToast('✅ Google Drive connecté — '+driveEmail);
         }
-      }).requestAccessToken();
+      });
+      client.requestAccessToken();
       return;
-    }catch(e){ console.warn('GIS popup failed:', e.message); }
+    }catch(e){ console.warn('GIS init failed:', e.message); }
   }
-  // Fallback: alert user to allow popups
-  if(confirm('Google Drive nécessite un popup.\n\nAutorisez les popups pour tvanhoye.github.io dans les paramètres Chrome, puis cliquez OK pour réessayer.\n\n(Chrome → Paramètres → Confidentialité → Paramètres des sites → Fenêtres contextuelles)')){
-    driveSignIn();
-  }
+  // Fallback: implicit redirect (no popup needed)
+  driveSignInRedirect();
 }
 
-async function driveHandleRedirect(){
-  // Parse OAuth token from URL hash after redirect
-  const hash = location.hash.substring(1);
-  const hp = new URLSearchParams(hash);
-  const token = hp.get('access_token');
-  if(!token) return;
-
-  // Validate state
-  const retState = hp.get('state');
-  const savedState = sessionStorage.getItem('ks_oauth_state');
-  sessionStorage.removeItem('ks_oauth_state');
-  if(savedState && retState && retState !== savedState){
-    showToast('Erreur sécurité OAuth — réessayez');
-    return;
-  }
-
-  // Clean URL hash
-  history.replaceState(null, '', location.pathname);
-
-  driveToken = token;
-  const expiry = Date.now() + parseInt(hp.get('expires_in')||'3600')*1000;
-
-  // Get user email
-  try{
-    const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
-      {headers:{'Authorization':'Bearer '+driveToken}});
-    const ud = await ui.json();
-    driveEmail = ud.email||'';
-  }catch(e){}
-
-  // Save to session
-  localStorage.setItem('ks_drive', JSON.stringify({
-    token:driveToken, expiry, fileId:null, email:driveEmail
-  }));
-
-  // Update UI
-  syncBarShow('Connecté — '+driveEmail);
-  const db=document.getElementById('driveBtn');
-  const dc=document.getElementById('driveBtnConnect');
-  if(db) db.style.display='';
-  if(dc) dc.style.display='none';
-
-  await driveLoad();
-  showToast('✅ Google Drive connecté — '+driveEmail);
-}
 function driveSignInImplicit(){
   // Fallback: implicit flow (older but simpler)
   const params = new URLSearchParams({
