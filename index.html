@@ -402,12 +402,12 @@ tr[onclick]{cursor:pointer}
 .pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:fixed}
 .pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center}
 .pay-grid th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);width:80px;min-width:80px;max-width:80px}
-.pay-grid th:nth-child(2){text-align:left;position:sticky;left:80px;z-index:3;background:var(--s2);min-width:120px;max-width:140px;border-right:2px solid var(--bd)}
+/* col2 sticky removed in v1.83 - col1 now contains merged logement+locataire */
 .pay-grid td{padding:4px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle;white-space:nowrap}
 .pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 6px;width:80px;min-width:80px;max-width:80px}
-.pay-grid td:nth-child(2){text-align:left;position:sticky;left:80px;background:var(--sf);z-index:1;padding:5px 6px;min-width:120px;max-width:140px;border-right:2px solid var(--bd)}
+/* col2 td sticky removed in v1.83 */
 .pay-grid tr:hover td{background:#fafaf8}
-.pay-grid tr:hover td:first-child,.pay-grid tr:hover td:nth-child(2){background:#f5f5f2}
+.pay-grid tr:hover td:first-child{background:#f5f5f2}
 .pg-month-col{width:12%;text-align:center;overflow:hidden}
 .pg-btn{width:30px;height:24px;border-radius:5px;border:none;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;justify-content:center}
 .pg-btn:active{transform:scale(.85)}
