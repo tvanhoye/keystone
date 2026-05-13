@@ -575,7 +575,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.75</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 17:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.76</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 18:00</div></div>
 </aside>
 
 <div id="main">
@@ -1751,7 +1751,7 @@ function delLc(id){if(!confirm('Supprimer ?'))return;lcs=lcs.filter(l=>l.id!==id
 // ═══ PAIEMENTS ═══
 // ═══ PAIEMENTS GRID ═══
 let payGridOffset = 0; // months offset from today
-let payGridShowOld = false; // show old tenants
+let payGridShowOld = true; // show old tenants
 let payView = localStorage.getItem('ks_payview') || 'grid';
 
 function setPayView(v){
@@ -1814,14 +1814,7 @@ function renderPayGrid(){
         rows.push({lg, lgLcs, activeLcOverride: lc, isOld, isFirst: idx===0, lgRowSpan: lgLcs.length});
       });
       if(lgLcs.length===0) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
-    else {
-      // For logements with only past tenants (all have fin), show the latest one
-      const hasActive=lgLcs.some(l=>!l.fin||new Date(l.fin)>=now2);
-      if(!hasActive){
-        const latest=lgLcs.sort((a,b)=>new Date(b.fin)-new Date(a.fin))[0];
-        rows.push({lg,lgLcs,activeLcOverride:latest,isOld:true,isFirst:true,lgRowSpan:1});
-      }
-    }
+
     } else {
       // Only show current tenant row
       rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
