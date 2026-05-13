@@ -4777,6 +4777,17 @@ function checkPin(){
   }
 }
 
+function loginAsNew(){
+  // Login as empty new profile
+  const p = {id:'new_'+Date.now(), name:'Utilisateur', role:'lecture', avatar:'👤', pin:''};
+  doLogin(p);
+}
+function loginShowAdmin(){
+  loginSelectedProfile = getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'admin',pin:'0000',avatar:'👑'};
+  document.getElementById('loginStep1').style.display='none';
+  document.getElementById('loginStep2').style.display='';
+  pinEntry=''; updatePinDots();
+}
 function loginBack(){
   document.getElementById('loginStep1').style.display='';
   document.getElementById('loginStep2').style.display='none';
@@ -5579,16 +5590,22 @@ function updatePinDots(){
 </div>
 <div id="loginScreen" style="display:none">
   <div class="login-card">
-    <div class="login-logo">🐠</div>
+    <div class="login-logo">🏠</div>
     <div class="login-title">Keystone</div>
-    <div class="login-sub">Gestion Locative — Connexion</div>
+    <div class="login-sub">Gestion Locative</div>
+    <!-- Step 1: choose mode -->
     <div id="loginStep1">
-      <div class="profile-grid" id="profileGrid"></div>
-      <button class="btn btn-p" style="width:100%;margin-top:4px" onclick="loginSelectProfile()">Connexion →</button>
-      <button class="btn" style="width:100%;margin-top:8px;font-size:.72rem;opacity:.7" onclick="activateDemo()">Mode démo</button>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <button class="btn btn-p" style="width:100%;padding:14px;font-size:.95rem;font-weight:700" onclick="loginAsNew()">✨ Nouveau</button>
+        <button class="btn" style="width:100%;padding:14px;font-size:.95rem;font-weight:700;background:var(--s2);border:2px solid var(--bd)" onclick="activateDemo()">🎭 Démo</button>
+      </div>
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
+        <button onclick="loginShowAdmin()" style="background:none;border:none;color:var(--t3);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:4px" onmouseover="this.style.color='var(--t2)'" onmouseout="this.style.color='var(--t3)'">⚙ Admin</button>
+      </div>
     </div>
+    <!-- Step 2: Admin PIN -->
     <div id="loginStep2" style="display:none">
-      <div style="font-size:.85rem;font-weight:700;margin-bottom:12px" id="loginProfileName"></div>
+      <div style="font-size:.8rem;color:var(--t2);margin-bottom:14px">Accès administrateur</div>
       <div class="pin-dots" id="pinDots">
         <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
         <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -5597,7 +5614,7 @@ function updatePinDots(){
         <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
         <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
         <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
-        <button class="pin-key" onclick="loginBack()">←</button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key" style="font-size:.8rem" onclick="loginSelectProfile()">OK</button>
+        <button class="pin-key" onclick="loginBack()" style="font-size:.8rem">Retour</button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key" onclick="pinPress('')" style="font-size:.8rem">OK</button>
       </div>
       <div class="pin-error" id="pinError"></div>
     </div>
