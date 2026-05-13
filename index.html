@@ -595,7 +595,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.80</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 23:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.81</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026 à 09:00</div></div>
 </aside>
 
 <div id="main">
@@ -1881,7 +1881,7 @@ function renderPayGrid(){
   // Monthly total expected (for current months shown)
   const curMonthKey = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
   const curMonthTot = mTotals[curMonthKey];
-  html += `<td colspan="1" style="padding:8px 10px;font-weight:700;font-size:.78rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
+  html += `<td colspan="1" style="padding:8px 10px;font-weight:700;font-size:.78rem;color:#fff;border-right:2px solid rgba(255,255,255,.1);background:#1a1814">`;
   html += `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">`;
   html += `<span>📋 Attendu période: <strong style="font-family:monospace">${fE(totalDu)}</strong></span>`;
   html += `<span style="color:${totalRecu>=totalDu?'#a8e6af':'#f9a825'}">✓ Encaissé: <strong style="font-family:monospace">${fE(totalRecu)}</strong> <span style="font-size:.68rem;opacity:.7">${Math.round(totalRecu/(totalDu||1)*100)}%</span></span>`;
@@ -1906,7 +1906,7 @@ function renderPayGrid(){
 
   // ── Column header row ──
   html += '<tr>';
-  html += '<th style="min-width:160px;border-right:2px solid var(--bd)">Logement · Locataire</th>';
+  html += '<th style="min-width:160px;border-right:2px solid rgba(255,255,255,.15);background:#1a1814;color:#fff;text-align:left;padding-left:10px">Logement · Locataire</th>';
   html += '';
   cols.forEach(col=>{
     html += `<th class="pg-month-col${col.isFuture?' pg-future':''}">${col.lbl}</th>`;
