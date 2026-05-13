@@ -408,7 +408,7 @@ tr[onclick]{cursor:pointer}
 .pay-grid td:nth-child(2){text-align:left;position:sticky;left:80px;background:var(--sf);z-index:1;padding:5px 6px;min-width:120px;max-width:140px;border-right:2px solid var(--bd)}
 .pay-grid tr:hover td{background:#fafaf8}
 .pay-grid tr:hover td:first-child,.pay-grid tr:hover td:nth-child(2){background:#f5f5f2}
-.pg-month-col{width:70px;text-align:center;overflow:hidden}
+.pg-month-col{width:12%;text-align:center;overflow:hidden}
 .pg-btn{width:30px;height:24px;border-radius:5px;border:none;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;justify-content:center}
 .pg-btn:active{transform:scale(.85)}
 .pg-paid{background:#c8f0cc;color:#1a6b2a}
@@ -566,6 +566,9 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 .pay-grid thead tr:last-child th:first-child{background:#1a1814;color:rgba(255,255,255,.7);font-size:.68rem;font-weight:600;padding:5px 8px;border-bottom:2px solid rgba(255,255,255,.15);}
 
 .pay-grid th.pg-month-col{background:rgba(26,24,20,.85)!important;color:rgba(255,255,255,.6)!important;font-size:.65rem;font-weight:500;padding:5px 2px;border-left:1px solid rgba(255,255,255,.08);}
+
+.pay-grid th:first-child,.pay-grid td:first-child{width:28%!important;}
+.pay-grid th.pg-month-col{width:12%!important;background:rgba(26,24,20,.85)!important;color:rgba(255,255,255,.6)!important;font-size:.65rem;font-weight:500;padding:5px 2px;border-left:1px solid rgba(255,255,255,.1);}
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -600,7 +603,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.82</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026 à 09:30</div></div>
+  <div class="sb-foot"><div>Keystone v1.82</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026 à 10:00</div></div>
 </aside>
 
 <div id="main">
