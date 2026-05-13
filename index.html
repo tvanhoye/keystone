@@ -579,7 +579,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.77</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 20:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.78</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 21:00</div></div>
 </aside>
 
 <div id="main">
@@ -729,7 +729,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <!-- BANQUE -->
     <div class="page" id="page-banque">
       <div class="sh-row"><div><h2>Banque &amp; Crédits</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Crédit</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
-      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this)">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this)">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this)">🧾 Dépenses</button></div>
+      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='flex';})()">🧸 Dépenses</button></div>
     <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
         <button class="btn btn-xs btn-s active" onclick="filterDepCat('',this)">Tout</button>
         <button class="btn btn-xs btn-s" onclick="filterDepCat('energies',this)">⚡ Énergies</button>
