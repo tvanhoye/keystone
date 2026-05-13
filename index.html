@@ -561,7 +561,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.57</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 12/05/2026 à 23:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.58</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 12:00</div></div>
 </aside>
 
 <div id="main">
@@ -4778,9 +4778,28 @@ function checkPin(){
 }
 
 function loginAsNew(){
-  // Login as empty new profile
-  const p = {id:'new_'+Date.now(), name:'Utilisateur', role:'lecture', avatar:'👤', pin:''};
+  // Show sub-screen: code projet or empty
+  document.getElementById('loginStep1').style.display='none';
+  document.getElementById('loginStepNew').style.display='';
+}
+function loginNewEmpty(){
+  const p={id:'new_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
   doLogin(p);
+}
+function loginNewCode(){
+  const code = document.getElementById('projetCodeInput').value.trim();
+  if(!code){showToast('Entrez un code projet');return;}
+  try{
+    const cfg = JSON.parse(atob(code));
+    if(!cfg||!cfg.bats){showToast('Code invalide');return;}
+    // Load project config
+    if(cfg.bats) { bats=cfg.bats; sv('bt',bats); }
+    if(cfg.lgs)  { lgs=cfg.lgs;  sv('lg',lgs);  }
+    if(cfg.lcs)  { lcs=cfg.lcs;  sv('lc',lcs);  }
+    const p={id:'proj_'+Date.now(),name:cfg.nom||'Projet',role:cfg.role||'gestionnaire',avatar:'🏗',pin:''};
+    doLogin(p);
+    showToast('✅ Projet chargé : '+p.name);
+  }catch(e){showToast('Code incorrect ou corrompu');}
 }
 function loginShowAdmin(){
   loginSelectedProfile = getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'admin',pin:'0000',avatar:'👑'};
@@ -4819,7 +4838,7 @@ function applyRoleRestrictions(){
     const tdate=document.getElementById('tdate');
     if(tdate){
       const badge=`<span class="profile-badge role-admin" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">${currentProfile.avatar||'👑'} ${currentProfile.name}</span>`;
-      tdate.innerHTML=(tdate.textContent||'')+badge;
+      tdate.innerHTML=badge;
     }
     const lb=document.getElementById('logoutBtn');
     if(lb) lb.style.display='';
@@ -4850,7 +4869,7 @@ function applyRoleRestrictions(){
   const tdate = document.getElementById('tdate');
   if(tdate){
     const badge=`<span class="profile-badge ${ROLE_COLORS[role]||''}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Options">${currentProfile.avatar||ROLE_ICONS[role]} ${currentProfile.name}</span>`;
-    tdate.innerHTML=(tdate.textContent||'')+badge;
+    tdate.innerHTML=badge;
   }
   // Show logout button
   const lb=document.getElementById('logoutBtn');
@@ -5602,6 +5621,15 @@ function updatePinDots(){
       <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
         <button onclick="loginShowAdmin()" style="background:none;border:none;color:var(--t3);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:4px" onmouseover="this.style.color='var(--t2)'" onmouseout="this.style.color='var(--t3)'">⚙ Admin</button>
       </div>
+    </div>
+    <!-- Step New: code or empty -->
+    <div id="loginStepNew" style="display:none">
+      <p style="font-size:.78rem;color:var(--t2);margin-bottom:14px">Comment voulez-vous commencer ?</p>
+      <button class="btn btn-p" style="width:100%;padding:12px;margin-bottom:10px" onclick="loginNewEmpty()">📂 Application vide</button>
+      <div style="position:relative;margin:14px 0"><hr style="border:none;border-top:1px solid var(--bd)"><span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--sf);padding:0 10px;font-size:.68rem;color:var(--t3)">OU</span></div>
+      <input id="projetCodeInput" placeholder="Code projet (donné par un collègue)" style="width:100%;padding:10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.8rem;background:var(--bg);box-sizing:border-box;margin-bottom:8px">
+      <button class="btn btn-p" style="width:100%;padding:12px;background:var(--ac2,#1a5276)" onclick="loginNewCode()">🔗 Rejoindre un projet</button>
+      <button onclick="document.getElementById('loginStepNew').style.display='none';document.getElementById('loginStep1').style.display='';" style="background:none;border:none;color:var(--t3);font-size:.7rem;cursor:pointer;margin-top:12px;font-family:inherit">← Retour</button>
     </div>
     <!-- Step 2: Admin PIN -->
     <div id="loginStep2" style="display:none">
