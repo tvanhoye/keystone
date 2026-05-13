@@ -536,6 +536,17 @@ tr[onclick]{cursor:pointer}
 #photoZone:hover{border-color:var(--ac);background:var(--acl)}
 #photoZone.drag-over{border-color:var(--ac);background:var(--acl);transform:scale(1.01)}
 #photoZone.has-photo{border-style:solid;border-color:var(--ac)}
+
+@media(max-width:600px){
+  .pay-grid td:nth-child(1){display:none}
+  .pay-grid th:nth-child(1){display:none}
+  .pay-grid .pg-info{flex-direction:column;gap:1px;font-size:.65rem}
+  .pay-grid .pg-info .pg-lg{font-weight:700;font-size:.68rem}
+  .pay-grid .pg-info .pg-lc{opacity:.8;font-size:.62rem}
+  .pay-grid{font-size:.65rem}
+  .pay-grid td,.pay-grid th{padding:4px 3px!important}
+  .pg-col2{max-width:90px;overflow:hidden}
+}
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -564,7 +575,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.74</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 15:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.75</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 17:00</div></div>
 </aside>
 
 <div id="main">
@@ -1803,6 +1814,14 @@ function renderPayGrid(){
         rows.push({lg, lgLcs, activeLcOverride: lc, isOld, isFirst: idx===0, lgRowSpan: lgLcs.length});
       });
       if(lgLcs.length===0) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
+    else {
+      // For logements with only past tenants (all have fin), show the latest one
+      const hasActive=lgLcs.some(l=>!l.fin||new Date(l.fin)>=now2);
+      if(!hasActive){
+        const latest=lgLcs.sort((a,b)=>new Date(b.fin)-new Date(a.fin))[0];
+        rows.push({lg,lgLcs,activeLcOverride:latest,isOld:true,isFirst:true,lgRowSpan:1});
+      }
+    }
     } else {
       // Only show current tenant row
       rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
@@ -4080,6 +4099,7 @@ function driveSignOut(){
 
 // ── UI ──
 function syncBarShow(msg, status){
+  document.querySelectorAll('.page').forEach(el=>el.style.paddingBottom='52px');
   const bar=document.getElementById('syncBar');
   const dot=document.getElementById('syncDot');
   const msgEl=document.getElementById('syncMsg');
