@@ -547,6 +547,10 @@ tr[onclick]{cursor:pointer}
   .pay-grid td,.pay-grid th{padding:4px 3px!important}
   .pg-col2{max-width:90px;overflow:hidden}
 }
+
+/* SyncBar: contenu jamais derrière la barre */
+body:has(#syncBar.show) .page { padding-bottom:52px!important; }
+body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -575,7 +579,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.76</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 18:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.77</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 20:00</div></div>
 </aside>
 
 <div id="main">
@@ -726,14 +730,13 @@ tr[onclick]{cursor:pointer}
     <div class="page" id="page-banque">
       <div class="sh-row"><div><h2>Banque &amp; Crédits</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Crédit</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
       <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this)">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this)">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this)">🧾 Dépenses</button></div>
-      <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
+    <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
         <button class="btn btn-xs btn-s active" onclick="filterDepCat('',this)">Tout</button>
-        <button class="btn btn-xs btn-s" onclick="filterDepCat('energie',this)">⚡ Énergie</button>
-        <button class="btn btn-xs btn-s" onclick="filterDepCat('eau',this)">💧 Eau</button>
-        <button class="btn btn-xs btn-s" onclick="filterDepCat('rc',this)">🛡 RC</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('energies',this)">⚡ Énergies</button>
         <button class="btn btn-xs btn-s" onclick="filterDepCat('banque',this)">🏦 Banque</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('ass',this)">🛡 Ass.</button>
         <button class="btn btn-xs btn-s" onclick="filterDepCat('travaux',this)">🔨 Travaux</button>
-        <button class="btn btn-xs btn-s" onclick="filterDepCat('autres',this)">📦 Autres</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('divers',this)">📦 Divers</button>
       </div>
       <div id="banqueTabContent"></div>
       <div class="dash-charts" id="banqueCharts"></div>
@@ -950,7 +953,7 @@ tr[onclick]{cursor:pointer}
 <div class="mfoot"><button class="btn btn-s" onclick="closeM('mRel')">Annuler</button><button class="btn btn-p" onclick="saveRel()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mDepense"><div class="modal" style="max-width:460px"><div class="mh"><span class="mtitle" id="mDepenseT">Ajouter une dépense</span><button class="mclose" onclick="closeM('mDepense')">✕</button></div><div class="mbody"><input type="hidden" id="dpId">
   <div class="fr"><div class="fg"><label>Libellé *</label><input id="dpNom" placeholder="Ex: Travaux toiture"></div>
-      <div class="fg"><label>Catégorie</label><select id="depCateg" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="energie">⚡ Énergie</option><option value="eau">💧 Eau</option><option value="rc">🛡 RC</option><option value="banque">🏦 Banque</option><option value="travaux">🔨 Travaux</option><option value="autres" selected>📦 Autres</option></select></div><div class="fg"><label>Bâtiment</label><select id="dpBat"><option value="">Général</option></select></div></div>
+      <div class="fg"><label>Catégorie</label><select id="depCateg" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="energies">⚡ Énergies</option><option value="banque">🏦 Banque</option><option value="ass" selected>🛡 Assurance</option><option value="travaux">🔨 Travaux</option><option value="divers">📦 Divers</option></select></div><div class="fg"><label>Bâtiment</label><select id="dpBat"><option value="">Général</option></select></div></div>
   <div class="fr"><div class="fg"><label>Montant (€) *</label><input id="dpMontant" type="number" placeholder="1500"></div><div class="fg"><label>Date *</label><input id="dpDate" type="date"></div></div>
   <div class="fr"><div class="fg"><label>Catégorie</label><select id="dpCat"><option>Travaux</option><option>Assurance</option><option>Taxe</option><option>Précompte immobilier</option><option>Revenu cadastral</option><option>Frais de gestion</option><option>Honoraires</option><option>Divers</option></select></div><div class="fg"><label>Payé</label><select id="dpPaye"><option value="oui">Oui</option><option value="non">Non</option></select></div></div>
   <div class="fg"><label>Notes</label><textarea id="dpNotes"></textarea></div>
@@ -1816,8 +1819,9 @@ function renderPayGrid(){
       if(lgLcs.length===0) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
 
     } else {
-      // Only show current tenant row
-      rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
+      // Only show current tenant row — skip entirely if no active tenant (vacant)
+      const hasActive2=lgLcs.some(l=>!l.fin||new Date(l.fin)>=new Date());
+      if(hasActive2) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
     }
   });
 
@@ -1899,9 +1903,16 @@ function renderPayGrid(){
     html += `<tr style="${rowStyle}">`;
     
     // Logement column — only show for first row of this logement
+    // Pre-compute active locataire for merged cell
+    const _nowD=new Date();
+    let _dispLc=activeLcOverride||(lgLcs.find(l=>{
+      const _e=l.ent?new Date(l.ent):null,_f=l.fin?new Date(l.fin):null;
+      return(!_e||_e<=_nowD)&&(!_f||_f>=_nowD);
+    }));
+    const _lcName=_dispLc?(_dispLc.prenom+' '+_dispLc.nom).trim():'Vacant';
     if(isFirst){
       const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
-      html += `<td ${rsAttr} style="min-width:90px;vertical-align:top;padding-top:8px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div></td>`;
+      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div class="pg-name" style="font-size:.72rem">${lg.nom}</div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
     }
 
     // Locataire column
@@ -1920,13 +1931,7 @@ function renderPayGrid(){
       (displayLc.fin&&new Date(displayLc.fin)<new Date()?' → '+fD(displayLc.fin).slice(0,5)+' ✓':'') 
       : '';
     const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
-    html += `<td style="min-width:110px;border-right:2px solid var(--bd)">${displayLc
-      ?'<div style=\"display:flex;align-items:center;justify-content:space-between;gap:4px\">'
-        +'<div class=\"pg-name\" style=\"font-size:.72rem\">'+lcFull(displayLc)+oldBadge+'</div>'
-        +loyerStr
-        +'</div>'
-        +(entFin?'<div class=\"pg-sub\">'+entFin+'</div>':'')
-      :'<em style=\"color:var(--t3)\">Vacant</em>'}</td>`;
+    html += `<td style="min-width:60px;border-right:2px solid var(--bd);text-align:center;font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac);vertical-align:top;padding-top:8px">${_dispLc?(lg.loyer+lg.ch)+'€':'<em style=\"color:var(--t3);font-weight:400;font-size:.65rem\">—</em>'}</td>`;
 
     cols.forEach(col=>{
       // Find which tenant was active during this month
