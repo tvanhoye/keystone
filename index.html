@@ -564,7 +564,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.73</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 14:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.74</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 15:00</div></div>
 </aside>
 
 <div id="main">
@@ -5810,6 +5810,40 @@ function activateDemo(){
   setTimeout(()=>{rDash();nav('dashboard');},50);
   showToast('🎭 Mode démo — données fictives uniquement');
 }
+
+function rPays(f){
+  payF=f||'tous';
+  const activeLcIds=new Set(lcs.map(l=>l.id));
+  let list=(payF==='tous'?pys.filter(p=>activeLcIds.has(p.lcId)):pys.filter(p=>p.stat===payF&&activeLcIds.has(p.lcId)));
+  const tb=document.getElementById('payTbl');
+  if(!tb) return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">Aucun paiement</td></tr>';return;}
+  const sorted=[...list].sort((a,b)=>b.mois.localeCompare(a.mois));
+  tb.innerHTML=sorted.map(p=>{
+    const lc=gLc(p.lcId);const lg=gLg(lc?.lgId);
+    return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')">'+
+      '<td>'+lcFull(lc)+'</td>'+
+      '<td style="font-size:.73rem">'+lg.nom+'</td>'+
+      '<td class="mono">'+p.mois+'</td>'+
+      '<td class="mono">'+fE(p.du)+'</td>'+
+      '<td class="mono">'+fE(p.rec)+'</td>'+
+      '<td>'+fD(p.date)+'</td>'+
+      '<td style="font-size:.73rem">'+p.mode+'</td>'+
+      '<td>'+sBadge(p.stat)+'</td>'+
+      '<td><div style="display:flex;gap:3px">'+
+        '<button class="btn btn-xs btn-s" onclick="event.stopPropagation();generateQuittance(\''+p.id+'\')" title="Quittance PDF">🧾</button>'+
+        '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delPay(\''+p.id+'\')">✕</button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function tabPay(f,el){
+  document.querySelectorAll('#payTabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  rPays(f);
+}
+
 
 </script>
 
