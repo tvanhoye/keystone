@@ -563,7 +563,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.71</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 08:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.72</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 10:00</div></div>
 </aside>
 
 <div id="main">
@@ -1727,7 +1727,7 @@ function saveLoc(){
   if(!ent) missing.push("Date d'entrée");
   if(missing.length){alert('Champs manquants : '+missing.join(', '));return;}
   const eid=document.getElementById('locId').value;
-  const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,notes:document.getElementById('locNotes').value};
+  const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,notes:(document.getElementById('locNotes')||{value:''}).value};
   if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
   sv('lc',lcs);document.getElementById('locId').value='';document.getElementById('mLocT').textContent='Ajouter un locataire';
   closeM('mLoc');rLcs();
@@ -5780,10 +5780,13 @@ function activateDemo(){
     {id:'co_d3',nom:'Compteur Eau D2',type:'eau',unit:'m3',lgId:'lg_d2',notes:''}
   ];
   rls=[
-    {id:'rl1',coId:'co_d1',date:'2024-01-01',val:1200,notes:''},{id:'rl2',coId:'co_d1',date:'2024-07-01',val:1340,notes:''},{id:'rl3',coId:'co_d1',date:'2025-01-01',val:1490,notes:''},{id:'rl4',coId:'co_d1',date:'2025-07-01',val:1620,notes:''},{id:'rl5',coId:'co_d1',date:'2026-01-01',val:1780,notes:''},
-    {id:'rl6',coId:'co_d2',date:'2024-01-01',val:8400,notes:''},{id:'rl7',coId:'co_d2',date:'2024-07-01',val:9100,notes:''},{id:'rl8',coId:'co_d2',date:'2025-01-01',val:9850,notes:''},{id:'rl9',coId:'co_d2',date:'2025-07-01',val:10500,notes:''},{id:'rl10',coId:'co_d2',date:'2026-01-01',val:11200,notes:''},
-    {id:'rl11',coId:'co_d3',date:'2024-01-01',val:540,notes:''},{id:'rl12',coId:'co_d3',date:'2025-01-01',val:680,notes:''},{id:'rl13',coId:'co_d3',date:'2026-01-01',val:820,notes:''}
-  ];
+    // Eau - bat_d1 - apt 101
+    {id:'rl1',coId:'co_d1',date:'2024-01-01',val:1200,notes:''},{id:'rl2',coId:'co_d1',date:'2024-04-01',val:1285,notes:''},{id:'rl3',coId:'co_d1',date:'2024-07-01',val:1340,notes:''},{id:'rl4',coId:'co_d1',date:'2024-10-01',val:1410,notes:''},{id:'rl5',coId:'co_d1',date:'2025-01-01',val:1490,notes:''},{id:'rl6',coId:'co_d1',date:'2025-04-01',val:1565,notes:''},{id:'rl7',coId:'co_d1',date:'2025-07-01',val:1620,notes:''},{id:'rl8',coId:'co_d1',date:'2025-10-01',val:1695,notes:''},{id:'rl9',coId:'co_d1',date:'2026-01-01',val:1780,notes:''},
+    // Elec - bat_d1 - apt 101
+    {id:'rl10',coId:'co_d2',date:'2024-01-01',val:8400,notes:''},{id:'rl11',coId:'co_d2',date:'2024-04-01',val:8710,notes:''},{id:'rl12',coId:'co_d2',date:'2024-07-01',val:9100,notes:''},{id:'rl13',coId:'co_d2',date:'2024-10-01',val:9480,notes:''},{id:'rl14',coId:'co_d2',date:'2025-01-01',val:9850,notes:''},{id:'rl15',coId:'co_d2',date:'2025-04-01',val:10180,notes:''},{id:'rl16',coId:'co_d2',date:'2025-07-01',val:10500,notes:''},{id:'rl17',coId:'co_d2',date:'2025-10-01',val:10850,notes:''},{id:'rl18',coId:'co_d2',date:'2026-01-01',val:11200,notes:''},
+    // Eau - bat_d2 - apt 202
+    {id:'rl19',coId:'co_d3',date:'2024-01-01',val:540,notes:''},{id:'rl20',coId:'co_d3',date:'2024-07-01',val:612,notes:''},{id:'rl21',coId:'co_d3',date:'2025-01-01',val:680,notes:''},{id:'rl22',coId:'co_d3',date:'2025-07-01',val:749,notes:''},{id:'rl23',coId:'co_d3',date:'2026-01-01',val:820,notes:''}
+  ]
   ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'},{id:'en_d2',lgId:'lg_d3',tit:'Peinture couloir',prio:'normal',stat:'planifié',date:'2026-06-15',notes:''}];
   dcs=[];rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
   const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
