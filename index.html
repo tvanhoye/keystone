@@ -4678,12 +4678,18 @@ let pinEntry = '';
 
 function checkLogin(){
   const profiles = getProfiles();
-  // Auto-login if only one profile with no PIN (or PIN = 0000 and not set up)
   const saved = sessionStorage.getItem('ks_current_profile');
   if(saved){
     try{ currentProfile = JSON.parse(saved); applyRoleRestrictions(); return; }catch(e){}
   }
-  // Show login screen
+  // Auto-login: si profil unique ou admin_default sans PIN, connexion directe
+  const admin = profiles.find(p=>p.id==='admin_default')||profiles[0];
+  if(admin && (!admin.pin || admin.pin==='0000')){
+    currentProfile = admin;
+    sessionStorage.setItem('ks_current_profile', JSON.stringify(admin));
+    applyRoleRestrictions();
+    return;
+  }
   showLoginScreen();
 }
 
@@ -4850,14 +4856,12 @@ function logout(){
   if(lb) lb.style.display='none';
   // Reset sidebar items visibility
   document.querySelectorAll('.sb-item').forEach(i=>i.style.display='');
-  // Show login screen
-  showLoginScreen();
+  // Reload to get back to initial state
+  location.reload();
 }
 
 // ── Profile Manager (accessible to admin) ──
 function showProfileManager(){
-  if(!currentProfile){ return; }
-  // Show manage modal
   openM('mProfiles');
   renderProfileManager();
 }
