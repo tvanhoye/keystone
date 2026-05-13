@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.62</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 17:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.63</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 18:00</div></div>
 </aside>
 
 <div id="main">
@@ -984,8 +984,8 @@ tr[onclick]{cursor:pointer}
 <script>
 // ═══ STORAGE ═══
 const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp'};
-const ld=k=>{try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
-const sv=(k,d)=>{if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));if(typeof driveTriggerSave==='function')driveTriggerSave();};
+const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('_ksi_'+K[k]))||[]}catch{return[]}}try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
+const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
@@ -1041,6 +1041,7 @@ var REAL_LCS=[
 ];
 
 function injectRealData(){
+  if(window._ksIsolated) return;
   // Inject compteurs
   var existingCo=[];
   try{existingCo=JSON.parse(localStorage.getItem(K.co)||'[]')}catch(e){}
@@ -4063,6 +4064,7 @@ async function driveGetFileId(){
 
 // ── Load data from Drive ──
 async function driveLoad(){
+  if(window._ksIsolated) return;
   if(!driveToken)return;
   syncBarShow('Chargement...','syncing');
   try{
@@ -4802,22 +4804,30 @@ function loginAsNew(){
   document.getElementById('loginStepNew').style.display='';
 }
 function loginNewEmpty(){
-  const p={id:'new_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
+  window._ksIsolated=true;
+  sessionStorage.setItem('ks_isolated','1');
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];
+  const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
   doLogin(p);
+  showToast('📂 Application vide — aucune donnée du projet principal');
 }
 function loginNewCode(){
-  const code = document.getElementById('projetCodeInput').value.trim();
+  const code=document.getElementById('projetCodeInput').value.trim();
   if(!code){showToast('Entrez un code projet');return;}
   try{
-    const cfg = JSON.parse(atob(code));
+    const cfg=JSON.parse(decodeURIComponent(escape(atob(code))));
     if(!cfg||!cfg.bats){showToast('Code invalide');return;}
-    // Load project config
-    if(cfg.bats) { bats=cfg.bats; sv('bt',bats); }
-    if(cfg.lgs)  { lgs=cfg.lgs;  sv('lg',lgs);  }
-    if(cfg.lcs)  { lcs=cfg.lcs;  sv('lc',lcs);  }
+    window._ksIsolated=true;
+    sessionStorage.setItem('ks_isolated','1');
+    Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];
+    if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
+    if(cfg.lgs){lgs=cfg.lgs;sv('lg',lgs);}
+    if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
     const p={id:'proj_'+Date.now(),name:cfg.nom||'Projet',role:cfg.role||'gestionnaire',avatar:'🏗',pin:''};
     doLogin(p);
-    showToast('✅ Projet chargé : '+p.name);
+    showToast('✅ Projet '+p.name+' chargé (🔒 isolé)');
   }catch(e){showToast('Code incorrect ou corrompu');}
 }
 function loginShowUsers(){
@@ -4920,7 +4930,10 @@ function applyRoleRestrictions(){
 function logout(){
   sessionStorage.setItem('ks_logout_pending','1');
   sessionStorage.removeItem('ks_current_profile');
-  currentProfile = null;
+  sessionStorage.removeItem('ks_isolated');
+  window._ksIsolated=false;
+  currentProfile=null;
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   location.reload();
 }
 
@@ -5603,8 +5616,15 @@ setTimeout(async ()=>{
     showLoginScreen();
     return;
   }
-  await driveHandleRedirect();
-  driveInit();
+  // Restore isolation for guest/demo/project sessions
+  if(sessionStorage.getItem('ks_isolated')){
+    window._ksIsolated=true;
+    bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
+    ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
+  } else {
+    await driveHandleRedirect();
+    driveInit();
+  }
   // Update menu visibility for admin items
   const md=document.getElementById('menuDrive');
   const mp=document.getElementById('menuProfiles');
@@ -5681,11 +5701,17 @@ function copyProjectCode(){
 
 
 function activateDemo(){
-  // Log in as Demo profile with demo data
-  const demoProfile = {id:'demo_'+Date.now(), name:'Démo', role:'lecture', avatar:'🎭', pin:''};
-  sessionStorage.setItem('ks_demo_mode', '1');
-  doLogin(demoProfile);
-  showToast('🎭 Mode démo activé — données fictives');
+  window._ksIsolated=true;
+  sessionStorage.setItem('ks_isolated','1');
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  bats=[{id:'bat_demo',nom:'Résidence Démo',addr:'12 rue Fictive, Paris'}];
+  lgs=[{id:'lg_d1',batId:'bat_demo',nom:'Apt 101',loyer:800,ch:50,type:'F2'},{id:'lg_d2',batId:'bat_demo',nom:'Apt 102',loyer:950,ch:60,type:'F3'}];
+  lcs=[{id:'lc_d1',lgId:'lg_d1',nom:'Jean Martin',email:'jean@demo.fr',ent:'2023-01-01',fin:'2025-12-31'},{id:'lc_d2',lgId:'lg_d2',nom:'Sophie Durand',email:'sophie@demo.fr',ent:'2022-06-01',fin:'2025-05-31'}];
+  pys=[{id:'py_d1',lcId:'lc_d1',mois:'2026-04',rec:800,du:800,stat:'payé'},{id:'py_d2',lcId:'lc_d2',mois:'2026-04',rec:0,du:950,stat:'retard'}];
+  ens=[];dcs=[];rps=[];cos=[];rls=[];
+  const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
+  doLogin(p);
+  showToast('🎭 Mode démo — données fictives uniquement');
 }
 
 </script>
