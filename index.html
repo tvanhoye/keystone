@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.65</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 19:30</div></div>
+  <div class="sb-foot"><div>Keystone v1.66</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 20:00</div></div>
 </aside>
 
 <div id="main">
@@ -5612,6 +5612,13 @@ function startDemoMode(){
 }
 
 // ═══ INIT ═══
+// SECURITY: restore isolation flag immediately (before injectRealData)
+window._ksIsolated = !!sessionStorage.getItem('ks_isolated');
+if(window._ksIsolated){
+  // Reload isolated data arrays immediately
+  bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
+  ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
+}
 injectRealData();
 rDash();
 setTimeout(async ()=>{
@@ -5624,8 +5631,7 @@ setTimeout(async ()=>{
   // Restore isolation for guest/demo/project sessions
   if(sessionStorage.getItem('ks_isolated')){
     window._ksIsolated=true;
-    bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
-    ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
+    // Data already loaded at page start; skip Drive
   } else {
     await driveHandleRedirect();
     driveInit();
