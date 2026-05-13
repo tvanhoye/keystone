@@ -102,7 +102,8 @@ tr[onclick]{cursor:pointer}
 .mono{font-family:monospace;font-size:.77rem}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:12px;font-size:.64rem;font-weight:700}
-.bg{background:#e8f5e9;color:#2e7d32}.br{background:#fdecea;color:#c62828}.bo{background:#fff3e0;color:#e65100}
+.bg{background:#e8f5e9;color:#2e7d32}.bt{background:#7b4f00;color:#fff}
+.br{background:#fdecea;color:#c62828}.bo{background:#fff3e0;color:#e65100}
 .bb{background:var(--bll);color:var(--bl)}.bx{background:var(--s2);color:var(--t2)}.bgo{background:var(--gol);color:var(--go)}
 .dot{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block}
 /* ALERT */
@@ -563,7 +564,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.72</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 10:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.73</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 12:00</div></div>
 </aside>
 
 <div id="main">
@@ -693,7 +694,7 @@ tr[onclick]{cursor:pointer}
       </div>
       <!-- List view -->
       <div id="payListView" style="display:none">
-        <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
+        <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('travaux',this)">🏗 Travaux</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
         <div class="card"><div class="tblw"><table><thead><tr><th>Locataire</th><th>Logement</th><th>Mois</th><th>Dû</th><th>Reçu</th><th>Date</th><th>Mode</th><th>Statut</th><th></th></tr></thead><tbody id="payTbl"></tbody></table></div></div>
       </div>
     </div>
@@ -1215,7 +1216,8 @@ function fillSels(){
 }
 
 // ═══ HELPERS ═══
-function sBadge(s){const m={payé:'bg',retard:'br',partiel:'bo'};return'<span class="badge '+(m[s]||'bx')+'"><span class="dot"></span>'+s+'</span>'}
+function sBadge(s){
+  if(s==='travaux') return '<span class="badge bt">🏗 Travaux</span>';const m={payé:'bg',retard:'br',partiel:'bo'};return'<span class="badge '+(m[s]||'bx')+'"><span class="dot"></span>'+s+'</span>'}
 
 // ═══ DASHBOARD ═══
 function rDash(){
