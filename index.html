@@ -5544,6 +5544,31 @@ setTimeout(async ()=>{
 },300);
 setTimeout(checkOnboarding, 1200);
 
+
+function pinPress(d){
+  if(pinEntry.length>=4) return;
+  pinEntry+=d;
+  updatePinDots();
+  if(pinEntry.length===4){
+    setTimeout(()=>{
+      if(pinEntry===loginSelectedProfile.pin){
+        document.getElementById('pinError').textContent='';
+        doLogin(loginSelectedProfile);
+      } else {
+        document.getElementById('pinError').textContent='Code incorrect';
+        pinEntry='';
+        updatePinDots();
+      }
+    },200);
+  }
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    if(d) d.className='pin-dot'+(i<pinEntry.length?' filled':'');
+  }
+}
+
 </script>
 
 <div id="syncBar">
@@ -5551,5 +5576,31 @@ setTimeout(checkOnboarding, 1200);
   <span id="syncMsg">Google Drive</span>
   <button onclick="syncNow()" style="margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:.72rem">Sync</button>
   <button onclick="driveSignOut()" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:.72rem">✕</button>
+</div>
+<div id="loginScreen" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">🐠</div>
+    <div class="login-title">Keystone</div>
+    <div class="login-sub">Gestion Locative — Connexion</div>
+    <div id="loginStep1">
+      <div class="profile-grid" id="profileGrid"></div>
+      <button class="btn btn-p" style="width:100%;margin-top:4px" onclick="loginSelectProfile()">Connexion →</button>
+      <button class="btn" style="width:100%;margin-top:8px;font-size:.72rem;opacity:.7" onclick="activateDemo()">Mode démo</button>
+    </div>
+    <div id="loginStep2" style="display:none">
+      <div style="font-size:.85rem;font-weight:700;margin-bottom:12px" id="loginProfileName"></div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key" onclick="loginBack()">←</button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key" style="font-size:.8rem" onclick="loginSelectProfile()">OK</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+    </div>
+  </div>
 </div>
 </body></html>
