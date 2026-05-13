@@ -551,6 +551,16 @@ tr[onclick]{cursor:pointer}
 /* SyncBar: contenu jamais derrière la barre */
 body:has(#syncBar.show) .page { padding-bottom:52px!important; }
 body:has(#syncBar.show) #main { padding-bottom:52px!important; }
+
+.sb-accordion{overflow:hidden;max-height:0;transition:max-height .25s ease}
+.sb-accordion.open{max-height:300px}
+.sb-item.sb-parent{display:flex;justify-content:space-between;align-items:center}
+.sb-parent .sb-arrow{font-size:.6rem;opacity:.5;transition:transform .2s}
+.sb-parent.open .sb-arrow{transform:rotate(90deg)}
+.sb-sub{padding-left:10px}
+.sb-sub .sb-item{font-size:.76rem;padding:6px 12px 6px 22px;opacity:.85}
+.sb-sub .sb-item:hover,.sb-sub .sb-item.active{opacity:1;background:rgba(255,255,255,.08)}
+.sb-sec-sm{padding:4px 16px 2px;font-size:.58rem;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin-top:8px}
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -568,18 +578,24 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" data-p="logements" data-tip="Logements"><span class="sb-icon">🏢</span><span class="sb-lbl">Logements</span></div>
     <div class="sb-item" data-p="locataires" data-tip="Locataires"><span class="sb-icon">👥</span><span class="sb-lbl">Locataires</span></div>
     <div class="sb-item" data-p="paiements" data-tip="Loyers"><span class="sb-icon">💶</span><span class="sb-lbl">Loyers</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
-    <div class="sb-sec">Suivi</div>
-    <div class="sb-item" data-p="charges" data-tip="Charges &amp; Compteurs"><span class="sb-icon">⚡</span><span class="sb-lbl">Charges &amp; Compteurs</span></div>
-    <div class="sb-item" data-p="banque" data-tip="Banque &amp; Crédits"><span class="sb-icon">💶</span><span class="sb-lbl">Finances</span></div>
-    <div class="sb-item" data-p="entretien" data-tip="Entretien"><span class="sb-icon">🔧</span><span class="sb-lbl">Entretien</span><span class="sb-badge" id="bUrg" style="display:none">0</span></div>
-    <div class="sb-item" data-p="documents" data-tip="Documents"><span class="sb-icon">📄</span><span class="sb-lbl">Documents</span></div>
-    <div class="sb-item" data-p="rappels" data-tip="Rappels"><span class="sb-icon">🔔</span><span class="sb-lbl">Rappels</span></div>
+    <div class="sb-sec">DÉPENSES</div>
+    <div class="sb-item sb-parent" onclick="toggleSbAccordion('sbDep',this)" title="Dépenses">
+      <div style="display:flex;align-items:center;gap:8px"><span class="sb-icon">📤</span><span class="sb-lbl">Dépenses</span></div>
+      <span class="sb-arrow" style="margin-right:4px;font-size:.65rem">▶</span>
+    </div>
+    <div id="sbDep" class="sb-accordion sb-sub">
+      <div class="sb-item" data-p="charges" data-tip="Charges &amp; Compteurs" onclick="navSub('charges',this)">⚡ Charges &amp; Compteurs</div>
+      <div class="sb-item" data-p="banque" data-tip="Finances" onclick="navSub('banque',this)">🏦 Finances</div>
+      <div class="sb-item" data-p="entretien" data-tip="Entretien" onclick="navSub('entretien',this)">🔧 Entretien</div>
+      <div class="sb-item" data-p="documents" data-tip="Documents" onclick="navSub('documents',this)">📄 Documents</div>
+    </div>
+    <div class="sb-item" data-p="rappels" data-tip="Rappels" onclick="navSub('rappels',this)"><span class="sb-icon">🔔</span><span class="sb-lbl">Rappels</span></div>
     <div class="sb-sec">Analyse</div>
     <div class="sb-item" data-p="annuel" data-tip="Tableau annuel"><span class="sb-icon">📈</span><span class="sb-lbl">Tableau annuel</span></div>
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.79</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 22:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.80</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 23:00</div></div>
 </aside>
 
 <div id="main">
@@ -1865,7 +1881,7 @@ function renderPayGrid(){
   // Monthly total expected (for current months shown)
   const curMonthKey = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
   const curMonthTot = mTotals[curMonthKey];
-  html += `<td colspan="2" style="padding:8px 10px;font-weight:700;font-size:.78rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
+  html += `<td colspan="1" style="padding:8px 10px;font-weight:700;font-size:.78rem;color:#fff;border-right:2px solid rgba(255,255,255,.1)">`;
   html += `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">`;
   html += `<span>📋 Attendu période: <strong style="font-family:monospace">${fE(totalDu)}</strong></span>`;
   html += `<span style="color:${totalRecu>=totalDu?'#a8e6af':'#f9a825'}">✓ Encaissé: <strong style="font-family:monospace">${fE(totalRecu)}</strong> <span style="font-size:.68rem;opacity:.7">${Math.round(totalRecu/(totalDu||1)*100)}%</span></span>`;
@@ -1890,8 +1906,8 @@ function renderPayGrid(){
 
   // ── Column header row ──
   html += '<tr>';
-  html += '<th style="min-width:90px">Logement</th>';
-  html += '<th style="min-width:130px;border-right:2px solid var(--bd)">Locataire · Loyer</th>';
+  html += '<th style="min-width:160px;border-right:2px solid var(--bd)">Logement · Locataire</th>';
+  html += '';
   cols.forEach(col=>{
     html += `<th class="pg-month-col${col.isFuture?' pg-future':''}">${col.lbl}</th>`;
   });
@@ -1931,8 +1947,7 @@ function renderPayGrid(){
       (displayLc.fin&&new Date(displayLc.fin)<new Date()?' → '+fD(displayLc.fin).slice(0,5)+' ✓':'') 
       : '';
     const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
-    html += `<td style="display:none">${_dispLc?(lg.loyer+lg.ch)+'€':'<em style=\"color:var(--t3);font-weight:400;font-size:.65rem\">—</em>'}</td>`;
-
+    
     cols.forEach(col=>{
       // Find which tenant was active during this month
       let activeLc;
@@ -5862,6 +5877,30 @@ function tabPay(f,el){
   rPays(f);
 }
 
+
+
+function toggleSbAccordion(id,el){
+  const acc=document.getElementById(id);
+  if(!acc) return;
+  const isOpen=acc.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.sb-accordion').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.sb-parent').forEach(p=>p.classList.remove('open'));
+  if(!isOpen){ acc.classList.add('open'); el.classList.add('open'); }
+}
+
+
+function navSub(p,el){
+  nav(p);
+  // Keep accordion open and mark active
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  // Open the accordion
+  const acc=document.getElementById('sbDep');
+  if(acc)acc.classList.add('open');
+  const parent=document.querySelector('.sb-parent');
+  if(parent)parent.classList.add('open');
+}
 
 </script>
 
