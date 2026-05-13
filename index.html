@@ -564,7 +564,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.73</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 12:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.73</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 14:00</div></div>
 </aside>
 
 <div id="main">
@@ -890,7 +890,8 @@ tr[onclick]{cursor:pointer}
 </div>
 <div style="font-size:.65rem;color:var(--t3);margin-top:2px">Laisser vide = bail à durée indéterminée</div>
 </div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
-<div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
+<div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="fg"><label>Forcer statut</label><select id="payStatutOverride" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="">Auto (calculé)</option><option value="travaux">🏗 Travaux</option></select></div>
+      <div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mComp"><div class="modal"><div class="mh"><span class="mtitle">Gérer les compteurs</span><button class="mclose" onclick="closeM('mComp')">✕</button></div><div class="mbody"><div id="compList" style="margin-bottom:14px"></div><div style="background:var(--s2);border-radius:var(--rs);padding:14px"><p style="font-size:.74rem;font-weight:700;margin-bottom:10px">＋ Nouveau compteur</p><div class="fr"><div class="fg"><label>Nom</label><input id="cNom"></div><div class="fg"><label>Type</label><select id="cType"><option value="eau">💧 Eau</option><option value="gaz">🔥 Gaz</option><option value="elec_mono">⚡ Électricité mono</option><option value="elec_bi">⚡ Élec. bihoraire HP/HC</option><option value="autre">📊 Autre</option></select></div></div><div class="fr"><div class="fg"><label>Unité</label><input id="cUnit" placeholder="kWh ou m³"></div><div class="fg"><label>Logement</label><select id="cLog"><option value="">Tous / Immeuble</option></select></div></div><button class="btn btn-p btn-sm" onclick="saveComp()">Ajouter</button></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mComp')">Fermer</button></div></div></div>
 <div class="overlay" id="mRel"><div class="modal" style="max-width:600px"><div class="mh"><span class="mtitle">Saisir un relevé</span><button class="mclose" onclick="closeM('mRel')">✕</button></div><div class="mbody">
   <div class="fr"><div class="fg"><label>Compteur *</label><select id="relComp" onchange="updateRelFields()"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Date *</label><input id="relDate" type="date"></div></div>
@@ -2011,6 +2012,19 @@ function renderPayGrid(){
       const dt=Date.now()-t0;
       if(Math.abs(dx)>40&&dy<80&&dt<500&&Math.abs(dx)>dy*0.8) shiftPayGrid(dx<0?1:-1);
     },{passive:true});
+    if(!wrap._keyHandlerAdded){
+      wrap._keyHandlerAdded=true;
+      wrap.setAttribute('tabindex','0');
+      wrap.style.outline='none';
+      wrap.addEventListener('keydown',e=>{
+        if(['ArrowLeft','ArrowRight','PageUp','PageDown'].includes(e.key)){
+          e.preventDefault();
+          const dir=(e.key==='ArrowRight'||e.key==='PageDown')?1:-1;
+          shiftPayGrid(dir*((e.key==='PageUp'||e.key==='PageDown')?3:1));
+        }
+      });
+      wrap.addEventListener('click',()=>wrap.focus());
+    }
     // Mouse drag to scroll horizontally
     wrap.addEventListener('mousedown',e=>{mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;},{passive:true});
     document.addEventListener('mousemove',e=>{if(!wrap._dragging)return;wrap.scrollLeft=wrap._scrollStart-(e.clientX-mx);},{passive:true});
