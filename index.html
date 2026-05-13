@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.64</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 19:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.65</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 19:30</div></div>
 </aside>
 
 <div id="main">
@@ -4550,9 +4550,10 @@ const ROLE_COLORS = {masteradmin:'role-masteradmin', admin:'role-admin', gestion
 
 // Default admin profile (always exists)
 function getProfiles(){
+  if(window._ksIsolated && currentProfile) return [currentProfile];
   try{ return JSON.parse(localStorage.getItem('ks_profiles')||'null') || [
     {id:'admin_default', name:'Admin', role:'masteradmin', pin:'0000', avatar:'👑', color:'#1a1a2e'}
-  ]; }catch(e){ return [{id:'admin_default', name:'Admin', role:'admin', pin:'0000', avatar:'👑', color:'#2d5a3d'}]; }
+  ]; }catch(e){ return [{id:'admin_default', name:'Admin', role:'masteradmin', pin:'0000', avatar:'👑', color:'#1a1a2e'}]; }
 }
 
 function saveProfiles(profiles){ localStorage.setItem('ks_profiles', JSON.stringify(profiles)); }
@@ -4941,6 +4942,8 @@ function logout(){
 
 // ── Profile Manager (accessible to admin) ──
 function showProfileManager(){
+  if(window._ksIsolated){ showToast('🔒 Non disponible en session isolée'); return; }
+  if(!currentProfile){ return; }
   openM('mProfiles');
   renderProfileManager();
 }
