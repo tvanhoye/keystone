@@ -400,8 +400,8 @@ tr[onclick]{cursor:pointer}
 .pay-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;cursor:grab}
 .pay-grid-wrap:active{cursor:grabbing}
 .pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:fixed}
-.pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center}
-.pay-grid th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);width:80px;min-width:80px;max-width:80px}
+.pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;top:0;z-index:2}
+.pay-grid th:first-child{text-align:left;position:sticky;left:0;top:0;z-index:4;background:var(--s2);width:80px;min-width:80px;max-width:80px}
 /* col2 sticky removed in v1.83 - col1 now contains merged logement+locataire */
 .pay-grid td{padding:4px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle;white-space:nowrap}
 .pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 6px;width:80px;min-width:80px;max-width:80px}
@@ -488,7 +488,7 @@ tr[onclick]{cursor:pointer}
 @media(max-width:700px){.ob-2col{grid-template-columns:1fr}.ob-card{max-height:95vh;border-radius:14px 14px 0 0;margin-top:auto}}
 
 /* ── LOGEMENT LIST VIEW ── */
-.lg-list-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s}
+.lg-list-item{display:flex;align-items:center;gap:16px;padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s}
 .lg-list-item:hover{background:var(--s2)}
 .lg-list-item:last-child{border-bottom:none}
 .lg-list-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
@@ -1800,7 +1800,7 @@ function setPayView(v){
   else rPays(payF);
 }
 
-function shiftPayGrid(dir){
+function shiftPayGrid(dir){const _kn=new Date();const _kf=new Date(_kn.getFullYear(),_kn.getMonth()-5+payGridOffset+dir,1);if(_kf<new Date(2023,8,1))return;
   payGridOffset += dir;
   renderPayGrid();
 }
@@ -2066,8 +2066,8 @@ function renderPayGrid(){
       wrap.addEventListener('click',()=>wrap.focus());
     }
     // Mouse drag to scroll horizontally
-    wrap.addEventListener('mousedown',e=>{mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;},{passive:true});
-    document.addEventListener('mousemove',e=>{if(!wrap._dragging)return;wrap.scrollLeft=wrap._scrollStart-(e.clientX-mx);},{passive:true});
+    wrap.addEventListener('mousedown',e=>{if(e.target.closest('button,input,select,a'))return;e.preventDefault();mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;});
+    document.addEventListener('mousemove',e=>{if(!wrap._dragging)return;e.preventDefault();wrap.scrollLeft=wrap._scrollStart-(e.clientX-mx);});
     document.addEventListener('mouseup',()=>{wrap._dragging=false;wrap.style.cursor='grab';},{passive:true});
   }
 }
