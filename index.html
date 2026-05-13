@@ -448,6 +448,7 @@ tr[onclick]{cursor:pointer}
 .pin-key:active{transform:scale(.92)}
 .pin-error{color:#c0392b;font-size:.75rem;margin-top:8px;min-height:18px}
 .profile-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;font-size:.62rem;font-weight:700}
+.role-masteradmin{background:#1a1a2e;color:#e8c547;font-weight:800}
 .role-admin{background:#e8f5e9;color:#1a6b2a}
 .role-gestionnaire{background:#e3f2fd;color:#1a3a8c}
 .role-lecture{background:#f3e5f5;color:#6b1a8c}
@@ -561,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.58</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 12:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.59</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 14:00</div></div>
 </aside>
 
 <div id="main">
@@ -949,7 +950,25 @@ tr[onclick]{cursor:pointer}
 <div class="overlay" id="mEnt"><div class="modal"><div class="mh"><span class="mtitle" id="mEntT">Intervention</span><button class="mclose" onclick="closeM('mEnt')">✕</button></div><div class="mbody"><input type="hidden" id="entId"><div class="fr"><div class="fg"><label>Titre *</label><input id="entTit"></div><div class="fg"><label>Priorité</label><select id="entPrio"><option value="urgent">🔴 Urgent</option><option value="planifié">🟡 Planifié</option><option value="terminé">🟢 Terminé</option></select></div></div><div class="fr"><div class="fg"><label>Logement</label><select id="entLog"><option value="">Tous</option></select></div><div class="fg"><label>Date</label><input id="entDate" type="date"></div></div><div class="fr"><div class="fg"><label>Prestataire</label><input id="entPrest"></div><div class="fg"><label>Coût (€)</label><input id="entCout" type="number"></div></div><div class="fg"><label>Description</label><textarea id="entDesc"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mEnt')">Annuler</button><button class="btn btn-p" onclick="saveEnt()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mDoc"><div class="modal"><div class="mh"><span class="mtitle" id="mDocT">Document</span><button class="mclose" onclick="closeM('mDoc')">✕</button></div><div class="mbody"><input type="hidden" id="docId"><div class="fr"><div class="fg"><label>Nom *</label><input id="docNom"></div><div class="fg"><label>Type</label><select id="docType"><option value="bail">Bail</option><option value="quittance">Quittance</option><option value="etat">État des lieux</option><option value="autre">Autre</option></select></div></div><div class="fr"><div class="fg"><label>Locataire</label><select id="docLoc"><option value="">Aucun</option></select></div><div class="fg"><label>Date</label><input id="docDate" type="date"></div></div><div class="fg"><label>Notes</label><textarea id="docNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDoc')">Annuler</button><button class="btn btn-p" onclick="saveDoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mRap"><div class="modal"><div class="mh"><span class="mtitle" id="mRapT">Rappel</span><button class="mclose" onclick="closeM('mRap')">✕</button></div><div class="mbody"><input type="hidden" id="rapId"><div class="fr"><div class="fg"><label>Titre *</label><input id="rapTit"></div><div class="fg"><label>Catégorie</label><select id="rapCat"><option>Entretien</option><option>Bail</option><option>Assurance</option><option>Fiscal</option><option>Autre</option></select></div></div><div class="fr"><div class="fg"><label>Date échéance *</label><input id="rapDate" type="date"></div><div class="fg"><label>Logement</label><select id="rapLog"><option value="">Tous</option></select></div></div><div class="fg"><label>Notes</label><textarea id="rapNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mRap')">Annuler</button><button class="btn btn-p" onclick="saveRap()">Enregistrer</button></div></div></div>
-<div class="overlay" id="mData"><div class="modal" style="max-width:440px"><div class="mh"><span class="mtitle">💾 Gestion des données</span><button class="mclose" onclick="closeM('mData')">✕</button></div><div class="mbody"><p style="font-size:.77rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Données stockées localement — exportez régulièrement.</p><div style="background:var(--acl);border:1px solid rgba(45,90,61,.15);border-radius:var(--rs);padding:10px;margin-bottom:14px;font-size:.77rem;color:var(--ac)"><strong>✅ Données protégées</strong> — jamais écrasées automatiquement.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-p" style="width:100%;justify-content:center" onclick="exportData()">📤 Exporter mes données (JSON)</button><label class="btn btn-s" style="width:100%;justify-content:center;cursor:pointer">📥 Importer des données (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label><button class="btn btn-d" style="width:100%;justify-content:center" onclick="clearAll()">🗑 Effacer toutes les données</button></div><div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button></div></div></div>
+<div class="overlay" id="mData"><div class="modal" style="max-width:440px"><div class="mh"><span class="mtitle">💾 Gestion des données</span><button class="mclose" onclick="closeM('mData')">✕</button></div><div class="mbody"><p style="font-size:.77rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Données stockées localement — exportez régulièrement.</p><div style="background:var(--acl);border:1px solid rgba(45,90,61,.15);border-radius:var(--rs);padding:10px;margin-bottom:14px;font-size:.77rem;color:var(--ac)"><strong>✅ Données protégées</strong> — jamais écrasées automatiquement.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-p" style="width:100%;justify-content:center" onclick="exportData()">📤 Exporter mes données (JSON)</button><label class="btn btn-s" style="width:100%;justify-content:center;cursor:pointer">📥 Importer des données (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label><button class="btn btn-d" style="width:100%;justify-content:center" onclick="clearAll()">🗑 Effacer toutes les données</button></div><div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--bd)">
+      <div style="font-size:.78rem;font-weight:700;color:var(--ac);margin-bottom:10px">🔗 Partager un projet</div>
+      <p style="font-size:.72rem;color:var(--t2);margin-bottom:10px">Générez un code à donner à un collègue pour qu'il rejoigne ce projet.</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <select id="codeGenBat" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.78rem;background:var(--sf)">
+          <option value="">-- Choisir un bâtiment --</option>
+        </select>
+        <select id="codeGenRole" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.78rem;background:var(--sf)">
+          <option value="admin">Admin Projet</option>
+          <option value="gestionnaire" selected>Gestionnaire</option>
+          <option value="lecture">Lecture seule</option>
+        </select>
+        <button class="btn btn-p" style="width:100%;justify-content:center" onclick="(()=>{const s=document.getElementById('codeGenBat');s.innerHTML='<option value=&quot;&quot;>-- Choisir --</option>'+bats.map(b=>'<option value=&quot;'+b.id+'&quot;>'+b.nom+'</option>').join('');})();generateProjectCode()">🔑 Générer le code</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="codeGenOutput" style="display:none;flex:1;padding:6px;border:1px solid var(--bd);border-radius:4px;font-size:.6rem;font-family:monospace;background:var(--bg);color:var(--t1)" readonly>
+          <button class="btn btn-s" onclick="copyProjectCode()" style="display:none" id="codeGenCopyBtn">📋</button>
+        </div>
+      </div></div></div></div>
 
 <div id="sb-overlay" onclick="closeMobSb()"></div>
 <nav id="mob-nav"><div class="mn-items">
@@ -4523,14 +4542,14 @@ document.addEventListener('keydown', e=>{
 // ══════════════════════════════════════════════
 // PROFILES & AUTH
 // ══════════════════════════════════════════════
-const ROLE_ICONS = {admin:'👑', gestionnaire:'🔧', lecture:'👁'};
-const ROLE_LABELS = {admin:'Administrateur', gestionnaire:'Gestionnaire', lecture:'Lecture seule'};
-const ROLE_COLORS = {admin:'role-admin', gestionnaire:'role-gestionnaire', lecture:'role-lecture'};
+const ROLE_ICONS = {masteradmin:'👑', admin:'🏗', gestionnaire:'🔧', lecture:'👁'};
+const ROLE_LABELS = {masteradmin:'Master Admin', admin:'Admin Projet', gestionnaire:'Gestionnaire', lecture:'Lecture seule'};
+const ROLE_COLORS = {masteradmin:'role-masteradmin', admin:'role-admin', gestionnaire:'role-gestionnaire', lecture:'role-lecture'};
 
 // Default admin profile (always exists)
 function getProfiles(){
   try{ return JSON.parse(localStorage.getItem('ks_profiles')||'null') || [
-    {id:'admin_default', name:'Admin', role:'admin', pin:'0000', avatar:'👑', color:'#2d5a3d'}
+    {id:'admin_default', name:'Admin', role:'masteradmin', pin:'0000', avatar:'👑', color:'#1a1a2e'}
   ]; }catch(e){ return [{id:'admin_default', name:'Admin', role:'admin', pin:'0000', avatar:'👑', color:'#2d5a3d'}]; }
 }
 
@@ -4802,7 +4821,7 @@ function loginNewCode(){
   }catch(e){showToast('Code incorrect ou corrompu');}
 }
 function loginShowAdmin(){
-  loginSelectedProfile = getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'admin',pin:'0000',avatar:'👑'};
+  loginSelectedProfile = getProfiles().find(p=>p.role==='masteradmin') || getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'masteradmin',pin:'0000',avatar:'👑'};
   document.getElementById('loginStep1').style.display='none';
   document.getElementById('loginStep2').style.display='';
   pinEntry=''; updatePinDots();
@@ -4833,15 +4852,20 @@ function doLogin(profile){
 function applyRoleRestrictions(){
   if(!currentProfile) return;
   const role = currentProfile.role;
-  if(role==='admin'){
-    // Admin: show badge and logout
+  if(role==='masteradmin'||role==='admin'){
+    // Admin levels: show badge and logout
     const tdate=document.getElementById('tdate');
     if(tdate){
-      const badge=`<span class="profile-badge role-admin" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">${currentProfile.avatar||'👑'} ${currentProfile.name}</span>`;
+      const badgeClass = role==='masteradmin'?'role-masteradmin':'role-admin';
+      const badge=`<span class="profile-badge ${badgeClass}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">${currentProfile.avatar||ROLE_ICONS[role]} ${currentProfile.name}</span>`;
       tdate.innerHTML=badge;
     }
     const lb=document.getElementById('logoutBtn');
     if(lb) lb.style.display='';
+    // Project admin: hide masteradmin-only items
+    if(role==='admin'){
+      document.querySelectorAll('[data-masteronly]').forEach(el=>el.style.display='none');
+    }
     return;
   }
 
@@ -5597,6 +5621,33 @@ function updatePinDots(){
     const d=document.getElementById('pd'+i);
     if(d) d.className='pin-dot'+(i<pinEntry.length?' filled':'');
   }
+}
+
+
+function generateProjectCode(){
+  const batId = document.getElementById('codeGenBat')?.value;
+  const role = document.getElementById('codeGenRole')?.value || 'gestionnaire';
+  if(!batId){showToast('Choisissez un bâtiment');return;}
+  const bat = bats.find(b=>b.id===batId);
+  if(!bat){showToast('Bâtiment introuvable');return;}
+  const payload = {
+    v:1,
+    nom: bat.nom,
+    bats: [bat],
+    lgs: lgs.filter(l=>l.batId===batId).map(l=>({id:l.id,nom:l.nom,batId:l.batId,loyer:l.loyer,ch:l.ch,type:l.type})),
+    role: role,
+    generatedBy: currentProfile?.name||'Admin',
+    generatedAt: new Date().toISOString().slice(0,10)
+  };
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const out = document.getElementById('codeGenOutput');
+  if(out){ out.value=code; out.style.display=''; }
+  showToast('✅ Code généré !');
+}
+function copyProjectCode(){
+  const out = document.getElementById('codeGenOutput');
+  if(!out) return;
+  navigator.clipboard.writeText(out.value).then(()=>showToast('📋 Code copié !'));
 }
 
 </script>
