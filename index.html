@@ -496,10 +496,11 @@ tr[onclick]{cursor:pointer}
 #lgViewGrid.active,#lgViewList.active,#lgViewCompact.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
 
 /* ── DRIVE SYNC ── */
-#syncBar{position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1a1814;color:#fff;
+#syncBar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#1a1814;color:#fff;
   padding:8px 16px;font-size:.75rem;display:none;align-items:center;gap:10px;
   box-shadow:0 -2px 12px rgba(0,0,0,.3)}
 #syncBar.show{display:flex}
+#syncBar.show~* .page,#syncBar.show~#main,body.sync-active .page{padding-bottom:52px!important}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#2d5a3d;flex-shrink:0}
 .sync-dot.syncing{background:#b5780a;animation:pulse .8s infinite}
 .sync-dot.error{background:#c0392b}
@@ -550,7 +551,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-item" data-p="batiments" data-tip="Bâtiments"><span class="sb-icon">🏗</span><span class="sb-lbl">Bâtiments</span></div>
     <div class="sb-item" data-p="logements" data-tip="Logements"><span class="sb-icon">🏢</span><span class="sb-lbl">Logements</span></div>
     <div class="sb-item" data-p="locataires" data-tip="Locataires"><span class="sb-icon">👥</span><span class="sb-lbl">Locataires</span></div>
-    <div class="sb-item" data-p="paiements" data-tip="Paiements"><span class="sb-icon">💶</span><span class="sb-lbl">Paiements</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
+    <div class="sb-item" data-p="paiements" data-tip="Loyers"><span class="sb-icon">💶</span><span class="sb-lbl">Loyers</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
     <div class="sb-sec">Suivi</div>
     <div class="sb-item" data-p="charges" data-tip="Charges &amp; Compteurs"><span class="sb-icon">⚡</span><span class="sb-lbl">Charges &amp; Compteurs</span></div>
     <div class="sb-item" data-p="banque" data-tip="Banque &amp; Crédits"><span class="sb-icon">🏦</span><span class="sb-lbl">Banque</span></div>
@@ -562,7 +563,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.69</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 22:30</div></div>
+  <div class="sb-foot"><div>Keystone v1.70</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 23:00</div></div>
 </aside>
 
 <div id="main">
@@ -669,7 +670,7 @@ tr[onclick]{cursor:pointer}
     <!-- PAIEMENTS -->
     <div class="page" id="page-paiements">
       <div class="sh-row">
-        <div><h2>Paiements</h2></div>
+        <div><h2>Loyers</h2></div>
         <div class="sh-right">
           <div style="display:flex;gap:2px;background:var(--s2);padding:3px;border-radius:var(--rs);border:1px solid var(--bd)">
             <button id="payViewGrid" class="btn btn-xs active" onclick="setPayView('grid')" title="Grille">⊞ Grille</button>
@@ -712,7 +713,16 @@ tr[onclick]{cursor:pointer}
     <!-- BANQUE -->
     <div class="page" id="page-banque">
       <div class="sh-row"><div><h2>Banque &amp; Crédits</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Crédit</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
-      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this)">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this)">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this)">🧾 Autres dépenses</button></div>
+      <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this)">🏦 Crédits</button><button class="tab" onclick="tabBanque('charges',this)">📋 Charges fixes</button><button class="tab" onclick="tabBanque('depenses',this)">🧾 Dépenses</button></div>
+      <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
+        <button class="btn btn-xs btn-s active" onclick="filterDepCat('',this)">Tout</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('energie',this)">⚡ Énergie</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('eau',this)">💧 Eau</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('rc',this)">🛡 RC</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('banque',this)">🏦 Banque</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('travaux',this)">🔨 Travaux</button>
+        <button class="btn btn-xs btn-s" onclick="filterDepCat('autres',this)">📦 Autres</button>
+      </div>
       <div id="banqueTabContent"></div>
       <div class="dash-charts" id="banqueCharts"></div>
       <div id="banqueGrid"></div>
@@ -926,7 +936,8 @@ tr[onclick]{cursor:pointer}
 </div>
 <div class="mfoot"><button class="btn btn-s" onclick="closeM('mRel')">Annuler</button><button class="btn btn-p" onclick="saveRel()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mDepense"><div class="modal" style="max-width:460px"><div class="mh"><span class="mtitle" id="mDepenseT">Ajouter une dépense</span><button class="mclose" onclick="closeM('mDepense')">✕</button></div><div class="mbody"><input type="hidden" id="dpId">
-  <div class="fr"><div class="fg"><label>Libellé *</label><input id="dpNom" placeholder="Ex: Travaux toiture"></div><div class="fg"><label>Bâtiment</label><select id="dpBat"><option value="">Général</option></select></div></div>
+  <div class="fr"><div class="fg"><label>Libellé *</label><input id="dpNom" placeholder="Ex: Travaux toiture"></div>
+      <div class="fg"><label>Catégorie</label><select id="depCateg" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="energie">⚡ Énergie</option><option value="eau">💧 Eau</option><option value="rc">🛡 RC</option><option value="banque">🏦 Banque</option><option value="travaux">🔨 Travaux</option><option value="autres" selected>📦 Autres</option></select></div><div class="fg"><label>Bâtiment</label><select id="dpBat"><option value="">Général</option></select></div></div>
   <div class="fr"><div class="fg"><label>Montant (€) *</label><input id="dpMontant" type="number" placeholder="1500"></div><div class="fg"><label>Date *</label><input id="dpDate" type="date"></div></div>
   <div class="fr"><div class="fg"><label>Catégorie</label><select id="dpCat"><option>Travaux</option><option>Assurance</option><option>Taxe</option><option>Précompte immobilier</option><option>Revenu cadastral</option><option>Frais de gestion</option><option>Honoraires</option><option>Divers</option></select></div><div class="fg"><label>Payé</label><select id="dpPaye"><option value="oui">Oui</option><option value="non">Non</option></select></div></div>
   <div class="fg"><label>Notes</label><textarea id="dpNotes"></textarea></div>
@@ -1987,11 +1998,16 @@ function renderPayGrid(){
     let sx=0,sy=0,t0=0,mx=0;
     // Touch swipe for month navigation
     wrap.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;t0=Date.now();},{passive:true});
+    wrap.addEventListener('touchmove',e=>{
+      const dx=e.touches[0].clientX-sx;
+      const dy=Math.abs(e.touches[0].clientY-sy);
+      if(Math.abs(dx)>15&&Math.abs(dx)>dy*0.8) e.preventDefault();
+    },{passive:false});
     wrap.addEventListener('touchend',e=>{
       const dx=e.changedTouches[0].clientX-sx;
       const dy=Math.abs(e.changedTouches[0].clientY-sy);
       const dt=Date.now()-t0;
-      if(Math.abs(dx)>70&&dy<60&&dt<350&&Math.abs(dx)>Math.abs(dy)*1.5) shiftPayGrid(dx<0?1:-1);
+      if(Math.abs(dx)>40&&dy<80&&dt<500&&Math.abs(dx)>dy*0.8) shiftPayGrid(dx<0?1:-1);
     },{passive:true});
     // Mouse drag to scroll horizontally
     wrap.addEventListener('mousedown',e=>{mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;},{passive:true});
@@ -2899,6 +2915,12 @@ function tabBanque(tab, btn){
   document.querySelectorAll('#banqueTabs .tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
   rBanqueTab();
+}
+function filterDepCat(cat,el){
+  document.querySelectorAll('#depCatFilter .btn').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  window._depCatFilter=cat;
+  tabBanque('depenses',document.querySelector('#banqueTabs .tab:nth-child(3)'));
 }
 function rBanqueTab(){
   const cont=document.getElementById('banqueTabContent');
@@ -5724,12 +5746,39 @@ function activateDemo(){
   window._ksIsolated=true;
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   bats=[{id:'bat_d1',nom:'Résidence Les Acacias',addr:'15 rue des Acacias, Liège'},{id:'bat_d2',nom:'Appartements du Parc',addr:'8 allée du Parc, Seraing'}];
-  lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'}];
-  lcs=[{id:'lc_d1',lgId:'lg_d1',prenom:'Thomas',nom:'MARTIN',tel:'04/221.33.44',email:'t.martin@demo.be',jour:1,ent:'2022-03-01',fin:'2025-02-28',urg:'',notes:''},{id:'lc_d2',lgId:'lg_d2',prenom:'Isabelle',nom:'DUPONT',tel:'04/332.44.55',email:'i.dupont@demo.be',jour:1,ent:'2021-09-01',fin:'',urg:'',notes:''},{id:'lc_d3',lgId:'lg_d3',prenom:'Marc',nom:'LEJEUNE',tel:'04/443.55.66',email:'',jour:5,ent:'2023-01-01',fin:'',urg:'',notes:''},{id:'lc_d4',lgId:'lg_d5',prenom:'Sophie',nom:'RENARD',tel:'04/554.66.77',email:'s.renard@demo.be',jour:1,ent:'2020-06-01',fin:'',urg:'',notes:''}];
-  pys=[{id:'py_d1',lcId:'lc_d1',mois:'2026-04',rec:830,du:830,stat:'payé'},{id:'py_d2',lcId:'lc_d2',mois:'2026-04',rec:0,du:1000,stat:'retard'},{id:'py_d3',lcId:'lc_d3',mois:'2026-04',rec:720,du:720,stat:'payé'},{id:'py_d4',lcId:'lc_d4',mois:'2026-04',rec:910,du:910,stat:'payé'},{id:'py_d5',lcId:'lc_d1',mois:'2026-03',rec:830,du:830,stat:'payé'},{id:'py_d6',lcId:'lc_d2',mois:'2026-03',rec:0,du:1000,stat:'retard'}];
-  ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'}];
-  dcs=[];rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''}];cos=[];rls=[];
+  lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'},{id:'lg_d6',batId:'bat_d2',nom:'Apt C',loyer:760,ch:80,type:'F2'}];
+  lcs=[
+    {id:'lc_d1',lgId:'lg_d1',prenom:'Thomas',nom:'MARTIN',tel:'04/221.33.44',email:'t.martin@demo.be',jour:1,ent:'2022-03-01',fin:'',urg:'',notes:''},
+    {id:'lc_d2',lgId:'lg_d2',prenom:'Isabelle',nom:'DUPONT',tel:'04/332.44.55',email:'i.dupont@demo.be',jour:1,ent:'2021-09-01',fin:'',urg:'',notes:''},
+    {id:'lc_d3',lgId:'lg_d3',prenom:'Marc',nom:'LEJEUNE',tel:'04/443.55.66',email:'',jour:5,ent:'2023-01-01',fin:'',urg:'',notes:''},
+    {id:'lc_d4',lgId:'lg_d5',prenom:'Sophie',nom:'RENARD',tel:'04/554.66.77',email:'s.renard@demo.be',jour:1,ent:'2020-06-01',fin:'',urg:'',notes:''},
+    {id:'lc_d5',lgId:'lg_d6',prenom:'Pierre',nom:'LAMBERT',tel:'04/665.77.88',email:'p.lambert@demo.be',jour:1,ent:'2024-01-01',fin:'',urg:'',notes:''}
+  ];
+  // 18 months of payments
+  const makeP=(lcId,mois,rec,du,stat)=>({id:'py_'+lcId+'_'+mois,lcId,mois,rec,du,stat,date:mois+'-05',mode:'virement'});
+  pys=[];
+  [['lc_d1',750+80],['lc_d2',900+100],['lc_d3',650+70],['lc_d4',820+90],['lc_d5',760+80]].forEach(([id,tot])=>{
+    ['2024-09','2024-10','2024-11','2024-12','2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03'].forEach(m=>{
+      const retard=id==='lc_d2'&&(m==='2026-03'||m==='2026-04');
+      pys.push(makeP(id,m,retard?0:tot,tot,retard?'retard':'payé'));
+    });
+  });
+  pys.push(makeP('lc_d2','2026-04',0,1000,'retard'));
+  // Meter readings from 2024
+  cos=[
+    {id:'co_d1',nom:'Compteur Eau D1',type:'eau',unit:'m3',lgId:'lg_d1',notes:''},
+    {id:'co_d2',nom:'Compteur Elec D1',type:'elec',unit:'kWh',lgId:'lg_d1',notes:''},
+    {id:'co_d3',nom:'Compteur Eau D2',type:'eau',unit:'m3',lgId:'lg_d2',notes:''}
+  ];
+  rls=[
+    {id:'rl1',coId:'co_d1',date:'2024-01-01',val:1200,notes:''},{id:'rl2',coId:'co_d1',date:'2024-07-01',val:1340,notes:''},{id:'rl3',coId:'co_d1',date:'2025-01-01',val:1490,notes:''},{id:'rl4',coId:'co_d1',date:'2025-07-01',val:1620,notes:''},{id:'rl5',coId:'co_d1',date:'2026-01-01',val:1780,notes:''},
+    {id:'rl6',coId:'co_d2',date:'2024-01-01',val:8400,notes:''},{id:'rl7',coId:'co_d2',date:'2024-07-01',val:9100,notes:''},{id:'rl8',coId:'co_d2',date:'2025-01-01',val:9850,notes:''},{id:'rl9',coId:'co_d2',date:'2025-07-01',val:10500,notes:''},{id:'rl10',coId:'co_d2',date:'2026-01-01',val:11200,notes:''},
+    {id:'rl11',coId:'co_d3',date:'2024-01-01',val:540,notes:''},{id:'rl12',coId:'co_d3',date:'2025-01-01',val:680,notes:''},{id:'rl13',coId:'co_d3',date:'2026-01-01',val:820,notes:''}
+  ];
+  ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'},{id:'en_d2',lgId:'lg_d3',tit:'Peinture couloir',prio:'normal',stat:'planifié',date:'2026-06-15',notes:''}];
+  dcs=[];rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
   const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
   doLogin(p);
   setTimeout(()=>{rDash();nav('dashboard');},50);
