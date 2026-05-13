@@ -562,7 +562,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.61</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 16:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.62</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 17:00</div></div>
 </aside>
 
 <div id="main">
@@ -4820,6 +4820,23 @@ function loginNewCode(){
     showToast('✅ Projet chargé : '+p.name);
   }catch(e){showToast('Code incorrect ou corrompu');}
 }
+function loginShowUsers(){
+  // Show existing non-admin profiles
+  const profiles = getProfiles().filter(p=>p.role!=='masteradmin');
+  if(profiles.length===0){ showToast('Aucun utilisateur créé. Utilisez "Nouveau" ou demandez un code projet.'); return; }
+  const grid = document.getElementById('profileGridUsers');
+  if(grid){
+    grid.style.gridTemplateColumns = profiles.length<=2?'1fr 1fr':profiles.length<=3?'1fr 1fr 1fr':'1fr 1fr';
+    grid.innerHTML = profiles.map(p=>`<div class="profile-btn" id="pbtn_${p.id}" onclick="selectProfile('${p.id}')">
+      <div class="profile-avatar">${p.avatar||'👤'}</div>
+      <div class="profile-name">${p.name}</div>
+      <div class="profile-role">${ROLE_LABELS[p.role]||p.role}</div>
+    </div>`).join('');
+  }
+  document.getElementById('loginStep1').style.display='none';
+  document.getElementById('loginStepUsers').style.display='';
+  loginSelectedProfile = null;
+}
 function loginShowAdmin(){
   loginSelectedProfile = getProfiles().find(p=>p.role==='masteradmin') || getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'masteradmin',pin:'0000',avatar:'👑'};
   document.getElementById('loginStep1').style.display='none';
@@ -5688,11 +5705,19 @@ function activateDemo(){
     <div id="loginStep1">
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
         <button class="btn btn-p" style="width:100%;padding:14px;font-size:.95rem;font-weight:700" onclick="loginAsNew()">✨ Nouveau</button>
-        <button class="btn" style="width:100%;padding:14px;font-size:.95rem;font-weight:700;background:var(--s2);border:2px solid var(--bd)" onclick="activateDemo()">🎭 Démo</button>
+        <button class="btn btn-p" style="width:100%;padding:14px;font-size:.95rem;font-weight:700;background:#1a5276" onclick="loginShowUsers()">👤 Se connecter</button>
+        <button class="btn" style="width:100%;padding:12px;font-size:.85rem;font-weight:600;background:var(--s2);border:2px solid var(--bd)" onclick="activateDemo()">🎭 Démo</button>
       </div>
       <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
         <button onclick="loginShowAdmin()" style="background:none;border:none;color:var(--t3);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:4px" onmouseover="this.style.color='var(--t2)'" onmouseout="this.style.color='var(--t3)'">⚙ Admin</button>
       </div>
+    </div>
+    <!-- Step Users: existing profiles -->
+    <div id="loginStepUsers" style="display:none">
+      <div style="font-size:.8rem;color:var(--t2);margin-bottom:14px">Choisissez votre profil</div>
+      <div class="profile-grid" id="profileGridUsers"></div>
+      <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="loginSelectProfile()">Connexion →</button>
+      <button onclick="document.getElementById('loginStepUsers').style.display='none';document.getElementById('loginStep1').style.display='';" style="background:none;border:none;color:var(--t3);font-size:.7rem;cursor:pointer;margin-top:10px;font-family:inherit">← Retour</button>
     </div>
     <!-- Step New: code or empty -->
     <div id="loginStepNew" style="display:none">
