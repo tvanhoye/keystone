@@ -563,7 +563,7 @@ tr[onclick]{cursor:pointer}
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.70</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 13/05/2026 à 23:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.71</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026 à 08:00</div></div>
 </aside>
 
 <div id="main">
@@ -4726,22 +4726,23 @@ let loginSelectedProfile = null;
 let pinEntry = '';
 
 function checkLogin(){
-  const profiles = getProfiles();
-  const saved = sessionStorage.getItem('ks_current_profile');
-  if(saved){
-    try{ currentProfile = JSON.parse(saved); applyRoleRestrictions(); return; }catch(e){}
+  const profiles=getProfiles();
+  // 1. Persistent: check localStorage for masteradmin across sessions
+  const lsSaved=localStorage.getItem('ks_'+'current'+'_profile');
+  if(lsSaved&&!sessionStorage.getItem('ks_isolated')){
+    try{
+      const p=JSON.parse(lsSaved);
+      if(p&&p.role==='masteradmin'){currentProfile=p;applyRoleRestrictions();return;}
+    }catch(e){localStorage.removeItem('ks_'+'current'+'_profile');}
   }
-  // Auto-login: si profil unique ou admin_default sans PIN, connexion directe
-  const admin = profiles.find(p=>p.id==='admin_default')||profiles[0];
-  if(admin && (!admin.pin || admin.pin==='0000')){
-    currentProfile = admin;
-    sessionStorage.setItem('ks_current_profile', JSON.stringify(admin));
-    applyRoleRestrictions();
-    return;
+  // 2. Temporary: sessionStorage for current tab
+  const ssSaved=sessionStorage.getItem('ks_'+'current'+'_profile');
+  if(ssSaved){
+    try{currentProfile=JSON.parse(ssSaved);applyRoleRestrictions();return;}catch(e){}
   }
+  // 3. No session: show login screen
   showLoginScreen();
 }
-
 function showLoginScreen(){
   const screen = document.getElementById('loginScreen');
   if(screen) screen.style.display='flex';
@@ -4893,7 +4894,12 @@ function loginBack(){
 
 function doLogin(profile){
   currentProfile = profile;
-  sessionStorage.setItem('ks_current_profile', JSON.stringify(profile));
+  // Persist masteradmin across sessions, isolated sessions only in tab
+  if(profile.role==='masteradmin'&&!window._ksIsolated){
+    localStorage.setItem('ks_current_profile', JSON.stringify(profile));
+  } else {
+    sessionStorage.setItem('ks_current_profile', JSON.stringify(profile));
+  }
   // Remember this profile on this device
   const recent = JSON.parse(localStorage.getItem('ks_recent_profiles')||'[]');
   const idx = recent.indexOf(profile.id);
@@ -4963,6 +4969,7 @@ function applyRoleRestrictions(){
 function logout(){
   sessionStorage.setItem('ks_logout_pending','1');
   sessionStorage.removeItem('ks_current_profile');
+  localStorage.removeItem('ks_current_profile');
   sessionStorage.removeItem('ks_isolated');
   window._ksIsolated=false;
   currentProfile=null;
