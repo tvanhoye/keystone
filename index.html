@@ -4310,7 +4310,9 @@ async function driveSave(silent){
         headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'multipart/related; boundary='+boundary},
         body
       });
+      if(!resp.ok)throw new Error('Création fichier Drive: '+resp.status);
       const rd=await resp.json();
+      if(!rd.id)throw new Error('Création fichier Drive: réponse sans id');
       driveFileId=rd.id;
       sessionStorage.setItem('ks_drive',JSON.stringify({token:driveToken,expiry:Date.now()+3500000,fileId:driveFileId,email:driveEmail}));
       const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
@@ -4318,7 +4320,8 @@ async function driveSave(silent){
       if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
       return;
     }
-    await fetch(url,{method,headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},body:payload});
+    const respPatch=await fetch(url,{method,headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},body:payload});
+    if(!respPatch.ok)throw new Error('Sauvegarde Drive: '+respPatch.status);
     const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
     syncBarShow('Sauvegardé — '+ts);
     if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
