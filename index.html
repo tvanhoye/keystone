@@ -1209,7 +1209,7 @@ function fillLogCompteurs(selectedIds){
   cont.innerHTML = cos.map(comp => {
     const checked = selectedIds && selectedIds.includes(comp.id) ? 'checked' : '';
     const ico = {eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
-    return `<label style="display:flex;align-items:center;gap:5px;padding:4px 8px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;font-size:.76rem;background:var(--sf)">
+    return `<label style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid var(--bd);border-radius:999px;cursor:pointer;font-size:.7rem;background:var(--sf);white-space:nowrap;line-height:1.5">
       <input type="checkbox" value="${comp.id}" ${checked} style="accent-color:var(--ac)"> ${ico} ${comp.nom}
     </label>`;
   }).join('');
