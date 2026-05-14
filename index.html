@@ -603,7 +603,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.82</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026 à 10:00</div></div>
+  <div class="sb-foot"><div>Keystone v1.88</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -1649,6 +1649,7 @@ function rLgs(){
 
 function editLg(id){
   const l=lgs.find(x=>x.id===id);if(!l)return;
+  window._pendingHist=l.loyerHist?[...l.loyerHist]:null;
   document.getElementById('mLogT').textContent='Modifier le logement';
   document.getElementById('lId').value=l.id;
   document.getElementById('lNom').value=l.nom;document.getElementById('lType').value=l.type;
@@ -1677,13 +1678,57 @@ function saveLog(){
   if(isNaN(loyer)) missingLg.push('Loyer');
   if(missingLg.length){alert('Champs manquants : '+missingLg.join(', '));return;}
   const eid=document.getElementById('lId').value;
-  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist:(window._pendingHist||(eid?(lgs.find(x=>x.id===eid)||{}).loyerHist:null)||[])};
+  const existingHist=eid?((lgs.find(x=>x.id===eid)||{}).loyerHist||[]):[];
+  const loyerHist=Array.isArray(window._pendingHist)?window._pendingHist:existingHist;
+  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist};
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  window._pendingHist=null;
   closeM('mLog');rLgs();
 }
-function getLoyerFor(lg,monthKey){const h=lg.loyerHist||[];if(!h.length)return{loyer:lg.loyer||0,ch:lg.ch||0};const t=monthKey+'-01';const v=h.filter(e=>e.from<=t).sort((a,b)=>b.from.localeCompare(a.from));return v.length?{loyer:+v[0].loyer||0,ch:+v[0].ch||0}:{loyer:lg.loyer||0,ch:lg.ch||0};} function renderLoyerHist(lg){const cont=document.getElementById('lHistList');if(!cont)return;const h=window._pendingHist||lg.loyerHist||[];if(!h.length){cont.innerHTML='<i style="color:var(--t3)">Aucune indexation. Loyer actuel : '+fE(lg.loyer||0)+' + '+fE(lg.ch||0)+' charges</i>';return;}const s=[...h].sort((a,b)=>b.from.localeCompare(a.from));cont.innerHTML=s.map(e=>'<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--bd);align-items:center"><span style="flex:1">'+e.from+'</span><span style="flex:1">'+fE(e.loyer)+'</span><span style="flex:1;color:var(--t3)">+'+fE(e.ch||0)+'</span><button type="button" class="btn btn-d btn-xs" onclick="delIndex(\''+e.id+'\')">×</button></div>').join('');} function getLoyerFor(lg,monthKey){const h=lg.loyerHist||[];if(!h.length)return{loyer:lg.loyer||0,ch:lg.ch||0};const t=monthKey+'-01';const v=h.filter(e=>e.from<=t).sort((a,b)=>b.from.localeCompare(a.from));return v.length?{loyer:+v[0].loyer||0,ch:+v[0].ch||0}:{loyer:lg.loyer||0,ch:lg.ch||0};} function renderLoyerHist(lg){const c=document.getElementById('lHistList');if(!c)return;const h=window._pendingHist||lg.loyerHist||[];if(!h.length){c.innerHTML='<i style="color:var(--t3)">Aucune indexation. Loyer actuel: '+fE(lg.loyer||0)+' + '+fE(lg.ch||0)+' charges</i>';return;}c.innerHTML=[...h].sort((a,b)=>b.from.localeCompare(a.from)).map(e=>'<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--bd);align-items:center"><span style="flex:1">'+e.from+'</span><span style="flex:1">'+fE(e.loyer)+'</span><span style="flex:1;color:var(--t3)">+'+fE(e.ch||0)+'</span><button type="button" class="btn btn-d btn-xs" onclick="delIndex(\''+e.id+'\')">×</button></div>').join('');} function openIndexModal(){const lg=lgs.find(x=>x.id===document.getElementById('lId').value);const today=new Date().toISOString().slice(0,10);document.getElementById('idxFrom').value=today;document.getElementById('idxLoyer').value=lg?(lg.loyer||0):0;document.getElementById('idxCh').value=lg?(lg.ch||0):0;document.getElementById('mIdx').classList.add('open');} function addIndex(){const from=document.getElementById('idxFrom').value;const loyer=parseFloat(document.getElementById('idxLoyer').value);const ch=parseFloat(document.getElementById('idxCh').value)||0;if(!from||isNaN(loyer)){alert('Date et loyer requis');return;}const lgId=document.getElementById('lId').value;const lg=lgs.find(x=>x.id===lgId);if(!window._pendingHist)window._pendingHist=[...((lg&&lg.loyerHist)||[])];window._pendingHist.push({id:uid(),from,loyer,ch});closeM('mIdx');renderLoyerHist(lg||{});} function delIndex(eid){if(!confirm('Supprimer cette indexation ?'))return;const lgId=document.getElementById('lId').value;const lg=lgs.find(x=>x.id===lgId);if(!window._pendingHist)window._pendingHist=[...((lg&&lg.loyerHist)||[])];window._pendingHist=window._pendingHist.filter(e=>e.id!==eid);renderLoyerHist(lg||{});} function delLg(id){if(!confirm('Supprimer ce logement ?'))return;lgs=lgs.filter(l=>l.id!==id);sv('lg',lgs);rLgs();}function getLoyerFor(lg,monthKey){const h=(window._pendingHist&&document.getElementById('mLog').classList.contains('open')&&document.getElementById('lId').value===lg.id)?window._pendingHist:(lg.loyerHist||[]);if(!h||!h.length)return{loyer:lg.loyer||0,ch:lg.ch||0};const t=monthKey+'-01';const valid=h.filter(e=>e.from<=t).sort((a,b)=>b.from.localeCompare(a.from));if(valid.length)return{loyer:+valid[0].loyer||0,ch:+valid[0].ch||0};return{loyer:lg.loyer||0,ch:lg.ch||0};}function renderLoyerHist(lg){const cont=document.getElementById('lHistList');const h=window._pendingHist||lg.loyerHist||[];if(!h.length){cont.innerHTML='<div style="color:var(--t3);font-style:italic">Aucune indexation. Loyer actuel : '+fE(lg.loyer)+' + '+fE(lg.ch||0)+' charges</div>';return;}const sorted=[...h].sort((a,b)=>b.from.localeCompare(a.from));cont.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;padding:4px 6px;font-weight:700;font-size:.7rem;color:var(--t3);border-bottom:1px solid var(--bd)"><div>À partir de</div><div>Loyer HC</div><div>Charges</div><div></div></div>'+sorted.map((e,i)=>'<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;padding:4px 6px;border-bottom:1px solid var(--bd);align-items:center"><div>'+e.from+'</div><div>'+fE(e.loyer)+'</div><div>'+fE(e.ch||0)+'</div><button type="button" class="btn btn-d btn-xs" onclick="delIndex(\''+e.id+'\')">×</button></div>').join('');}function openIndexModal(){const lg=lgs.find(x=>x.id===document.getElementById('lId').value);const today=new Date().toISOString().slice(0,10);const curLoyer=lg?lg.loyer:0;const curCh=lg?(lg.ch||0):0;document.getElementById('idxFrom').value=today;document.getElementById('idxLoyer').value=curLoyer;document.getElementById('idxCh').value=curCh;document.getElementById('mIdx').classList.add('open');}function getLoyerFor(lg,monthKey){const h=(window._pendingHist&&document.getElementById('mLog').classList.contains('open')&&document.getElementById('lId').value===lg.id)?window._pendingHist:(lg.loyerHist||[]);if(!h||!h.length)return{loyer:lg.loyer||0,ch:lg.ch||0};const t=monthKey+'-01';const valid=h.filter(e=>e.from<=t).sort((a,b)=>b.from.localeCompare(a.from));if(valid.length)return{loyer:+valid[0].loyer||0,ch:+valid[0].ch||0};return{loyer:lg.loyer||0,ch:lg.ch||0};}
+function delLg(id){if(!confirm('Supprimer ce logement ?'))return;lgs=lgs.filter(l=>l.id!==id);sv('lg',lgs);rLgs();}
+function getLoyerFor(lg,monthKey){
+  const modalOpenForLg=window._pendingHist&&document.getElementById('mLog').classList.contains('open')&&document.getElementById('lId').value===lg.id;
+  const h=modalOpenForLg?window._pendingHist:(lg.loyerHist||[]);
+  if(!h.length)return{loyer:lg.loyer||0,ch:lg.ch||0};
+  const t=monthKey+'-01';
+  const v=h.filter(e=>e.from<=t).sort((a,b)=>b.from.localeCompare(a.from));
+  return v.length?{loyer:+v[0].loyer||0,ch:+v[0].ch||0}:{loyer:lg.loyer||0,ch:lg.ch||0};
+}
+function renderLoyerHist(lg){
+  const cont=document.getElementById('lHistList');if(!cont)return;
+  const h=window._pendingHist||lg.loyerHist||[];
+  if(!h.length){cont.innerHTML='<div style="color:var(--t3);font-style:italic">Aucune indexation. Loyer actuel : '+fE(lg.loyer||0)+' + '+fE(lg.ch||0)+' charges</div>';return;}
+  const sorted=[...h].sort((a,b)=>b.from.localeCompare(a.from));
+  cont.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;padding:4px 6px;font-weight:700;font-size:.7rem;color:var(--t3);border-bottom:1px solid var(--bd)"><div>À partir de</div><div>Loyer HC</div><div>Charges</div><div></div></div>'+sorted.map(e=>'<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;padding:4px 6px;border-bottom:1px solid var(--bd);align-items:center"><div>'+e.from+'</div><div>'+fE(e.loyer)+'</div><div>'+fE(e.ch||0)+'</div><button type="button" class="btn btn-d btn-xs" onclick="delIndex(\''+e.id+'\')">×</button></div>').join('');
+}
+function openIndexModal(){
+  const lg=lgs.find(x=>x.id===document.getElementById('lId').value);
+  document.getElementById('idxFrom').value=new Date().toISOString().slice(0,10);
+  document.getElementById('idxLoyer').value=lg?(lg.loyer||0):0;
+  document.getElementById('idxCh').value=lg?(lg.ch||0):0;
+  document.getElementById('mIdx').classList.add('open');
+}
+function addIndex(){
+  const from=document.getElementById('idxFrom').value;
+  const loyer=parseFloat(document.getElementById('idxLoyer').value);
+  const ch=parseFloat(document.getElementById('idxCh').value)||0;
+  if(!from||isNaN(loyer)){alert('Date et loyer requis');return;}
+  const lgId=document.getElementById('lId').value;
+  const lg=lgs.find(x=>x.id===lgId);
+  if(!Array.isArray(window._pendingHist))window._pendingHist=[...((lg&&lg.loyerHist)||[])];
+  window._pendingHist.push({id:uid(),from,loyer,ch});
+  closeM('mIdx');renderLoyerHist(lg||{});
+}
+function delIndex(eid){
+  if(!confirm('Supprimer cette indexation ?'))return;
+  const lgId=document.getElementById('lId').value;
+  const lg=lgs.find(x=>x.id===lgId);
+  if(!Array.isArray(window._pendingHist))window._pendingHist=[...((lg&&lg.loyerHist)||[])];
+  window._pendingHist=window._pendingHist.filter(e=>e.id!==eid);
+  renderLoyerHist(lg||{});
+}
 
 // ═══ LOCATAIRES ═══
 let lcFilter='';
