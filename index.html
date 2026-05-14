@@ -1687,7 +1687,37 @@ function saveLog(){
   window._pendingHist=null;
   closeM('mLog');rLgs();
 }
-function delLg(id){if(!confirm('Supprimer ce logement ?'))return;lgs=lgs.filter(l=>l.id!==id);sv('lg',lgs);rLgs();}
+function delLg(id){
+  const locs=lcs.filter(l=>l.lgId===id);
+  const locIds=locs.map(l=>l.id);
+  const paysCount=pys.filter(p=>locIds.includes(p.lcId)).length;
+  const docsCount=dcs.filter(d=>locIds.includes(d.lcId)).length;
+  const entsCount=ens.filter(e=>e.lgId===id).length;
+  const rapsCount=rps.filter(r=>r.lgId===id).length;
+  const cosCount=cos.filter(c=>c.lgId===id).length;
+  const rlsCount=rls.filter(r=>cos.some(c=>c.id===r.coId&&c.lgId===id)).length;
+  const counts=[];
+  if(locs.length)counts.push(locs.length+' locataire(s)');
+  if(paysCount)counts.push(paysCount+' paiement(s)');
+  if(docsCount)counts.push(docsCount+' document(s)');
+  if(entsCount)counts.push(entsCount+' entretien(s)');
+  if(rapsCount)counts.push(rapsCount+' rappel(s)');
+  if(cosCount)counts.push(cosCount+' compteur(s)');
+  if(rlsCount)counts.push(rlsCount+' relevé(s)');
+  const msg=counts.length?'Supprimer ce logement ET '+counts.join(', ')+' ?':'Supprimer ce logement ?';
+  if(!confirm(msg))return;
+  const cosToDel=cos.filter(c=>c.lgId===id).map(c=>c.id);
+  lgs=lgs.filter(l=>l.id!==id);
+  lcs=lcs.filter(l=>l.lgId!==id);
+  pys=pys.filter(p=>!locIds.includes(p.lcId));
+  dcs=dcs.filter(d=>!locIds.includes(d.lcId));
+  ens=ens.filter(e=>e.lgId!==id);
+  rps=rps.filter(r=>r.lgId!==id);
+  rls=rls.filter(r=>!cosToDel.includes(r.coId));
+  cos=cos.filter(c=>c.lgId!==id);
+  sv('lg',lgs);sv('lc',lcs);sv('py',pys);sv('dc',dcs);sv('en',ens);sv('rp',rps);sv('rl',rls);sv('co',cos);
+  rLgs();
+}
 function getLoyerFor(lg,monthKey){
   const modalOpenForLg=window._pendingHist&&document.getElementById('mLog').classList.contains('open')&&document.getElementById('lId').value===lg.id;
   const h=modalOpenForLg?window._pendingHist:(lg.loyerHist||[]);
