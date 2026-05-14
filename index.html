@@ -397,7 +397,7 @@ tr[onclick]{cursor:pointer}
 .top-menu-item:hover{background:var(--s2)}
 
 /* ── PAYMENT GRID ── */
-.pay-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;cursor:grab}
+.pay-grid-wrap{cursor:grab}
 .pay-grid-wrap:active{cursor:grabbing}
 .pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:fixed}
 .pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;top:0;z-index:2}
@@ -1934,9 +1934,9 @@ function renderPayGrid(){
       return(!_e||_e<=_nowD)&&(!_f||_f>=_nowD);
     }));
     const _lcName=_dispLc?(_dispLc.prenom+' '+_dispLc.nom).trim():'Vacant';
-    if(isFirst){
+    if(true){
       const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
-      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_dispLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
+      html += `<td  style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_dispLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
     }
 
     // Locataire column
@@ -2066,9 +2066,9 @@ function renderPayGrid(){
       wrap.addEventListener('click',()=>wrap.focus());
     }
     // Mouse drag to scroll horizontally
-    wrap.addEventListener('mousedown',e=>{if(e.target.closest('button,input,select,a'))return;e.preventDefault();mx=e.clientX;wrap.style.cursor='grabbing';wrap._dragging=true;wrap._scrollStart=wrap.scrollLeft;});
-    document.addEventListener('mousemove',e=>{if(!wrap._dragging)return;e.preventDefault();wrap.scrollLeft=wrap._scrollStart-(e.clientX-mx);});
-    document.addEventListener('mouseup',()=>{wrap._dragging=false;wrap.style.cursor='grab';},{passive:true});
+    let _msx=0,_mst=0;wrap.addEventListener('mousedown',e=>{if(e.target.closest('button,input,select,a'))return;_msx=e.clientX;_mst=Date.now();wrap.style.cursor='grabbing';wrap._dragging=true;});
+    /* mousemove removed v1.84 - swipe handled in mouseup */
+    document.addEventListener('mouseup',e=>{if(!wrap._dragging)return;wrap._dragging=false;wrap.style.cursor='grab';const _dx=e.clientX-_msx,_dt=Date.now()-_mst;if(Math.abs(_dx)>50&&_dt<800)shiftPayGrid(_dx<0?1:-1);});
   }
 }
 
