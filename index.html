@@ -3432,9 +3432,13 @@ function importData(input){
       const data=JSON.parse(e.target.result);
       if(!data.logements&&!data.locataires)throw new Error('Format invalide');
       if(!confirm('Importer ces données ? Les données actuelles seront remplacées.'))return;
-      if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.logements){lgs=data.logements;sv('lg',lgs);}if(data.credits){crs=data.credits;sv('cr',crs);}if(data.charges){chs=data.charges;sv('ch',chs);}
+      if(data.batiments){bats=data.batiments;sv('bt',bats);}
+      if(data.logements){lgs=data.logements;sv('lg',lgs);}
       if(data.locataires){lcs=data.locataires;sv('lc',lcs);}
       if(data.paiements){pys=data.paiements;sv('py',pys);}
+      if(data.credits){crs=data.credits;sv('cr',crs);}
+      if(data.charges){chs=data.charges;sv('ch',chs);}
+      if(data.depenses){dps=data.depenses;sv('dp',dps);}
       if(data.entretiens){ens=data.entretiens;sv('en',ens);}
       if(data.documents){dcs=data.documents;sv('dc',dcs);}
       if(data.rappels){rps=data.rappels;sv('rp',rps);}
