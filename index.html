@@ -603,7 +603,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v1.88</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.0</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -1146,6 +1146,7 @@ let curP='dashboard',payF='tous',entF='tous',docF='tous';
 document.querySelectorAll('.sb-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
 
 function nav(p){
+  window._depCatFilter='';
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -1201,7 +1202,7 @@ function openM(id){
     }, 10);
   }
 }
-function closeM(id){document.getElementById(id).classList.remove('open')}
+function closeM(id){if(id==='mDepense')window._depCatFilter='';document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 function fillLogCompteurs(selectedIds){
   const cont = document.getElementById('lCompteurs');
