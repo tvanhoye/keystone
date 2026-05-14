@@ -5758,9 +5758,10 @@ function startDemoMode(){
 // SECURITY: restore isolation flag immediately (before injectRealData)
 window._ksIsolated = !!sessionStorage.getItem('ks_isolated');
 if(window._ksIsolated){
-  // Reload isolated data arrays immediately
+  // Reload isolated data arrays immediately (all 12 collections)
   bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
   ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
+  crs=ld('cr');chs=ld('ch');dps=ld('dp');
 }
 injectRealData();
 rDash();
