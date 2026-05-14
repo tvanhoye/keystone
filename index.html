@@ -603,7 +603,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.1</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.2</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -4243,6 +4243,18 @@ async function driveGetFileId(){
 async function driveLoad(){
   if(window._ksIsolated) return;
   if(!driveToken)return;
+  // FIX I3/I4: si une sauvegarde locale est en attente (debounce 3s), la flusher AVANT de
+  // charger Drive — sinon le fetch écraserait une modif locale non encore poussée.
+  // Si le flush échoue, on bail-out plutôt que d'écraser silencieusement.
+  if(pendingSync){
+    clearTimeout(syncTimer);
+    pendingSync=false;
+    const flushOk = await driveSave(true);
+    if(flushOk===false){
+      syncBarError('Sync annulée : sauvegarde locale en échec — réessayez');
+      return;
+    }
+  }
   syncBarShow('Chargement...','syncing');
   try{
     const fid=await driveGetFileId();
@@ -4283,8 +4295,10 @@ async function driveLoad(){
 }
 
 // ── Save data to Drive ──
+// Renvoie true en cas de succès, false en cas d'échec. Utilisé notamment par driveLoad
+// pour décider si le bail-out est nécessaire (fix I3/I4).
 async function driveSave(silent){
-  if(!driveToken)return;
+  if(!driveToken)return false;
   syncBarShow('Sauvegarde...','syncing');
   try{
     const payload=JSON.stringify({
@@ -4319,16 +4333,18 @@ async function driveSave(silent){
       const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
       syncBarShow('Sauvegardé — '+ts);
       if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
-      return;
+      return true;
     }
     const respPatch=await fetch(url,{method,headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},body:payload});
     if(!respPatch.ok)throw new Error('Sauvegarde Drive: '+respPatch.status);
     const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
     syncBarShow('Sauvegardé — '+ts);
     if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
+    return true;
   }catch(e){
     syncBarError('Erreur sauvegarde: '+e.message);
     console.error('driveSave:',e);
+    return false;
   }
 }
 
@@ -4909,7 +4925,8 @@ function showLoginScreen(){
 
 function renderProfileGrid(){
   const profiles = getProfiles();
-  const grid = document.getElementById('profileGrid');
+  // Le DOM expose #profileGridUsers (loginStepUsers). #profileGrid n'existe pas dans le markup.
+  const grid = document.getElementById('profileGridUsers');
   if(!grid) return;
   grid.style.gridTemplateColumns = profiles.length<=2 ? '1fr 1fr' : profiles.length<=3 ? '1fr 1fr 1fr' : '1fr 1fr';
   // Show recently used profiles on this device first
@@ -5127,14 +5144,27 @@ function applyRoleRestrictions(){
 }
 
 function logout(){
-  sessionStorage.setItem('ks_logout_pending','1');
+  // Clear stored sessions (les deux scopes : masteradmin persistant + tab-scoped)
   sessionStorage.removeItem('ks_current_profile');
   localStorage.removeItem('ks_current_profile');
   sessionStorage.removeItem('ks_isolated');
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  // Clear Drive credentials (force re-auth au prochain login)
+  driveToken=null; driveFileId=null; driveEmail=null;
+  localStorage.removeItem('ks_drive');
+  // Clear in-memory state
   window._ksIsolated=false;
   currentProfile=null;
-  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
-  location.reload();
+  // Reload non-isolated data depuis localStorage (au cas où on sort d'une session isolée)
+  bats=ld('bt'); lgs=ld('lg'); lcs=ld('lc'); pys=ld('py');
+  ens=ld('en'); dcs=ld('dc'); rps=ld('rp'); cos=ld('co'); rls=ld('rl');
+  crs=ld('cr'); chs=ld('ch'); dps=ld('dp');
+  // Hide Drive + logout UI
+  ['driveBtn','driveBtnConnect','syncBar','menuDrive'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const lb=document.getElementById('logoutBtn');if(lb)lb.style.display='none';
+  const tdate=document.getElementById('tdate');if(tdate)tdate.innerHTML='';
+  // Show login screen directement (pas de reload, donc pas de dépendance fragile au sessionStorage)
+  showLoginScreen();
 }
 
 // ── Profile Manager (accessible to admin) ──
