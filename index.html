@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.4</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.5</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -1038,7 +1038,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 // ═══ STORAGE ═══
 const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp'};
 const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('_ksi_'+K[k]))||[]}catch{return[]}}try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
-const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));if(typeof driveTriggerSave==='function')driveTriggerSave();};
+const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));localStorage.setItem('ks_last_local_change',String(Date.now()));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
@@ -4171,8 +4171,50 @@ async function driveHandleRedirect(){
   syncBarShow('Connecté — '+driveEmail);
   const db=document.getElementById('driveBtn');const dc=document.getElementById('driveBtnConnect');
   if(db) db.style.display='';if(dc) dc.style.display='none';
+  // GARDE-FOU I3 : avant de tirer Drive, vérifier que les données locales ne risquent pas
+  // d'être écrasées. Si lcs ou pys non-vides ET modifs locales postérieures au dernier
+  // sync Drive (ou pas de sync connu), demander à l'utilisateur quel sens donner au sync.
+  const driveLoadChoice = await driveResolveConflictBeforeLoad();
+  if(driveLoadChoice === 'push'){
+    await driveSave(true);
+    showToast('✅ Google Drive connecté — '+driveEmail+' (local poussé vers Drive)');
+    return;
+  }
+  if(driveLoadChoice === 'abort'){
+    showToast('Connecté à '+driveEmail+' — sync différée');
+    return;
+  }
+  // 'pull' (ou cas nominal sans risque) → comportement standard
   await driveLoad();
   showToast('✅ Google Drive connecté — '+driveEmail);
+}
+
+// Inspecte l'état local + timestamps et renvoie 'pull' | 'push' | 'abort'.
+// 'pull' : aucun risque d'écraser des modifs locales → driveLoad standard.
+// 'push' : utilisateur a choisi de pousser le local vers Drive.
+// 'abort' : utilisateur a annulé la synchro (ne rien faire ni dans un sens ni l'autre).
+async function driveResolveConflictBeforeLoad(){
+  let lcsLocal=[], pysLocal=[];
+  try{lcsLocal=JSON.parse(localStorage.getItem(K.lc)||'[]');}catch(e){}
+  try{pysLocal=JSON.parse(localStorage.getItem(K.py)||'[]');}catch(e){}
+  const hasLocalData = (lcsLocal.length>0) || (pysLocal.length>0);
+  if(!hasLocalData) return 'pull';
+  const lastSync = parseInt(localStorage.getItem('ks_last_sync')||'0',10);
+  const lastChange = parseInt(localStorage.getItem('ks_last_local_change')||'0',10);
+  const localAhead = lastChange > lastSync;  // true si modifs locales après le dernier push connu
+  // Si on a la certitude que tout local a déjà été synchronisé → pull sans prompt
+  if(lastSync>0 && !localAhead) return 'pull';
+  const fmt = t => t ? new Date(t).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}) : 'jamais';
+  const msg = 'Données locales détectées (locataires: '+lcsLocal.length+', paiements: '+pysLocal.length+').\n\n'
+    + 'Dernier push Drive : '+fmt(lastSync)+'\n'
+    + 'Dernière modif locale : '+fmt(lastChange)+'\n\n'
+    + 'OK   = télécharger la version Drive (écrase le local)\n'
+    + 'Annuler = pousser le local vers Drive (écrase le cloud)';
+  const choice = confirm(msg);
+  if(choice) return 'pull';
+  // Cancel → demander confirmation secondaire pour le push (sécurité supplémentaire)
+  if(confirm('Pousser le local vers Drive — ÉCRASE la version cloud actuelle.\n\nOK pour confirmer, Annuler pour ne rien faire.')) return 'push';
+  return 'abort';
 }
 
 
@@ -4314,6 +4356,7 @@ async function driveSave(silent){
       if(!rd.id)throw new Error('Création fichier Drive: réponse sans id');
       driveFileId=rd.id;
       sessionStorage.setItem('ks_drive',JSON.stringify({token:driveToken,expiry:Date.now()+3500000,fileId:driveFileId,email:driveEmail}));
+      localStorage.setItem('ks_last_sync', String(Date.now()));
       const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
       syncBarShow('Sauvegardé — '+ts);
       if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
@@ -4321,6 +4364,7 @@ async function driveSave(silent){
     }
     const respPatch=await fetch(url,{method,headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},body:payload});
     if(!respPatch.ok)throw new Error('Sauvegarde Drive: '+respPatch.status);
+    localStorage.setItem('ks_last_sync', String(Date.now()));
     const ts=new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
     syncBarShow('Sauvegardé — '+ts);
     if(!silent)showToast('✅ Données sauvegardées sur Google Drive');
