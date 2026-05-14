@@ -400,8 +400,8 @@ tr[onclick]{cursor:pointer}
 .pay-grid-wrap{cursor:grab}
 .pay-grid-wrap:active{cursor:grabbing}
 .pay-grid{width:100%;border-collapse:collapse;font-size:.73rem;table-layout:fixed}
-.pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;top:0;z-index:2}
-.pay-grid th:first-child{text-align:left;position:sticky;left:0;top:0;z-index:4;background:var(--s2);width:80px;min-width:80px;max-width:80px}
+.pay-grid th{background:var(--s2);font-weight:700;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);padding:6px 6px;border-bottom:2px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:center;position:sticky;top:42px;z-index:2}
+.pay-grid th:first-child{text-align:left;position:sticky;left:0;top:42px;z-index:4;background:var(--s2);width:80px;min-width:80px;max-width:80px}
 /* col2 sticky removed in v1.83 - col1 now contains merged logement+locataire */
 .pay-grid td{padding:4px 4px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);text-align:center;vertical-align:middle;white-space:nowrap}
 .pay-grid td:first-child{text-align:left;position:sticky;left:0;background:var(--sf);z-index:1;padding:5px 6px;width:80px;min-width:80px;max-width:80px}
@@ -721,7 +721,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
       </div>
       <!-- Grid view -->
       <div id="payGridView">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;background:var(--sf);z-index:6;padding:8px 0;border-bottom:1px solid var(--bd)">
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(-1)">‹ Préc.</button>
           <span id="payGridLabel" style="font-size:.78rem;font-weight:700;color:var(--t2)"></span>
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
@@ -2068,7 +2068,7 @@ function renderPayGrid(){
     // Mouse drag to scroll horizontally
     let _msx=0,_mst=0;wrap.addEventListener('mousedown',e=>{if(e.target.closest('button,input,select,a'))return;_msx=e.clientX;_mst=Date.now();wrap.style.cursor='grabbing';wrap._dragging=true;});
     /* mousemove removed v1.84 - swipe handled in mouseup */
-    document.addEventListener('mouseup',e=>{if(!wrap._dragging)return;wrap._dragging=false;wrap.style.cursor='grab';const _dx=e.clientX-_msx,_dt=Date.now()-_mst;if(Math.abs(_dx)>50&&_dt<800)shiftPayGrid(_dx<0?1:-1);});
+    document.addEventListener('mouseup',e=>{if(!wrap._dragging)return;wrap._dragging=false;wrap.style.cursor='grab';const _dx=e.clientX-_msx,_dt=Date.now()-_mst;if(Math.abs(_dx)>50&&_dt<800)shiftPayGrid(_dx<0?1:-1);});let _wlt=0;wrap.addEventListener('wheel',ev=>{if(Math.abs(ev.deltaX)<Math.abs(ev.deltaY))return;ev.preventDefault();const nw=Date.now();if(nw-_wlt<350)return;if(Math.abs(ev.deltaX)>20){_wlt=nw;shiftPayGrid(ev.deltaX>0?1:-1);}},{passive:false});
   }
 }
 
