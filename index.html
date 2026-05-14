@@ -418,6 +418,9 @@ tr[onclick]{cursor:pointer}
 .pg-future{opacity:.25;pointer-events:none}
 .pg-name{font-weight:700;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px}
 .pg-sub{font-size:.59rem;color:var(--t3)}
+/* Sous-lignes (locataires successifs sur même logement) — hauteur ~½ ligne normale */
+.pay-grid tr.pg-subrow td{padding:1px 4px}
+.pay-grid tr.pg-subrow .pg-btn{height:16px;font-size:.62rem;padding:0;width:28px}
 #payViewGrid.active,#payViewList.active{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
 
 /* ── MODAL NAV ── */
@@ -603,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.3</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.4</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -725,7 +728,6 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(-1)">‹ Préc.</button>
           <span id="payGridLabel" style="font-size:.78rem;font-weight:700;color:var(--t2)"></span>
           <button class="btn btn-s btn-xs" onclick="shiftPayGrid(1)">Suiv. ›</button>
-          <button id="btnPayOld" class="btn btn-s btn-xs" onclick="togglePayOld()" style="margin-left:8px">👥 Afficher anciens</button>
         </div>
         <div class="pay-grid-wrap" id="payGridWrap" style="touch-action:pan-y">
           <div id="payGrid"></div>
@@ -1867,7 +1869,6 @@ function delLc(id){
 // ═══ PAIEMENTS ═══
 // ═══ PAIEMENTS GRID ═══
 let payGridOffset = 0; // months offset from today
-let payGridShowOld = true; // show old tenants
 let payView = localStorage.getItem('ks_payview') || 'grid';
 
 function setPayView(v){
@@ -1894,15 +1895,6 @@ function shiftPayGrid(dir){const _kn=new Date();const _kf=new Date(_kn.getFullYe
   renderPayGrid();
 }
 
-function togglePayOld(){
-  payGridShowOld = !payGridShowOld;
-  const btn = document.getElementById('btnPayOld');
-  if(btn) btn.textContent = payGridShowOld ? '👥 Masquer anciens' : '👥 Afficher anciens';
-  if(btn) btn.style.background = payGridShowOld ? 'var(--ac)' : '';
-  if(btn) btn.style.color = payGridShowOld ? '#fff' : '';
-  renderPayGrid();
-}
-
 function renderPayGrid(){
   const MONTHS = 6;
   const now = new Date();
@@ -1916,25 +1908,36 @@ function renderPayGrid(){
   }
   document.getElementById('payGridLabel').textContent = cols[0].lbl+' → '+cols[cols.length-1].lbl;
 
-  // Build rows per logement
-  // Each logement shows ALL its tenants (current + old if toggled)
+  // Build rows per logement — toujours afficher TOUS les logements.
+  // Pour chaque logement, ne prendre que les locataires qui chevauchent la période visible.
+  // Si N (>1) locataires successifs → N sous-lignes en hauteur réduite (class pg-subrow).
+  // Si 0 → 1 ligne avec cellules vides (vacant / travaux).
+  const periodStart = new Date(cols[0].key+'-01');
+  const periodEndKey = cols[cols.length-1].key;
+  const periodEnd = new Date(periodEndKey.split('-')[0], parseInt(periodEndKey.split('-')[1]), 0);
   const rows = [];
   lgs.slice().sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(lg=>{
-    const lgLcs = lcs.filter(l=>l.lgId===lg.id).sort((a,b)=>new Date(a.ent)-new Date(b.ent));
-    const now2 = new Date();
-    
-    if(payGridShowOld){
-      // Show one sub-row per tenant (current + old)
-      lgLcs.forEach((lc,idx)=>{
-        const isOld = lc.fin && new Date(lc.fin) < now2;
-        rows.push({lg, lgLcs, activeLcOverride: lc, isOld, isFirst: idx===0, lgRowSpan: lgLcs.length});
-      });
-      if(lgLcs.length===0) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
-
+    const lgLcsPeriod = lcs
+      .filter(l => l.lgId === lg.id)
+      .filter(l => {
+        const ent = l.ent ? new Date(l.ent) : null;
+        const fin = l.fin ? new Date(l.fin) : null;
+        return (!ent || ent <= periodEnd) && (!fin || fin >= periodStart);
+      })
+      .sort((a,b)=>new Date(a.ent||0)-new Date(b.ent||0));
+    if(lgLcsPeriod.length === 0){
+      rows.push({lg, lgLcs: [], activeLcOverride: null, isSubRow: false, isFirstSubRow: true, lgRowSpan: 1});
     } else {
-      // Only show current tenant row — skip entirely if no active tenant (vacant)
-      const hasActive2=lgLcs.some(l=>!l.fin||new Date(l.fin)>=new Date());
-      if(hasActive2) rows.push({lg, lgLcs, activeLcOverride:null, isOld:false, isFirst:true, lgRowSpan:1});
+      lgLcsPeriod.forEach((lc, idx)=>{
+        rows.push({
+          lg,
+          lgLcs: lgLcsPeriod,
+          activeLcOverride: lc,
+          isSubRow: lgLcsPeriod.length > 1,
+          isFirstSubRow: idx === 0,
+          lgRowSpan: lgLcsPeriod.length
+        });
+      });
     }
   });
 
@@ -2010,41 +2013,20 @@ function renderPayGrid(){
   });
   html += '</tr></thead><tbody>';
 
-  let prevLgId = null;
-  rows.forEach(({lg, lgLcs, activeLcOverride, isOld, isFirst, lgRowSpan})=>{
-    const rowStyle = isOld ? 'opacity:.5;background:#f9f9f7' : '';
-    html += `<tr style="${rowStyle}">`;
-    
-    // Logement column — only show for first row of this logement
-    // Pre-compute active locataire for merged cell
-    const _nowD=new Date();
-    let _dispLc=activeLcOverride||(lgLcs.find(l=>{
-      const _e=l.ent?new Date(l.ent):null,_f=l.fin?new Date(l.fin):null;
-      return(!_e||_e<=_nowD)&&(!_f||_f>=_nowD);
-    }));
-    const _lcName=_dispLc?(_dispLc.prenom+' '+_dispLc.nom).trim():'Vacant';
-    if(true){
+  rows.forEach(({lg, lgLcs, activeLcOverride, isSubRow, isFirstSubRow, lgRowSpan})=>{
+    const rowClass = isSubRow ? ' class="pg-subrow"' : '';
+    html += `<tr${rowClass}>`;
+
+    // Logement column — only render on the first sub-row (rowspan covers the rest).
+    if(isFirstSubRow){
       const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
-      html += `<td  style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_dispLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${_lcName}</div></td>`;
+      // Show first-locataire name for the merged cell label (or "Vacant" if none).
+      const _firstLc = lgLcs[0] || null;
+      const _lcName = _firstLc ? (_firstLc.prenom+' '+_firstLc.nom).trim() : 'Vacant';
+      const _hasAnyLc = lgLcs.length > 0;
+      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_hasAnyLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${lgLcs.length>1?lgLcs.length+' locataires':_lcName}</div></td>`;
     }
 
-    // Locataire column
-    const nowD = new Date();
-    let displayLc = activeLcOverride;
-    if(!displayLc){
-      displayLc = lgLcs.find(l=>{
-        const ent = l.ent ? new Date(l.ent) : null;
-        const fin = l.fin ? new Date(l.fin) : null;
-        return (!ent||ent<=nowD) && (!fin||fin>=nowD);
-      });
-    }
-    const oldBadge = isOld ? ' <span class="badge bx" style="font-size:.55rem">ancien</span>' : '';
-    const entFin = displayLc ? 
-      (displayLc.ent?fD(displayLc.ent).slice(0,5):'') + 
-      (displayLc.fin&&new Date(displayLc.fin)<new Date()?' → '+fD(displayLc.fin).slice(0,5)+' ✓':'') 
-      : '';
-    const loyerStr = '<span style=\"font-family:monospace;font-weight:800;font-size:.78rem;color:var(--ac)\">'+(lg.loyer+lg.ch)+'€</span>';
-    
     cols.forEach(col=>{
       // Find which tenant was active during this month
       let activeLc;
