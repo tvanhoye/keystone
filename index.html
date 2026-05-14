@@ -3417,7 +3417,7 @@ function rAnnuel(){
 function isFutureMois(m){return new Date(m+'-15')>new Date();}
 
 // ═══ DATA MANAGEMENT ═══
-function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];}
+function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
 function exportData(){
   const data={version:'3.1',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls};
