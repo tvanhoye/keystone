@@ -5038,7 +5038,9 @@ function loginShowUsers(){
   loginSelectedProfile = null;
 }
 function loginShowAdmin(){
-  loginSelectedProfile = getProfiles().find(p=>p.role==='masteradmin') || getProfiles().find(p=>p.role==='admin') || {id:'admin_default',name:'Admin',role:'masteradmin',pin:'0000',avatar:'👑'};
+  const adminProfile = getProfiles().find(p=>p.role==='masteradmin') || getProfiles().find(p=>p.role==='admin');
+  if(!adminProfile){ showToast('Aucun profil admin configuré'); return; }
+  loginSelectedProfile = adminProfile;
   document.getElementById('loginStep1').style.display='none';
   document.getElementById('loginStep2').style.display='';
   pinEntry=''; updatePinDots();
