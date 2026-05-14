@@ -603,7 +603,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.0</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.1</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -5788,24 +5788,12 @@ const DEMO_DATA = {
 
 let isDemoMode = false;
 
+// Both demo entry points (carte profil "Démo" + bouton "🎭 Démo" du login) délèguent à activateDemo
+// pour garantir l'isolation (sessionStorage ks_isolated + _ksIsolated=true), évitant tout risque
+// d'écraser les vraies données en cas de sauvegarde accidentelle.
 function startDemoMode(){
   isDemoMode = true;
-  bats = DEMO_DATA.bats; lgs = DEMO_DATA.lgs; lcs = DEMO_DATA.lcs;
-  pys  = DEMO_DATA.pys;  ens = DEMO_DATA.ens||[]; rps = DEMO_DATA.rps||[];
-  dcs  = []; cos = DEMO_DATA.cos||[]; rls = DEMO_DATA.rls||[];
-  crs  = DEMO_DATA.crs||[]; chs = DEMO_DATA.chs||[]; dps = DEMO_DATA.dps||[];
-  driveToken=null; driveFileId=null; driveEmail=null;
-  localStorage.removeItem('ks_drive');
-  ['driveBtn','driveBtnConnect','syncBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
-  const bar=document.getElementById('syncBar');
-  if(bar){
-    bar.classList.add('show'); bar.style.background='#b5780a';
-    document.getElementById('syncMsg').textContent='🎭 MODE DÉMO — Aucune donnée réelle visible — Modifications non sauvegardées';
-    document.getElementById('syncDot').style.background='#fff';
-    document.querySelectorAll('.drive-btn').forEach(b=>b.style.display='none');
-  }
-  document.getElementById('loginScreen').style.display='none';
-  rDash(); showToast('🎭 Mode démo activé');
+  activateDemo();
 }
 
 // ═══ INIT ═══
@@ -5956,6 +5944,59 @@ function activateDemo(){
   showToast('🎭 Mode démo — données fictives uniquement');
 }
 
+function editPay(id){
+  const p=pys.find(x=>x.id===id);if(!p)return;
+  document.getElementById('mPayT').textContent='Modifier le paiement';
+  document.getElementById('payId').value=p.id;
+  fillSels();
+  setTimeout(()=>{
+    document.getElementById('payLoc').value=p.lcId||'';
+    document.getElementById('payMois').value=p.mois||'';
+    document.getElementById('payDu').value=p.du||'';
+    document.getElementById('payRec').value=p.rec||0;
+    document.getElementById('payDate').value=p.date||'';
+    document.getElementById('payMode').value=p.mode||'Virement';
+    document.getElementById('payNotes').value=p.notes||'';
+    const ov=document.getElementById('payStatutOverride');
+    if(ov)ov.value=p.stat==='travaux'?'travaux':'';
+  },10);
+  document.getElementById('mPay').classList.add('open');
+  setTimeout(()=>injectModalNav('mPay'),50);
+}
+function savePay(){
+  const lcId=document.getElementById('payLoc').value;
+  const mois=document.getElementById('payMois').value;
+  const recVal=document.getElementById('payRec').value;
+  const missing=[];
+  if(!lcId)missing.push('Locataire');
+  if(!mois)missing.push('Mois');
+  if(recVal===''||isNaN(parseFloat(recVal)))missing.push('Montant reçu');
+  if(missing.length){alert('Champs manquants : '+missing.join(', '));return;}
+  const rec=parseFloat(recVal);
+  const duVal=document.getElementById('payDu').value;
+  const du=duVal!==''&&!isNaN(parseFloat(duVal))?parseFloat(duVal):rec;
+  const override=document.getElementById('payStatutOverride')?.value||'';
+  const stat=override||(rec>=du?'payé':(rec>0?'partiel':'retard'));
+  const eid=document.getElementById('payId').value;
+  const obj={lcId,mois,du,rec,date:document.getElementById('payDate').value||tod(),mode:document.getElementById('payMode').value||'Virement',notes:document.getElementById('payNotes').value||'',stat};
+  if(eid){const i=pys.findIndex(x=>x.id===eid);if(i>=0)pys[i]={...pys[i],...obj};}
+  else{pys.push({id:uid(),...obj});}
+  sv('py',pys);
+  document.getElementById('payId').value='';
+  document.getElementById('mPayT').textContent='Enregistrer un paiement';
+  ['payLoc','payMois','payDu','payRec','payDate','payNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  const ov=document.getElementById('payStatutOverride');if(ov)ov.value='';
+  closeM('mPay');
+  if(curP==='paiements')setPayView(payView);
+  else if(curP==='dashboard')rDash();
+}
+function delPay(id){
+  if(!confirm('Supprimer ce paiement ?'))return;
+  pys=pys.filter(p=>p.id!==id);
+  sv('py',pys);
+  if(curP==='paiements')setPayView(payView);
+  else if(curP==='dashboard')rDash();
+}
 function rPays(f){
   payF=f||'tous';
   const activeLcIds=new Set(lcs.map(l=>l.id));
