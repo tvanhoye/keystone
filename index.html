@@ -3420,7 +3420,7 @@ function isFutureMois(m){return new Date(m+'-15')>new Date();}
 function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
 function exportData(){
-  const data={version:'3.0',exported:new Date().toISOString(),logements:lgs,locataires:lcs,paiements:pys,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls};
+  const data={version:'3.1',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keystone-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
