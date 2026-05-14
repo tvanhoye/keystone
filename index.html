@@ -1848,7 +1848,20 @@ function saveLoc(){
   sv('lc',lcs);document.getElementById('locId').value='';document.getElementById('mLocT').textContent='Ajouter un locataire';
   closeM('mLoc');rLcs();
 }
-function delLc(id){if(!confirm('Supprimer ?'))return;lcs=lcs.filter(l=>l.id!==id);sv('lc',lcs);rLcs();}
+function delLc(id){
+  const paysCount=pys.filter(p=>p.lcId===id).length;
+  const docsCount=dcs.filter(d=>d.lcId===id).length;
+  const counts=[];
+  if(paysCount)counts.push(paysCount+' paiement(s)');
+  if(docsCount)counts.push(docsCount+' document(s)');
+  const msg=counts.length?'Supprimer ce locataire ET '+counts.join(', ')+' ?':'Supprimer ce locataire ?';
+  if(!confirm(msg))return;
+  lcs=lcs.filter(l=>l.id!==id);
+  pys=pys.filter(p=>p.lcId!==id);
+  dcs=dcs.filter(d=>d.lcId!==id);
+  sv('lc',lcs);sv('py',pys);sv('dc',dcs);
+  rLcs();
+}
 
 // ═══ PAIEMENTS ═══
 // ═══ PAIEMENTS GRID ═══
