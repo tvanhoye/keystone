@@ -4213,9 +4213,13 @@ async function driveLoad(){
     if(!resp.ok)throw new Error('Erreur lecture: '+resp.status);
     const data=await resp.json();
     // Merge: Drive data wins (it's the source of truth)
-    if(data.batiments){bats=data.batiments;sv('bt',bats);}if(data.logements){lgs=data.logements;sv('lg',lgs);}
+    if(data.batiments){bats=data.batiments;sv('bt',bats);}
+    if(data.logements){lgs=data.logements;sv('lg',lgs);}
     if(data.locataires){lcs=data.locataires;sv('lc',lcs);}
     if(data.paiements){pys=data.paiements;sv('py',pys);}
+    if(data.credits){crs=data.credits;sv('cr',crs);}
+    if(data.charges){chs=data.charges;sv('ch',chs);}
+    if(data.depenses){dps=data.depenses;sv('dp',dps);}
     if(data.entretiens){ens=data.entretiens;sv('en',ens);}
     if(data.documents){dcs=data.documents;sv('dc',dcs);}
     if(data.rappels){rps=data.rappels;sv('rp',rps);}
@@ -4240,8 +4244,9 @@ async function driveSave(silent){
   syncBarShow('Sauvegarde...','syncing');
   try{
     const payload=JSON.stringify({
-      version:'1.0', savedAt:new Date().toISOString(),
-      batiments:bats, logements:lgs, locataires:lcs, paiements:pys, credits:crs, charges:chs,
+      version:'1.1', savedAt:new Date().toISOString(),
+      batiments:bats, logements:lgs, locataires:lcs, paiements:pys,
+      credits:crs, charges:chs, depenses:dps,
       entretiens:ens, documents:dcs, rappels:rps,
       compteurs:cos, releves:rls
     });
