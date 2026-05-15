@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.9</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.10</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -1402,6 +1402,8 @@ function delBat(id){
   const entsCount = ens.filter(e=>lgIds.includes(e.lgId)).length;
   const rapsCount = rps.filter(r=>lgIds.includes(r.lgId)).length;
   const rlsCount = rls.filter(r=>cosIds.includes(r.coId)).length;
+  const chargesCount = chs.filter(c=>c.batId===id).length;
+  const depCount = dps.filter(d=>d.batId===id).length;
   const counts=[];
   if(lgIds.length)counts.push(lgIds.length+' logement(s)');
   if(lcIds.length)counts.push(lcIds.length+' locataire(s)');
@@ -1411,6 +1413,8 @@ function delBat(id){
   if(rapsCount)counts.push(rapsCount+' rappel(s)');
   if(cosIds.length)counts.push(cosIds.length+' compteur(s)');
   if(rlsCount)counts.push(rlsCount+' relevé(s)');
+  if(chargesCount)counts.push(chargesCount+' charge(s) récurrente(s)');
+  if(depCount)counts.push(depCount+' dépense(s)');
   const msg=counts.length?'Supprimer ce bâtiment ET '+counts.join(', ')+' ?':'Supprimer ce bâtiment ?';
   if(!confirm(msg))return;
   // Cascade : on supprime de toutes les collections en un coup.
@@ -1423,7 +1427,9 @@ function delBat(id){
   rps=rps.filter(r=>!lgIds.includes(r.lgId));
   rls=rls.filter(r=>!cosIds.includes(r.coId));
   cos=cos.filter(c=>!cosIds.includes(c.id));
-  sv('bt',bats);sv('lg',lgs);sv('lc',lcs);sv('py',pys);sv('dc',dcs);sv('en',ens);sv('rp',rps);sv('rl',rls);sv('co',cos);
+  chs=chs.filter(c=>c.batId!==id);
+  dps=dps.filter(d=>d.batId!==id);
+  sv('bt',bats);sv('lg',lgs);sv('lc',lcs);sv('py',pys);sv('dc',dcs);sv('en',ens);sv('rp',rps);sv('rl',rls);sv('co',cos);sv('ch',chs);sv('dp',dps);
   rBats();
 }
 
