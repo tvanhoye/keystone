@@ -6163,15 +6163,29 @@ function _loadDemoData(){
   });
   pys.push(makeP('lc_d2','2026-04',0,1000,'retard'));
   cos=[
-    {id:'co_d1',nom:'Compteur Eau D1',type:'eau',unit:'m3',lgId:'lg_d1',notes:''},
-    {id:'co_d2',nom:'Compteur Elec D1',type:'elec',unit:'kWh',lgId:'lg_d1',notes:''},
-    {id:'co_d3',nom:'Compteur Eau D2',type:'eau',unit:'m3',lgId:'lg_d2',notes:''}
+    {id:'co_d1',nom:'Eau — Apt 101',type:'eau',unit:'m³',lgId:'lg_d1',notes:''},
+    {id:'co_d2',nom:'Gaz — Apt 101',type:'gaz',unit:'m³',lgId:'lg_d1',notes:''},
+    {id:'co_d3',nom:'Électricité — Apt 202',type:'elec_mono',unit:'kWh',lgId:'lg_d2',notes:''}
   ];
-  rls=[
-    {id:'rl1',coId:'co_d1',date:'2024-01-01',val:1200,notes:''},{id:'rl2',coId:'co_d1',date:'2024-04-01',val:1285,notes:''},{id:'rl3',coId:'co_d1',date:'2024-07-01',val:1340,notes:''},{id:'rl4',coId:'co_d1',date:'2024-10-01',val:1410,notes:''},{id:'rl5',coId:'co_d1',date:'2025-01-01',val:1490,notes:''},{id:'rl6',coId:'co_d1',date:'2025-04-01',val:1565,notes:''},{id:'rl7',coId:'co_d1',date:'2025-07-01',val:1620,notes:''},{id:'rl8',coId:'co_d1',date:'2025-10-01',val:1695,notes:''},{id:'rl9',coId:'co_d1',date:'2026-01-01',val:1780,notes:''},
-    {id:'rl10',coId:'co_d2',date:'2024-01-01',val:8400,notes:''},{id:'rl11',coId:'co_d2',date:'2024-04-01',val:8710,notes:''},{id:'rl12',coId:'co_d2',date:'2024-07-01',val:9100,notes:''},{id:'rl13',coId:'co_d2',date:'2024-10-01',val:9480,notes:''},{id:'rl14',coId:'co_d2',date:'2025-01-01',val:9850,notes:''},{id:'rl15',coId:'co_d2',date:'2025-04-01',val:10180,notes:''},{id:'rl16',coId:'co_d2',date:'2025-07-01',val:10500,notes:''},{id:'rl17',coId:'co_d2',date:'2025-10-01',val:10850,notes:''},{id:'rl18',coId:'co_d2',date:'2026-01-01',val:11200,notes:''},
-    {id:'rl19',coId:'co_d3',date:'2024-01-01',val:540,notes:''},{id:'rl20',coId:'co_d3',date:'2024-07-01',val:612,notes:''},{id:'rl21',coId:'co_d3',date:'2025-01-01',val:680,notes:''},{id:'rl22',coId:'co_d3',date:'2025-07-01',val:749,notes:''},{id:'rl23',coId:'co_d3',date:'2026-01-01',val:820,notes:''}
-  ];
+  // v2.17 : 3 ans de relevés mensuels, index cumulatif croissant et conso
+  // saisonnière cohérente (gaz/élec ↑ en hiver) — pour des graphiques sur 3 ans.
+  // Le code graphique lit r.idx (et hp/hc pour bi) → on stocke bien en 'idx'.
+  rls=[];
+  const _ds=new Date(); _ds.setDate(5); _ds.setMonth(_ds.getMonth()-36);
+  let _idxEau=920, _idxGaz=41000, _idxElec=17500;
+  for(let i=0;i<37;i++){
+    const _d=new Date(_ds.getFullYear(), _ds.getMonth()+i, 5);
+    const _date=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-05';
+    const _m=_d.getMonth();
+    const _cold=(_m<=2||_m>=10);          // oct→mars : période froide
+    const _consoEau = 9 + (_cold?2:4);     // été un peu plus (≈13), hiver ≈11 m³/mois
+    const _consoGaz = _cold ? (155+(i%30)) : (36+(i%18));   // hiver ≈155-185, été ≈36-54 m³
+    const _consoElec = 245 + (_cold?85:0) + (i%32);          // ≈245-360 kWh/mois
+    _idxEau+=_consoEau; _idxGaz+=_consoGaz; _idxElec+=_consoElec;
+    rls.push({id:'rl_eau_'+i,coId:'co_d1',date:_date,idx:_idxEau,notes:_consoEau+' m³'});
+    rls.push({id:'rl_gaz_'+i,coId:'co_d2',date:_date,idx:_idxGaz,notes:_consoGaz+' m³'});
+    rls.push({id:'rl_elec_'+i,coId:'co_d3',date:_date,idx:_idxElec,notes:_consoElec+' kWh'});
+  }
   ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'},{id:'en_d2',lgId:'lg_d3',tit:'Peinture couloir',prio:'normal',stat:'planifié',date:'2026-06-15',notes:''}];
   rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
 }
