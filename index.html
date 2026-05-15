@@ -605,6 +605,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" data-p="annuel" data-tip="Tableau annuel"><span class="sb-icon">📈</span><span class="sb-lbl">Tableau annuel</span></div>
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
+    <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
   <div class="sb-foot"><div>Keystone v2.16</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
@@ -862,6 +863,22 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
       </div>
     </div>
 
+    <div class="page" id="page-todo">
+      <div class="sh-row">
+        <div>
+          <h2>To-do list</h2>
+          <p>Vos tâches à traiter — l'Assistant IA pourra aussi l'alimenter sur demande</p>
+        </div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input id="todoInput" placeholder="Nouvelle tâche…" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.85rem;outline:none;background:var(--sf)" onkeydown="if(event.key==='Enter')addTodo()">
+          <button class="btn btn-p" onclick="addTodo()">+ Ajouter</button>
+        </div>
+        <div id="todoList"></div>
+      </div>
+    </div>
+
 </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1036,13 +1053,13 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
 <script>
 // ═══ STORAGE ═══
-const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp'};
+const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp',td:'ig3_td'};
 const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('_ksi_'+K[k]))||[]}catch{return[]}}try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
 const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));localStorage.setItem('ks_last_local_change',String(Date.now()));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
-let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp');
+let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp'),tds=ld('td');
 const gLg=id=>lgs.find(l=>l.id===id)||{nom:'—',loyer:0,ch:0};
 const gLc=id=>lcs.find(l=>l.id===id);
 const lcFull=l=>l?l.prenom+' '+l.nom:'—';
@@ -1142,7 +1159,7 @@ function injectRealData(){
 }
 
 // ═══ NAVIGATION ═══
-const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA'};
+const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA',todo:'To-do list'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
 // v2.16 : ne déclenche nav() que si l'item porte un data-p. L'accordéon
@@ -1187,6 +1204,7 @@ function rP(p){
   else if(p==='rappels')rRaps();
   else if(p==='annuel')rAnnuel();
   else if(p==='assistant')initAssistant();
+  else if(p==='todo')rTodo();
 }
 
 // ═══ MODALS ═══
@@ -3491,6 +3509,46 @@ function saveRap(){
 function doneRap(id){const r=rps.find(x=>x.id===id);if(r){r.stat='fait';sv('rp',rps);rRaps();}}
 function delRap(id){if(!confirm('Supprimer ?'))return;rps=rps.filter(r=>r.id!==id);sv('rp',rps);rRaps();}
 
+// ═══ TO-DO LIST ═══
+// tds : [{id, text, done, created}]. Alimentable manuellement, et plus tard
+// par l'Assistant IA (roadmap feature #2).
+function rTodo(){
+  const c=document.getElementById('todoList');if(!c)return;
+  if(!tds.length){c.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune tâche. Ajoutez-en une ci-dessus.</div></div>';return;}
+  // À faire d'abord (non cochées), puis faites ; chaque groupe trié du plus récent au plus ancien.
+  const sorted=[...tds].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.created||0)-(a.created||0));
+  c.innerHTML=sorted.map(t=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--bd)">'
+    +'<input type="checkbox" '+(t.done?'checked':'')+' onclick="toggleTodo(\''+t.id+'\')" style="width:17px;height:17px;cursor:pointer;accent-color:var(--ac);flex-shrink:0">'
+    +'<span style="flex:1;font-size:.85rem;'+(t.done?'text-decoration:line-through;color:var(--t3)':'')+'">'+t.text+'</span>'
+    +'<button class="btn btn-d btn-xs" onclick="delTodo(\''+t.id+'\')">✕</button>'
+    +'</div>').join('');
+}
+function addTodo(){
+  const i=document.getElementById('todoInput');if(!i)return;
+  const txt=i.value.trim();if(!txt)return;
+  tds.push({id:uid(),text:txt,done:false,created:Date.now()});
+  sv('td',tds);
+  i.value='';
+  rTodo();
+}
+// addTodoText : entrée programmatique (utilisée plus tard par l'Assistant IA).
+function addTodoText(txt){
+  txt=(txt||'').trim();if(!txt)return null;
+  const t={id:uid(),text:txt,done:false,created:Date.now()};
+  tds.push(t);sv('td',tds);
+  if(curP==='todo')rTodo();
+  return t;
+}
+function toggleTodo(id){
+  const t=tds.find(x=>x.id===id);
+  if(t){t.done=!t.done;sv('td',tds);rTodo();}
+}
+function delTodo(id){
+  tds=tds.filter(x=>x.id!==id);
+  sv('td',tds);
+  rTodo();
+}
+
 // ═══ TABLEAU ANNUEL ═══
 function initAnYear(){
   const sel=document.getElementById('anYear');if(!sel||sel.innerHTML)return;
@@ -3570,10 +3628,10 @@ function rAnnuel(){
 function isFutureMois(m){return new Date(m+'-15')>new Date();}
 
 // ═══ DATA MANAGEMENT ═══
-function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];}
+function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
 function exportData(){
-  const data={version:'3.1',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls};
+  const data={version:'3.2',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keystone-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
@@ -3592,6 +3650,7 @@ function importData(input){
       if(data.credits){crs=data.credits;sv('cr',crs);}
       if(data.charges){chs=data.charges;sv('ch',chs);}
       if(data.depenses){dps=data.depenses;sv('dp',dps);}
+      if(data.todos){tds=data.todos;sv('td',tds);}
       if(data.entretiens){ens=data.entretiens;sv('en',ens);}
       if(data.documents){dcs=data.documents;sv('dc',dcs);}
       if(data.rappels){rps=data.rappels;sv('rp',rps);}
@@ -4434,6 +4493,7 @@ async function driveLoad(){
     if(data.credits){crs=data.credits;sv('cr',crs);}
     if(data.charges){chs=data.charges;sv('ch',chs);}
     if(data.depenses){dps=data.depenses;sv('dp',dps);}
+    if(data.todos){tds=data.todos;sv('td',tds);}
     if(data.entretiens){ens=data.entretiens;sv('en',ens);}
     if(data.documents){dcs=data.documents;sv('dc',dcs);}
     if(data.rappels){rps=data.rappels;sv('rp',rps);}
@@ -4461,11 +4521,11 @@ async function driveSave(silent){
   syncBarShow('Sauvegarde...','syncing');
   try{
     const payload=JSON.stringify({
-      version:'1.1', savedAt:new Date().toISOString(),
+      version:'1.2', savedAt:new Date().toISOString(),
       batiments:bats, logements:lgs, locataires:lcs, paiements:pys,
       credits:crs, charges:chs, depenses:dps,
       entretiens:ens, documents:dcs, rappels:rps,
-      compteurs:cos, releves:rls
+      compteurs:cos, releves:rls, todos:tds
     });
     const fid=await driveGetFileId();
     let url, method;
@@ -5193,7 +5253,7 @@ function loginNewEmpty(){
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];
+  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];
   const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
   doLogin(p);
   setTimeout(()=>{rDash();nav('dashboard');},50);
@@ -5211,7 +5271,7 @@ function loginNewCode(){
     sessionStorage.setItem('ks_isolated','1');
     Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];
+    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];
     if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
     if(cfg.lgs){lgs=cfg.lgs;sv('lg',lgs);}
     if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
@@ -5281,7 +5341,7 @@ function doLogin(profile){
   if(!window._ksIsolated){
     bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
     ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
-    crs=ld('cr');chs=ld('ch');dps=ld('dp');
+    crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');
   }
   rP(curP);
   if(profile.role==='masteradmin'&&typeof driveInit==='function')setTimeout(driveInit,400);
@@ -5354,7 +5414,7 @@ function logout(){
   // Reload non-isolated data depuis localStorage (au cas où on sort d'une session isolée)
   bats=ld('bt'); lgs=ld('lg'); lcs=ld('lc'); pys=ld('py');
   ens=ld('en'); dcs=ld('dc'); rps=ld('rp'); cos=ld('co'); rls=ld('rl');
-  crs=ld('cr'); chs=ld('ch'); dps=ld('dp');
+  crs=ld('cr'); chs=ld('ch'); dps=ld('dp'); tds=ld('td');
   // Hide Drive + logout UI
   ['driveBtn','driveBtnConnect','syncBar','menuDrive'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   const lb=document.getElementById('logoutBtn');if(lb)lb.style.display='none';
@@ -6036,7 +6096,7 @@ if(_isDemo){
   // Reload isolated data arrays immediately (all 12 collections)
   bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
   ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
-  crs=ld('cr');chs=ld('ch');dps=ld('dp');
+  crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');
 }
 if(!_isDemo) injectRealData();  // injectRealData() bail-out déjà sur _ksIsolated, mais on est explicite ici
 rDash();
@@ -6144,6 +6204,11 @@ function copyProjectCode(){
 // Extrait de l'ancien activateDemo pour être appelable depuis le bootstrap.
 function _loadDemoData(){
   crs=[]; chs=[]; dps=[]; dcs=[];
+  tds=[
+    {id:'td_d1',text:'Relancer Isabelle DUPONT (loyer mars en retard)',done:false,created:Date.now()-86400000*2},
+    {id:'td_d2',text:'Planifier entretien chaudière Apt 303',done:false,created:Date.now()-86400000},
+    {id:'td_d3',text:'Envoyer quittances du mois',done:true,created:Date.now()-86400000*5}
+  ];
   bats=[{id:'bat_d1',nom:'Résidence Les Acacias',addr:'15 rue des Acacias, Liège'},{id:'bat_d2',nom:'Appartements du Parc',addr:'8 allée du Parc, Seraing'}];
   lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'},{id:'lg_d6',batId:'bat_d2',nom:'Apt C',loyer:760,ch:80,type:'F2'}];
   lcs=[
