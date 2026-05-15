@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.5</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 14/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.6</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -919,10 +919,10 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 <div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Bâtiment</label><select id="lBat"><option value="">Aucun / Maison individuelle</option></select></div><div class="fr"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label>
 <input id="lAddr" list="addrList" autocomplete="off" placeholder="Laisser vide si bâtiment sélectionné">
 <datalist id="addrList"></datalist>
-</div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div id="lHistWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">📈 Historique du loyer (indexations)</label><button type="button" class="btn btn-s btn-xs" onclick="openIndexModal()">+ Indexer</button></div><div id="lHistList" style="font-size:.78rem"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
+</div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div id="lHistWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">📈 Historique du loyer (indexations)</label><button type="button" class="btn btn-s btn-xs" onclick="openIndexModal()">+ Indexer</button></div><div id="lHistList" style="font-size:.78rem"></div></div><div id="lTravauxWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">🏗 Périodes de travaux</label><button type="button" class="btn btn-s btn-xs" onclick="openTravauxModal()">+ Ajouter période</button></div><div id="lTravauxList" style="font-size:.78rem"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
 <div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
 <div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
-</div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div><div class="overlay" id="mIdx"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">📈 Nouvelle indexation</span><button class="mclose" onclick="closeM('mIdx')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>À partir du *</label><input id="idxFrom" type="date"></div></div><div class="fr"><div class="fg"><label>Loyer HC (€) *</label><input id="idxLoyer" type="number"></div><div class="fg"><label>Charges (€)</label><input id="idxCh" type="number"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mIdx')">Annuler</button><button class="btn btn-p" onclick="addIndex()">Ajouter</button></div></div></div></div>
+</div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div><div class="overlay" id="mIdx"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">📈 Nouvelle indexation</span><button class="mclose" onclick="closeM('mIdx')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>À partir du *</label><input id="idxFrom" type="date"></div></div><div class="fr"><div class="fg"><label>Loyer HC (€) *</label><input id="idxLoyer" type="number"></div><div class="fg"><label>Charges (€)</label><input id="idxCh" type="number"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mIdx')">Annuler</button><button class="btn btn-p" onclick="addIndex()">Ajouter</button></div></div></div><div class="overlay" id="mTravaux"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">🏗 Période de travaux</span><button class="mclose" onclick="closeM('mTravaux')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>Début *</label><input id="trvDebut" type="date"></div><div class="fg"><label>Fin <span style="font-weight:400;color:var(--t3);font-size:.65rem">(vide = en cours)</span></label><input id="trvFin" type="date"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mTravaux')">Annuler</button><button class="btn btn-p" onclick="addTravaux()">Ajouter</button></div></div></div></div>
 <div class="overlay" id="mLoc"><div class="modal"><div class="mh"><span class="mtitle" id="mLocT">Ajouter un locataire</span><button class="mclose" onclick="closeM('mLoc')">✕</button></div><div class="mbody"><input type="hidden" id="locId"><div class="fr"><div class="fg"><label>Prénom *</label><input id="locPre"></div><div class="fg"><label>Nom *</label><input id="locNom"></div></div><div class="fr"><div class="fg"><label>Email</label><input id="locEmail" type="email"></div><div class="fg"><label>Téléphone</label><input id="locTel"></div></div><div class="fr"><div class="fg"><label>Logement *</label><select id="locLog"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Jour paiement</label><input id="locJour" type="number" min="1" max="28" value="1"></div></div><div class="fr"><div class="fg"><label>Date entrée *</label><input id="locEnt" type="date"></div><div class="fg"><label>Fin de bail</label>
 <div style="display:flex;gap:6px;align-items:center">
   <input id="locFin" type="date" style="flex:1">
@@ -1191,7 +1191,7 @@ function openM(id){
     removePhoto();
     setTimeout(initPhotoDrop, 50);
   }
-  if(id==='mLog'){const _hw=document.getElementById('lHistWrap');if(_hw)_hw.style.display='none';window._pendingHist=null;
+  if(id==='mLog'){const _hw=document.getElementById('lHistWrap');if(_hw)_hw.style.display='none';window._pendingHist=null;const _tw=document.getElementById('lTravauxWrap');if(_tw)_tw.style.display='none';window._pendingTravaux=null;
     setTimeout(()=>{
       fillLogCompteurs([]);
       // Populate address suggestions from existing logements
@@ -1629,17 +1629,22 @@ function rLgs(){
     g.className='pg';
     g.innerHTML=lgs.map(l=>{
       const lc=lcs.find(x=>x.lgId===l.id);const cc=pCol[l.type]||'#555';
+      const _travauxNow = !lc && isTravauxNow(l);
+      const _statusLine = lc ? '👤 '+lcFull(lc) : (_travauxNow ? '🏗 En travaux' : '<em>Vacant</em>');
+      const _statusBadge = lc ? '<span class="badge bg"><span class="dot"></span>occupé</span>'
+                              : (_travauxNow ? '<span class="badge bo"><span class="dot"></span>travaux</span>'
+                                             : '<span class="badge bx"><span class="dot"></span>vacant</span>');
       return '<div class="pc" onclick="editLg(\''+l.id+'\')" style="cursor:pointer">'+
         '<div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div>'+
         '<div class="pb">'+
           '<div class="pn">'+l.nom+'</div>'+
           '<div class="pa">📍 '+(l.addr||gBat(l.batId).addr||'—')+'</div>'+
           (l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+
-          '<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+'</div>'+
+          '<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+_statusLine+'</div>'+
           (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏗 '+gBat(l.batId).nom+'</div>':'')+
           '<div class="pf">'+
             '<span class="pr">'+(l.loyer+l.ch)+'€<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+
-            (lc?'<span class="badge bg"><span class="dot"></span>occupé</span>':'<span class="badge bx"><span class="dot"></span>vacant</span>')+
+            _statusBadge+
           '</div>'+
           '<div style="display:flex;gap:5px;margin-top:7px;justify-content:flex-end">'+
             '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')">✕</button>'+
@@ -1653,6 +1658,7 @@ function rLgs(){
 function editLg(id){
   const l=lgs.find(x=>x.id===id);if(!l)return;
   window._pendingHist=l.loyerHist?[...l.loyerHist]:null;
+  window._pendingTravaux=l.travaux?[...l.travaux]:null;
   document.getElementById('mLogT').textContent='Modifier le logement';
   document.getElementById('lId').value=l.id;
   document.getElementById('lNom').value=l.nom;document.getElementById('lType').value=l.type;
@@ -1668,7 +1674,9 @@ function editLg(id){
       dl.innerHTML=addrs.map(a=>`<option value="${a}">`).join('');
     }
   }, 10);
-  document.getElementById('lHistWrap').style.display='block';renderLoyerHist(l);document.getElementById('mLog').classList.add('open');setTimeout(()=>injectModalNav('mLog'),50);
+  document.getElementById('lHistWrap').style.display='block';renderLoyerHist(l);
+  document.getElementById('lTravauxWrap').style.display='block';renderTravauxList(l);
+  document.getElementById('mLog').classList.add('open');setTimeout(()=>injectModalNav('mLog'),50);
 }
 function saveLog(){
   const nom=document.getElementById('lNom').value.trim();
@@ -1683,11 +1691,14 @@ function saveLog(){
   const eid=document.getElementById('lId').value;
   const existingHist=eid?((lgs.find(x=>x.id===eid)||{}).loyerHist||[]):[];
   const loyerHist=Array.isArray(window._pendingHist)?window._pendingHist:existingHist;
-  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist};
+  const existingTravaux=eid?((lgs.find(x=>x.id===eid)||{}).travaux||[]):[];
+  const travaux=Array.isArray(window._pendingTravaux)?window._pendingTravaux:existingTravaux;
+  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist,travaux};
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
   window._pendingHist=null;
+  window._pendingTravaux=null;
   closeM('mLog');rLgs();
 }
 function delLg(id){
@@ -1761,6 +1772,62 @@ function delIndex(eid){
   if(!Array.isArray(window._pendingHist))window._pendingHist=[...((lg&&lg.loyerHist)||[])];
   window._pendingHist=window._pendingHist.filter(e=>e.id!==eid);
   renderLoyerHist(lg||{});
+}
+
+// ═══ TRAVAUX (périodes de travaux par logement) ═══
+function isTravauxFor(lg, monthKey){
+  const arr = (lg && lg.travaux) || [];
+  if(!arr.length) return false;
+  const colStart = new Date(monthKey+'-01');
+  const colEnd = new Date(monthKey.split('-')[0], parseInt(monthKey.split('-')[1]), 0);
+  return arr.some(t => {
+    const d = t.debut ? new Date(t.debut) : null;
+    const f = t.fin ? new Date(t.fin) : null;
+    return (!d || d <= colEnd) && (!f || f >= colStart);
+  });
+}
+function isTravauxNow(lg){
+  const arr = (lg && lg.travaux) || [];
+  if(!arr.length) return false;
+  const now = new Date();
+  return arr.some(t => {
+    const d = t.debut ? new Date(t.debut) : null;
+    const f = t.fin ? new Date(t.fin) : null;
+    return (!d || d <= now) && (!f || f >= now);
+  });
+}
+function renderTravauxList(lg){
+  const cont = document.getElementById('lTravauxList'); if(!cont) return;
+  const arr = window._pendingTravaux || (lg && lg.travaux) || [];
+  if(!arr.length){ cont.innerHTML='<div style="color:var(--t3);font-style:italic">Aucune période de travaux.</div>'; return; }
+  const sorted = [...arr].sort((a,b)=>(b.debut||'').localeCompare(a.debut||''));
+  cont.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;padding:4px 6px;font-weight:700;font-size:.7rem;color:var(--t3);border-bottom:1px solid var(--bd)"><div>Début</div><div>Fin</div><div></div></div>'
+    + sorted.map(t => '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;padding:4px 6px;border-bottom:1px solid var(--bd);align-items:center"><div>'+(t.debut||'—')+'</div><div>'+(t.fin||'<em style="color:var(--t3)">en cours</em>')+'</div><button type="button" class="btn btn-d btn-xs" onclick="delTravaux(\''+t.id+'\')">×</button></div>').join('');
+}
+function openTravauxModal(){
+  document.getElementById('trvDebut').value = new Date().toISOString().slice(0,10);
+  document.getElementById('trvFin').value = '';
+  document.getElementById('mTravaux').classList.add('open');
+}
+function addTravaux(){
+  const debut = document.getElementById('trvDebut').value;
+  const fin = document.getElementById('trvFin').value;
+  if(!debut){ alert('Date de début requise'); return; }
+  if(fin && fin < debut){ alert('Date de fin antérieure au début'); return; }
+  const lgId = document.getElementById('lId').value;
+  const lg = lgs.find(x=>x.id===lgId);
+  if(!Array.isArray(window._pendingTravaux)) window._pendingTravaux = [...((lg && lg.travaux)||[])];
+  window._pendingTravaux.push({id:uid(), debut, fin});
+  closeM('mTravaux');
+  renderTravauxList(lg||{});
+}
+function delTravaux(eid){
+  if(!confirm('Supprimer cette période de travaux ?')) return;
+  const lgId = document.getElementById('lId').value;
+  const lg = lgs.find(x=>x.id===lgId);
+  if(!Array.isArray(window._pendingTravaux)) window._pendingTravaux = [...((lg && lg.travaux)||[])];
+  window._pendingTravaux = window._pendingTravaux.filter(e=>e.id!==eid);
+  renderTravauxList(lg||{});
 }
 
 // ═══ LOCATAIRES ═══
@@ -2039,8 +2106,12 @@ function renderPayGrid(){
         const colStart2 = new Date(col.key+'-01');
         const colEnd2 = new Date(col.key.split('-')[0], parseInt(col.key.split('-')[1]), 0);
         if((ent&&ent>colEnd2)||(fin&&fin<colStart2)){
-          // Tenant was NOT active this month — show greyed cell
-          html += '<td style="background:var(--s2)"></td>';
+          // Tenant was NOT active this month — show travaux icon if applicable, else greyed cell
+          if(isTravauxFor(lg, col.key)){
+            html += '<td><span class="pg-btn" style="background:#fef3e0;color:#b5780a;cursor:default;border:1px solid #f5c842" title="Travaux">🏗</span></td>';
+          } else {
+            html += '<td style="background:var(--s2)"></td>';
+          }
           return;
         }
       } else {
@@ -2052,8 +2123,12 @@ function renderPayGrid(){
       }
 
       if(!activeLc){
-        // Vacant month
-        html += '<td><span class="pg-btn" style="background:var(--s2);color:#ccc;cursor:default;border:1px dashed #ddd">—</span></td>';
+        // No tenant this month — travaux icon if applicable, else vacant
+        if(isTravauxFor(lg, col.key)){
+          html += '<td><span class="pg-btn" style="background:#fef3e0;color:#b5780a;cursor:default;border:1px solid #f5c842" title="Travaux">🏗</span></td>';
+        } else {
+          html += '<td><span class="pg-btn" style="background:var(--s2);color:#ccc;cursor:default;border:1px dashed #ddd">—</span></td>';
+        }
         return;
       }
 
