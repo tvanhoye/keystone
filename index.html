@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.6</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.7</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -4399,6 +4399,7 @@ async function driveLoad(){
 // Renvoie true en cas de succès, false en cas d'échec. Utilisé notamment par driveLoad
 // pour décider si le bail-out est nécessaire (fix I3/I4).
 async function driveSave(silent){
+  if(window._ksIsolated){console.log('[Drive] save skipped: isolated session');return false;}
   if(!driveToken)return false;
   syncBarShow('Sauvegarde...','syncing');
   try{
@@ -4453,6 +4454,7 @@ async function driveSave(silent){
 
 // ── Auto-save after any data change (debounced 3s) ──
 function driveTriggerSave(){
+  if(window._ksIsolated) return;
   if(!driveToken)return;
   pendingSync=true;
   clearTimeout(syncTimer);
@@ -4460,6 +4462,7 @@ function driveTriggerSave(){
 }
 
 async function syncNow(){
+  if(window._ksIsolated){showToast('🔒 Sync Drive non disponible en session isolée');return;}
   // Check if token is still valid
   const saved = JSON.parse(localStorage.getItem('ks_drive')||'null');
   if(!driveToken || !saved || saved.expiry < Date.now()){
@@ -5111,11 +5114,13 @@ function loginAsNew(){
   document.getElementById('loginStepNew').style.display='';
 }
 function loginNewEmpty(){
+  // SÉCURITÉ : déconnecter Drive avant toute opération isolée (defense-in-depth).
+  if(typeof driveSignOut === 'function') driveSignOut();
   window._ksIsolated=true;
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];
+  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];
   const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
   doLogin(p);
   setTimeout(()=>{rDash();nav('dashboard');},50);
@@ -5127,11 +5132,13 @@ function loginNewCode(){
   try{
     const cfg=JSON.parse(decodeURIComponent(escape(atob(code))));
     if(!cfg||!cfg.bats){showToast('Code invalide');return;}
+    // SÉCURITÉ : déconnecter Drive avant toute opération isolée (defense-in-depth).
+    if(typeof driveSignOut === 'function') driveSignOut();
     window._ksIsolated=true;
     sessionStorage.setItem('ks_isolated','1');
     Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];
+    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];
     if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
     if(cfg.lgs){lgs=cfg.lgs;sv('lg',lgs);}
     if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
@@ -6032,10 +6039,15 @@ function copyProjectCode(){
 
 
 function activateDemo(){
+  // SÉCURITÉ : déconnecter Drive avant toute opération isolée (defense-in-depth).
+  // Empêche tout push de données démo vers le Drive réel de l'utilisateur.
+  if(typeof driveSignOut === 'function') driveSignOut();
   window._ksIsolated=true;
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  // Reset complet : toutes les collections (12), pour éviter toute fuite de données admin.
+  crs=[]; chs=[]; dps=[];
   bats=[{id:'bat_d1',nom:'Résidence Les Acacias',addr:'15 rue des Acacias, Liège'},{id:'bat_d2',nom:'Appartements du Parc',addr:'8 allée du Parc, Seraing'}];
   lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'},{id:'lg_d6',batId:'bat_d2',nom:'Apt C',loyer:760,ch:80,type:'F2'}];
   lcs=[
