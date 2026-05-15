@@ -1292,7 +1292,15 @@ function rDash(){
 
   const tm=tmth();
   const tmP=pys.filter(p=>p.mois===tm && visLcIds.has(p.lcId));
-  const tot=visLgs.length, occ=visLcs.length;
+  const tot=visLgs.length;
+  // v2.14 finding #4 : occupation = logements DISTINCTS ayant un locataire actif
+  // aujourd'hui (pas le total des locataires — sinon les baux successifs gonflent
+  // le compte au-delà de 100%, ex 18 locataires / 14 logements = 129%).
+  const _today=new Date();
+  const occ=new Set(visLcs.filter(l=>{
+    const ent=l.ent?new Date(l.ent):null,fin=l.fin?new Date(l.fin):null;
+    return (!ent||ent<=_today)&&(!fin||fin>=_today);
+  }).map(l=>l.lgId)).size;
   const totL=visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
   const ret=tmP.filter(p=>p.stat==='retard').length;
@@ -4544,17 +4552,23 @@ const OB_STEPS = [
 ];
 
 function obShow(){
-  document.getElementById('obOverlay').style.display='flex';
+  const ov=document.getElementById('obOverlay');
+  if(!ov)return;  // garde défensive : markup onboarding absent → no-op
+  ov.style.display='flex';
   obStep=0;
   obData={logements:[], locataire:null};
   obRender();
 }
 
 function obClose(){
-  document.getElementById('obOverlay').style.display='none';
+  const ov=document.getElementById('obOverlay');
+  if(ov)ov.style.display='none';
 }
 
 function obRender(){
+  // garde défensive : si le markup onboarding manque, on no-op (tous les enfants
+  // #obIco/#obBody/etc. vivent dans le même bloc que #obOverlay).
+  if(!document.getElementById('obOverlay'))return;
   const step = OB_STEPS[obStep];
   document.getElementById('obIco').textContent = step.ico;
   document.getElementById('obTitle').textContent = step.title;
@@ -5069,6 +5083,15 @@ function checkLogin(){
 function showLoginScreen(){
   const screen = document.getElementById('loginScreen');
   if(screen) screen.style.display='flex';
+  // v2.14 finding #4 : revenir à l'écran principal (loginStep1) et purger l'état
+  // résiduel du pavé PIN — sinon une déconnexion depuis Admin atterrit sur
+  // "Accès administrateur" avec les ronds PIN restés remplis du login précédent.
+  ['loginStepUsers','loginStepNew','loginStep2'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const s1=document.getElementById('loginStep1');if(s1)s1.style.display='';
+  pinEntry='';
+  if(typeof updatePinDots==='function')updatePinDots();
   renderProfileGrid();
 }
 
@@ -5119,7 +5142,8 @@ function loginSelectProfile(){
   // Show PIN entry
   document.getElementById('loginStep1').style.display='none';
   document.getElementById('loginStep2').style.display='';
-  document.getElementById('loginProfileName').textContent = loginSelectedProfile.avatar+' '+loginSelectedProfile.name;
+  const _lpn=document.getElementById('loginProfileName');
+  if(_lpn)_lpn.textContent = loginSelectedProfile.avatar+' '+loginSelectedProfile.name;
   pinEntry='';
   updatePinDots();
 }
@@ -6303,7 +6327,8 @@ function navSub(p,el){
     </div>
     <!-- Step 2: Admin PIN -->
     <div id="loginStep2" style="display:none">
-      <div style="font-size:.8rem;color:var(--t2);margin-bottom:14px">Accès administrateur</div>
+      <div style="font-size:.8rem;color:var(--t2);margin-bottom:6px">Accès administrateur</div>
+      <div id="loginProfileName" style="font-size:.95rem;font-weight:800;margin-bottom:14px"></div>
       <div class="pin-dots" id="pinDots">
         <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
         <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -6315,6 +6340,25 @@ function navSub(p,el){
         <button class="pin-key" onclick="loginBack()" style="font-size:.8rem">Retour</button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key" onclick="pinPress('')" style="font-size:.8rem">OK</button>
       </div>
       <div class="pin-error" id="pinError"></div>
+    </div>
+  </div>
+</div>
+<!-- Onboarding / Assistant guidé — reconstruit en v2.14 (markup perdu, JS obShow/obRender intact) -->
+<div class="ob-overlay" id="obOverlay" style="display:none">
+  <div class="ob-card">
+    <div class="ob-head">
+      <div class="ob-ico" id="obIco">🏠</div>
+      <div class="ob-title" id="obTitle"></div>
+      <div class="ob-sub" id="obSub"></div>
+      <div class="ob-progress" id="obProgress"></div>
+    </div>
+    <div class="ob-body" id="obBody"></div>
+    <div class="ob-foot">
+      <button class="btn btn-s" id="obBtnBack" onclick="obBack()" style="display:none">← Retour</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s" id="obBtnSkip" onclick="obSkip()">Passer</button>
+        <button class="btn btn-p" id="obBtnNext" onclick="obNext()">Suivant →</button>
+      </div>
     </div>
   </div>
 </div>
