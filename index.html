@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.10</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.11</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -4269,13 +4269,20 @@ async function driveHandleRedirect(){
   if(savedState && retState && retState !== savedState){ showToast('Erreur sécurité OAuth — réessayez'); return; }
   history.replaceState(null, '', location.pathname);
   driveToken = token;
+  driveFileId = null; // reset avant le re-fetch (cf. v2.11)
   const expiry = Date.now() + parseInt(hp.get('expires_in')||'3600')*1000;
   try{
     const ui = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+driveToken}});
     const ud = await ui.json();
     driveEmail = ud.email||'';
   }catch(e){}
-  localStorage.setItem('ks_drive', JSON.stringify({token:driveToken,expiry,fileId:null,email:driveEmail}));
+  // FIX v2.11 : récupérer l'éventuel fileId existant sur Drive AVANT de stocker ks_drive.
+  // Sinon ks_drive aurait fileId:null, et un éventuel driveSave avant un driveGetFileId
+  // créerait un fichier Keystone en doublon sur le Drive du user.
+  try{
+    await driveGetFileId();  // peuple driveFileId si un fichier 'keystone-data.json' existe
+  }catch(e){console.warn('driveGetFileId after OAuth failed:', e);}
+  localStorage.setItem('ks_drive', JSON.stringify({token:driveToken,expiry,fileId:driveFileId,email:driveEmail}));
   syncBarShow('Connecté — '+driveEmail);
   const db=document.getElementById('driveBtn');const dc=document.getElementById('driveBtnConnect');
   if(db) db.style.display='';if(dc) dc.style.display='none';
