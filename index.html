@@ -597,7 +597,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div id="sbDep" class="sb-accordion sb-sub">
       <div class="sb-item" data-p="charges" data-tip="Charges &amp; Compteurs" onclick="navSub('charges',this)">⚡ Charges &amp; Compteurs</div>
       <div class="sb-item" data-p="banque" data-tip="Finances" onclick="navSub('banque',this)">🏦 Finances</div>
-      <div class="sb-item" data-p="entretien" data-tip="Entretien" onclick="navSub('entretien',this)">🔧 Entretien</div>
+      <div class="sb-item" data-p="entretien" data-tip="Entretien" onclick="navSub('entretien',this)">🔧 Entretien<span class="sb-badge" id="bUrg" style="display:none">0</span></div>
       <div class="sb-item" data-p="documents" data-tip="Documents" onclick="navSub('documents',this)">📄 Documents</div>
     </div>
     <div class="sb-item" data-p="rappels" data-tip="Rappels" onclick="navSub('rappels',this)"><span class="sb-icon">🔔</span><span class="sb-lbl">Rappels</span></div>
@@ -1297,8 +1297,8 @@ function rDash(){
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
   const ret=tmP.filter(p=>p.stat==='retard').length;
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
-  const br=document.getElementById('bRet');br.textContent=ret;br.style.display=ret?'':'none';
-  const bu=document.getElementById('bUrg');bu.textContent=urg.length;bu.style.display=urg.length?'':'none';
+  const br=document.getElementById('bRet');if(br){br.textContent=ret;br.style.display=ret?'':'none';}
+  const bu=document.getElementById('bUrg');if(bu){bu.textContent=urg.length;bu.style.display=urg.length?'':'none';}
   document.getElementById('kpiG').innerHTML=
     '<div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
     '<div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(totL)+'</div><div class="kpi-sub">'+fE(enc)+' encaissé</div></div>'+
@@ -1697,8 +1697,11 @@ function editLg(id){
   document.getElementById('lNom').value=l.nom;document.getElementById('lType').value=l.type;
   document.getElementById('lAddr').value=l.addr;document.getElementById('lSurf').value=l.surf||'';
   document.getElementById('lLoyer').value=l.loyer||'';document.getElementById('lCh').value=l.ch||'';
-  document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';if(document.getElementById('lBat'))document.getElementById('lBat').value=l.batId||'';
+  document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';
   fillSels();
+  // fillSels() reconstruit les <option> du select #lBat — il faut donc fixer sa value
+  // APRÈS, sinon l'option courante n'existe pas encore et la sélection retombe sur "Aucun".
+  const _lBatSel=document.getElementById('lBat');if(_lBatSel)_lBatSel.value=l.batId||'';
   setTimeout(()=>{
     fillLogCompteurs(l.compteurs||[]);
     const dl=document.getElementById('addrList');
