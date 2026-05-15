@@ -855,7 +855,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
         <!-- Input -->
         <div style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:flex-end;background:var(--s2);border-radius:0 0 var(--r) var(--r)">
-          <textarea id="aiInput" placeholder="Posez votre question…" rows="1" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s" onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <textarea id="aiInput" placeholder="Posez votre question ou dictez une info à enregistrer…" rows="1" style="flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:9px 12px;font-family:inherit;font-size:.82rem;resize:none;outline:none;background:var(--sf);max-height:120px;overflow-y:auto;transition:border-color .15s" onkeydown="aiKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn btn-s" id="aiMicBtn" onclick="startVoiceInput()" title="Dicter" style="padding:9px 12px;flex-shrink:0;display:none">🎤</button>
           <button class="btn btn-p" id="aiSendBtn" onclick="sendMessage()" style="padding:9px 16px;flex-shrink:0">
             <span id="aiSendIcon">↑</span>
           </button>
@@ -3845,7 +3846,8 @@ Pour eau/gaz/mono: {"compteurId":"ID_EXACT","type":"eau","index":88745,"unite":"
 Pour bihoraire: {"compteurId":"ID_EXACT","type":"elec_bi","hp":271632,"hc":344488,"confiance":"haute","notes":"HP: X chiffres noirs: X X X X X X | HC: X chiffres noirs: X X X X X X | validation HP: 271145→271632 OK"}`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    if(!AI_PROXY_URL) throw new Error('Assistant non configuré (AI_PROXY_URL manquant) — saisie manuelle requise.');
+    const resp = await fetch(AI_PROXY_URL, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -3987,6 +3989,121 @@ const AI_MODEL = 'claude-sonnet-4-20250514';
 let chatHistory = [];
 let isLoading = false;
 
+// ─── Feature #2 (v2.17) : assistant IA capable d'AGIR dans l'app (tool use) ───
+// AI_PROXY_URL : URL du Cloudflare Worker qui détient la clé Anthropic côté
+// serveur et relaie les requêtes vers api.anthropic.com. À remplir par
+// l'administrateur après déploiement du worker. Tant qu'elle est vide,
+// l'assistant affiche un message de configuration au lieu de planter.
+const AI_PROXY_URL = (typeof localStorage!=='undefined' && localStorage.getItem('ks_ai_proxy')) || '';
+
+// Outils exposés au modèle : il les appelle pour enregistrer des infos dictées.
+const AI_TOOLS = [
+  {name:'add_todo',description:'Ajoute une tâche à la to-do list. À utiliser dès que l\'utilisateur demande de noter / retenir quelque chose à faire.',
+   input_schema:{type:'object',properties:{texte:{type:'string',description:'Intitulé de la tâche'}},required:['texte']}},
+  {name:'add_releve',description:'Enregistre un relevé de compteur (eau, gaz, électricité). Compteur bihoraire : fournir hp ET hc. Sinon fournir index.',
+   input_schema:{type:'object',properties:{
+     compteur:{type:'string',description:'Nom du compteur concerné'},
+     index:{type:'number',description:'Index relevé (compteur eau / gaz / élec simple)'},
+     hp:{type:'number',description:'Index heures pleines (élec bihoraire)'},
+     hc:{type:'number',description:'Index heures creuses (élec bihoraire)'},
+     date:{type:'string',description:'Date du relevé YYYY-MM-DD (défaut : aujourd\'hui)'}
+   },required:['compteur']}},
+  {name:'add_entretien',description:'Crée une intervention d\'entretien / maintenance sur un logement.',
+   input_schema:{type:'object',properties:{
+     titre:{type:'string'},logement:{type:'string',description:'Nom du logement concerné'},
+     priorite:{type:'string',enum:['urgent','planifié','terminé'],description:'Défaut : planifié'},
+     date:{type:'string',description:'YYYY-MM-DD'},cout:{type:'number'},
+     prestataire:{type:'string'},description:{type:'string'}
+   },required:['titre']}},
+  {name:'add_locataire',description:'Crée un nouveau locataire, éventuellement rattaché à un logement.',
+   input_schema:{type:'object',properties:{
+     prenom:{type:'string'},nom:{type:'string'},
+     logement:{type:'string',description:'Nom du logement loué'},
+     email:{type:'string'},tel:{type:'string'},
+     date_entree:{type:'string',description:'YYYY-MM-DD'},
+     jour_paiement:{type:'number',description:'Jour du mois (1-28)'}
+   },required:['prenom','nom']}},
+  {name:'add_paiement',description:'Enregistre un paiement de loyer reçu d\'un locataire.',
+   input_schema:{type:'object',properties:{
+     locataire:{type:'string',description:'Nom du locataire'},
+     mois:{type:'string',description:'Mois au format YYYY-MM'},
+     montant_recu:{type:'number'},montant_du:{type:'number'},
+     mode:{type:'string',description:'Virement, Chèque, Espèces, Prélèvement...'}
+   },required:['locataire','mois','montant_recu']}}
+];
+
+// Normalise pour recherche tolérante (minuscule, sans accents).
+function _aiNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+// Recherche floue dans une collection : par id exact, puis nom exact, puis inclusion.
+function _aiFind(coll,q,nameFn){
+  if(!q)return null;
+  const n=_aiNorm(q);
+  return coll.find(x=>x.id===q)
+    || coll.find(x=>_aiNorm(nameFn(x))===n)
+    || coll.find(x=>{const xn=_aiNorm(nameFn(x));return xn&&(xn.includes(n)||n.includes(xn));});
+}
+// Exécute une action demandée par le modèle. Renvoie un message (string) qui
+// sera renvoyé au modèle comme tool_result pour qu'il confirme en langage naturel.
+function executeAITool(name,input){
+  input=input||{};
+  try{
+    if(name==='add_todo'){
+      const t=addTodoText(input.texte);
+      return t?('✅ Tâche ajoutée : "'+t.text+'"'):'Échec : texte de tâche vide.';
+    }
+    if(name==='add_releve'){
+      const co=_aiFind(cos,input.compteur,c=>c.nom);
+      if(!co)return 'Compteur introuvable : "'+(input.compteur||'')+'". Compteurs disponibles : '+(cos.map(c=>c.nom).join(', ')||'aucun')+'.';
+      const date=input.date||tod();
+      const rec={id:uid(),coId:co.id,date,notes:'Saisi via assistant IA'};
+      if(co.type==='elec_bi'){
+        if(input.hp==null||input.hc==null)return 'Compteur bihoraire "'+co.nom+'" : il faut fournir hp ET hc.';
+        rec.hp=+input.hp;rec.hc=+input.hc;
+      }else{
+        if(input.index==null)return 'Index manquant pour le relevé de "'+co.nom+'".';
+        rec.idx=+input.index;
+      }
+      rls.push(rec);sv('rl',rls);
+      if(curP==='charges'&&typeof rCharges==='function')rCharges();
+      return '✅ Relevé enregistré : '+co.nom+' au '+date+(rec.idx!=null?(' — index '+rec.idx):(' — HP '+rec.hp+' / HC '+rec.hc))+'.';
+    }
+    if(name==='add_entretien'){
+      if(!input.titre)return 'Titre d\'entretien manquant.';
+      const lg=input.logement?_aiFind(lgs,input.logement,l=>l.nom):null;
+      if(input.logement&&!lg)return 'Logement introuvable : "'+input.logement+'".';
+      const prio=['urgent','planifié','terminé'].includes(input.priorite)?input.priorite:'planifié';
+      ens.push({id:uid(),tit:input.titre,prio,lgId:lg?lg.id:'',date:input.date||'',prest:input.prestataire||'',cout:+input.cout||0,desc:input.description||''});
+      sv('en',ens);
+      if(curP==='entretien'&&typeof rEnts==='function')rEnts(entF);
+      return '✅ Entretien créé : "'+input.titre+'" ['+prio+']'+(lg?' — '+lg.nom:'')+'.';
+    }
+    if(name==='add_locataire'){
+      if(!input.prenom||!input.nom)return 'Prénom et nom requis pour créer un locataire.';
+      const lg=input.logement?_aiFind(lgs,input.logement,l=>l.nom):null;
+      if(input.logement&&!lg)return 'Logement introuvable : "'+input.logement+'".';
+      lcs.push({id:uid(),prenom:input.prenom,nom:input.nom,lgId:lg?lg.id:'',email:input.email||'',tel:input.tel||'',jour:+input.jour_paiement||1,ent:input.date_entree||tod(),fin:'',urg:'',notes:'Créé via assistant IA'});
+      sv('lc',lcs);
+      if(curP==='locataires'&&typeof rLcs==='function')rLcs();
+      return '✅ Locataire créé : '+input.prenom+' '+input.nom+(lg?' — '+lg.nom:' (sans logement rattaché)')+'.';
+    }
+    if(name==='add_paiement'){
+      const lc=_aiFind(lcs,input.locataire,l=>l.prenom+' '+l.nom);
+      if(!lc)return 'Locataire introuvable : "'+(input.locataire||'')+'".';
+      if(!input.mois||!/^\d{4}-\d{2}$/.test(input.mois))return 'Mois invalide : attendu YYYY-MM.';
+      const rec=+input.montant_recu;
+      if(isNaN(rec))return 'Montant reçu invalide.';
+      const lg=gLg(lc.lgId);
+      const du=input.montant_du!=null?+input.montant_du:((lg.loyer||0)+(lg.ch||0));
+      const stat=rec>=du?'payé':(rec>0?'partiel':'retard');
+      pys.push({id:uid(),lcId:lc.id,mois:input.mois,du,rec,date:tod(),mode:input.mode||'Virement',notes:'Saisi via assistant IA',stat});
+      sv('py',pys);
+      if(curP==='paiements'&&typeof setPayView==='function')setPayView(payView);
+      return '✅ Paiement enregistré : '+lcFull(lc)+' '+input.mois+' — '+rec+'€ ('+stat+').';
+    }
+    return 'Outil inconnu : '+name;
+  }catch(e){return 'Erreur lors de l\'exécution : '+e.message;}
+}
+
 const SUGGESTIONS = [
   'Qui n\'a pas payé ce mois-ci ?',
   'Quels baux expirent dans 3 mois ?',
@@ -4006,6 +4123,31 @@ function initAssistant(){
       `<button class="ai-suggestion" onclick="askSuggestion('${s.replace(/'/g,"\\'")}')">${s}</button>`
     ).join('');
   }
+  // Affiche le bouton micro si la reconnaissance vocale est dispo (Chrome/Edge).
+  const mic=document.getElementById('aiMicBtn');
+  if(mic && (window.SpeechRecognition||window.webkitSpeechRecognition)) mic.style.display='';
+}
+
+// Saisie vocale : remplit le champ texte de l'assistant via Web Speech API.
+let _aiRecognition=null;
+function startVoiceInput(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('Reconnaissance vocale non supportée par ce navigateur');return;}
+  const btn=document.getElementById('aiMicBtn');
+  // Toggle : un 2e clic pendant l'écoute coupe.
+  if(_aiRecognition){ _aiRecognition.stop(); return; }
+  const r=new SR();
+  _aiRecognition=r;
+  r.lang='fr-FR'; r.interimResults=false; r.maxAlternatives=1;
+  if(btn)btn.textContent='🔴';
+  r.onresult=e=>{
+    const t=e.results[0][0].transcript;
+    const inp=document.getElementById('aiInput');
+    if(inp){ inp.value=(inp.value?inp.value+' ':'')+t; if(typeof autoResize==='function')autoResize(inp); inp.focus(); }
+  };
+  r.onerror=e=>{ if(e.error==='not-allowed')showToast('Micro refusé — autorisez l\'accès'); };
+  r.onend=()=>{ if(btn)btn.textContent='🎤'; _aiRecognition=null; };
+  r.start();
 }
 
 function buildContext(){
@@ -4084,6 +4226,13 @@ Règles :
 - Si tu génères une lettre, formate-la clairement avec des sauts de ligne
 - Sois direct et actionnable
 
+ACTIONS — tu peux ENREGISTRER des informations dans l'application :
+- Quand l'utilisateur dicte une donnée à sauvegarder (relevé de compteur, nouveau locataire, entretien, paiement, tâche à faire), utilise l'outil approprié (add_releve, add_locataire, add_entretien, add_paiement, add_todo).
+- Référence les compteurs / logements / locataires par leur NOM tel qu'il apparaît dans le contexte ci-dessous.
+- S'il manque une information obligatoire pour agir, NE DEVINE PAS : demande-la à l'utilisateur.
+- Après chaque action réussie, confirme en une phrase claire en langage naturel.
+- Si l'outil renvoie une erreur (ex: compteur introuvable), explique-la et propose une correction.
+
 ${buildContext()}`;
 }
 
@@ -4092,6 +4241,13 @@ async function sendMessage(text){
   const input = document.getElementById('aiInput');
   const msg = (text||input.value).trim();
   if(!msg)return;
+
+  if(!AI_PROXY_URL){
+    addMessage('user', msg);
+    if(!text)input.value='';
+    addMessage('bot','⚠️ **Assistant non configuré.**\n\nL\'URL du proxy IA (`AI_PROXY_URL`) n\'est pas renseignée. L\'administrateur doit déployer le Cloudflare Worker et renseigner son URL.','error');
+    return;
+  }
 
   // Add user message
   addMessage('user', msg);
@@ -4104,31 +4260,55 @@ async function sendMessage(text){
   const sendBtn=document.getElementById('aiSendBtn');
   sendBtn.disabled=true;
   sendBtn.innerHTML='<div class="ai-typing"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
-  const typingEl=addTyping();
+  let typingEl=addTyping();
 
   try{
-    const response = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 1000,
-        system: buildSystemPrompt(),
-        messages: chatHistory.slice(-10) // last 10 turns for context
-      })
-    });
+    // Boucle agentique : tant que le modèle demande un outil, on l'exécute et on
+    // relance pour qu'il confirme. guard évite toute boucle infinie.
+    let messages = chatHistory.slice(-10);
+    let guard = 0;
+    while(guard++ < 6){
+      const response = await fetch(AI_PROXY_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model: AI_MODEL,
+          max_tokens: 1500,
+          system: buildSystemPrompt(),
+          messages: messages,
+          tools: AI_TOOLS
+        })
+      });
+      if(!response.ok){
+        const err=await response.json().catch(()=>({}));
+        throw new Error(err.error?.message||`Erreur ${response.status}`);
+      }
+      const data=await response.json();
+      const blocks = data.content || [];
+      const toolUses = blocks.filter(b=>b.type==='tool_use');
+      // Le tour assistant complet (texte + tool_use) est conservé pour le contexte de la boucle.
+      messages.push({role:'assistant',content:blocks});
 
-    if(!response.ok){
-      const err=await response.json().catch(()=>({}));
-      throw new Error(err.error?.message||`Erreur ${response.status}`);
+      if(data.stop_reason==='tool_use' && toolUses.length){
+        // Affiche le texte intermédiaire éventuel, exécute les outils.
+        const interim = blocks.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+        if(interim){ typingEl.remove(); addMessage('bot',interim); typingEl=addTyping(); }
+        const results = toolUses.map(tu=>({
+          type:'tool_result',
+          tool_use_id:tu.id,
+          content:executeAITool(tu.name,tu.input)
+        }));
+        messages.push({role:'user',content:results});
+        continue; // relance pour la confirmation en langage naturel
+      }
+
+      // Réponse finale (pas d'outil) : on affiche et on mémorise.
+      const reply = blocks.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim() || 'Pas de réponse.';
+      chatHistory.push({role:'assistant',content:reply});
+      typingEl.remove();
+      addMessage('bot',reply);
+      break;
     }
-
-    const data=await response.json();
-    const reply=data.content?.[0]?.text||'Pas de réponse.';
-    chatHistory.push({role:'assistant',content:reply});
-    typingEl.remove();
-    addMessage('bot',reply);
-
   }catch(err){
     typingEl.remove();
     addMessage('bot',`⚠️ **Erreur** : ${err.message}\n\nVérifiez votre connexion ou réessayez.`,'error');
