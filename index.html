@@ -1145,16 +1145,22 @@ function injectRealData(){
 const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
-document.querySelectorAll('.sb-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
+// v2.16 : ne déclenche nav() que si l'item porte un data-p. L'accordéon
+// "Dépenses" (.sb-item.sb-parent) n'en a pas → sans ce garde, nav(undefined)
+// → getElementById('page-undefined') null → crash .classList.
+document.querySelectorAll('.sb-item').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.p)nav(el.dataset.p);}));
 
 function nav(p){
   window._depCatFilter='';
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
+  // v2.16 : null-safe défensif — si la page cible n'existe pas, on n'altère rien.
+  const _pg=document.getElementById('page-'+p);
+  if(_pg)_pg.classList.add('active');
   const si=document.querySelector('.sb-item[data-p="'+p+'"]');
   if(si)si.classList.add('active');
-  document.getElementById('ptitle').textContent=pTitles[p]||p;
+  const _pt=document.getElementById('ptitle');
+  if(_pt)_pt.textContent=pTitles[p]||p;
   curP=p;rP(p);
   closeMobSb();
   document.querySelectorAll('.mn-item').forEach(el=>el.classList.toggle('active',el.dataset.p===p));
@@ -2676,7 +2682,7 @@ function buildSVGChart(grouped, comp, chartType, colMain, colLight, coId){
 function rCharges(){
   // Refresh compteur list in modal
   const cl=document.getElementById('compList');
-  if(cl)cl.innerHTML=cos.length?cos.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:.8rem"><span>${cIco[c.type]}</span><span style="flex:1;font-weight:600">${c.nom}</span><span style="font-size:.69rem;color:var(--t3)">${c.unit}</span><button class="btn btn-d btn-xs" onclick="delComp('${c.id}')">✕</button></div>`).join(''):'<p style="font-size:.77rem;color:var(--t3)">Aucun compteur</p>';
+  if(cl)cl.innerHTML=cos.length?cos.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:.8rem"><span>${cIco[c.type]||'📊'}</span><span style="flex:1;font-weight:600">${c.nom}</span><span style="font-size:.69rem;color:var(--t3)">${c.unit}</span><button class="btn btn-d btn-xs" onclick="delComp('${c.id}')">✕</button></div>`).join(''):'<p style="font-size:.77rem;color:var(--t3)">Aucun compteur</p>';
 
   const cont=document.getElementById('chargesC');
   if(!cos.length){cont.innerHTML='<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">Aucun compteur.<br><br><button class="btn btn-p" onclick="openM(\'mComp\')">Ajouter</button></div></div>';return;}
@@ -2734,7 +2740,7 @@ function rCharges(){
     return`<div class="comp-card">
       <!-- Header -->
       <div class="comp-head">
-        <div class="comp-ico" style="background:${light}">${cIco[comp.type]}</div>
+        <div class="comp-ico" style="background:${light}">${cIco[comp.type]||'📊'}</div>
         <div class="comp-meta">
           <div class="comp-nom">${comp.nom}</div>
           <div class="comp-sub">${comp.notes||''} · ${comp.unit} · ${cRels.length} relevés</div>
@@ -3440,7 +3446,7 @@ function rDocs(f){
   docF=f;let list=f==='tous'?dcs:dcs.filter(d=>d.type===f);
   const cont=document.getElementById('docL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">Aucun document</div></div>';return;}
-  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+dIco[d.type]+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+d.nom+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+lcFull(l):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
+  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+(dIco[d.type]||'📎')+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+d.nom+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+lcFull(l):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
 }
 function tabDoc(f,el){document.querySelectorAll('#docTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rDocs(f);}
 function editDoc(id){
