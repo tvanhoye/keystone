@@ -5266,6 +5266,18 @@ function doLogin(profile){
   const lb=document.getElementById('logoutBtn');
   if(lb) lb.style.display='';
   showToast('Bienvenue, '+profile.name+' !');
+  // v2.15 : re-hydrater les variables data depuis le bon storage AVANT de rendre.
+  // Un login via l'UI (pas un location.reload()) laissait sinon le dashboard sur
+  // un état stale — KPI à 0 après un re-login Admin depuis le mode démo.
+  // - session NON isolée → re-parse depuis ig3_* (vraies données).
+  // - session isolée (démo/projet) → vars déjà en mémoire, NE PAS re-lire
+  //   (ld() lirait _ksi_* et écraserait les données démo).
+  if(!window._ksIsolated){
+    bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
+    ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
+    crs=ld('cr');chs=ld('ch');dps=ld('dp');
+  }
+  rP(curP);
   if(profile.role==='masteradmin'&&typeof driveInit==='function')setTimeout(driveInit,400);
 }
 
@@ -5325,6 +5337,7 @@ function logout(){
   sessionStorage.removeItem('ks_current_profile');
   localStorage.removeItem('ks_current_profile');
   sessionStorage.removeItem('ks_isolated');
+  sessionStorage.removeItem('ks_demo');  // v2.15 : sortir du mode démo
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   // Clear Drive credentials (force re-auth au prochain login)
   driveToken=null; driveFileId=null; driveEmail=null;
@@ -6006,11 +6019,11 @@ function startDemoMode(){
 // ═══ INIT ═══
 // SECURITY: restore isolation flag immediately (before injectRealData)
 window._ksIsolated = !!sessionStorage.getItem('ks_isolated');
-// v2.12: si activateDemo a déclenché un reload, on charge ici les données démo
-// AVANT tout autre traitement. ks_demo_pending est consommé immédiatement.
-const _demoBoot = sessionStorage.getItem('ks_demo_pending') === '1';
-if(_demoBoot){
-  sessionStorage.removeItem('ks_demo_pending');
+// v2.15 : ks_demo est un flag PERSISTANT. Tant qu'il est posé (toute la session
+// démo), le bootstrap re-génère les données démo en mémoire à chaque boot — donc
+// un F5 en mode démo recharge le dataset démo au lieu d'afficher du vide.
+const _isDemo = sessionStorage.getItem('ks_demo') === '1';
+if(_isDemo){
   window._ksIsolated = true;  // certitude
   _loadDemoData();
 } else if(window._ksIsolated){
@@ -6019,11 +6032,12 @@ if(_demoBoot){
   ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
   crs=ld('cr');chs=ld('ch');dps=ld('dp');
 }
-if(!_demoBoot) injectRealData();  // injectRealData() bail-out déjà sur _ksIsolated, mais on est explicite ici
+if(!_isDemo) injectRealData();  // injectRealData() bail-out déjà sur _ksIsolated, mais on est explicite ici
 rDash();
 setTimeout(async ()=>{
-  // v2.12: boot démo — auto-login profil Démo, hide Drive UI, nav dashboard
-  if(_demoBoot){
+  // v2.12/v2.15: boot démo — auto-login profil Démo, hide Drive UI, nav dashboard.
+  // S'exécute au 1er passage ET à chaque F5 tant que ks_demo est posé.
+  if(_isDemo){
     ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
     const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
     doLogin(p);
@@ -6157,20 +6171,22 @@ function _loadDemoData(){
 }
 
 // APPROCHE A (v2.12) : un reload garantit qu'aucune référence DOM ou variable
-// résiduelle ne peut afficher de vraies données. Le bootstrap se charge de la
-// suite via sessionStorage.ks_demo_pending.
+// résiduelle ne peut afficher de vraies données.
+// v2.15 : le flag sessionStorage.ks_demo est PERSISTANT (pas one-shot) — le
+// bootstrap re-génère les données démo en mémoire à CHAQUE boot tant qu'il est
+// posé, donc un F5 en mode démo recharge bien le dataset démo (et pas du vide).
 //
 // Test E2E manuel d'isolation démo :
 //   1. Login Admin → modifier un truc (ex: ajouter une période travaux)
 //   2. Menu 💾 → Se déconnecter → écran de login
 //   3. Cliquer "🎭 Démo"
 //   4. Vérifier que la modification N'APPARAÎT PAS en démo (dashboard, Loyers, Banque)
-//   5. F5 dans la session démo (NB : retour à login normal — comportement attendu)
-//   6. Login Admin → vérifier que les vraies données sont intactes
+//   5. F5 dans la session démo → données démo rechargées (KPI=6, pas 0)
+//   6. Se déconnecter → Login Admin → vraies données intactes (KPI=14)
 function activateDemo(){
   if(typeof driveSignOut === 'function') driveSignOut();
   sessionStorage.setItem('ks_isolated','1');
-  sessionStorage.setItem('ks_demo_pending','1');
+  sessionStorage.setItem('ks_demo','1');
   location.reload();
 }
 
