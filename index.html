@@ -606,7 +606,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.11</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.12</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -5979,15 +5979,30 @@ function startDemoMode(){
 // ═══ INIT ═══
 // SECURITY: restore isolation flag immediately (before injectRealData)
 window._ksIsolated = !!sessionStorage.getItem('ks_isolated');
-if(window._ksIsolated){
+// v2.12: si activateDemo a déclenché un reload, on charge ici les données démo
+// AVANT tout autre traitement. ks_demo_pending est consommé immédiatement.
+const _demoBoot = sessionStorage.getItem('ks_demo_pending') === '1';
+if(_demoBoot){
+  sessionStorage.removeItem('ks_demo_pending');
+  window._ksIsolated = true;  // certitude
+  _loadDemoData();
+} else if(window._ksIsolated){
   // Reload isolated data arrays immediately (all 12 collections)
   bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
   ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
   crs=ld('cr');chs=ld('ch');dps=ld('dp');
 }
-injectRealData();
+if(!_demoBoot) injectRealData();  // injectRealData() bail-out déjà sur _ksIsolated, mais on est explicite ici
 rDash();
 setTimeout(async ()=>{
+  // v2.12: boot démo — auto-login profil Démo, hide Drive UI, nav dashboard
+  if(_demoBoot){
+    ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
+    doLogin(p);
+    setTimeout(()=>{rDash();nav('dashboard');showToast('🎭 Mode démo activé');},50);
+    return;
+  }
   // If logout was requested, skip auto-login and show login screen immediately
   if(sessionStorage.getItem('ks_logout_pending')){
     sessionStorage.removeItem('ks_logout_pending');
@@ -6078,16 +6093,10 @@ function copyProjectCode(){
 }
 
 
-function activateDemo(){
-  // SÉCURITÉ : déconnecter Drive avant toute opération isolée (defense-in-depth).
-  // Empêche tout push de données démo vers le Drive réel de l'utilisateur.
-  if(typeof driveSignOut === 'function') driveSignOut();
-  window._ksIsolated=true;
-  sessionStorage.setItem('ks_isolated','1');
-  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
-  ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  // Reset complet : toutes les collections (12), pour éviter toute fuite de données admin.
-  crs=[]; chs=[]; dps=[];
+// Helper : peuple les variables data avec le dataset de démo.
+// Extrait de l'ancien activateDemo pour être appelable depuis le bootstrap.
+function _loadDemoData(){
+  crs=[]; chs=[]; dps=[]; dcs=[];
   bats=[{id:'bat_d1',nom:'Résidence Les Acacias',addr:'15 rue des Acacias, Liège'},{id:'bat_d2',nom:'Appartements du Parc',addr:'8 allée du Parc, Seraing'}];
   lgs=[{id:'lg_d1',batId:'bat_d1',nom:'Apt 101',loyer:750,ch:80,type:'F2'},{id:'lg_d2',batId:'bat_d1',nom:'Apt 202',loyer:900,ch:100,type:'F3'},{id:'lg_d3',batId:'bat_d1',nom:'Apt 303',loyer:650,ch:70,type:'F1'},{id:'lg_d4',batId:'bat_d2',nom:'Studio A',loyer:550,ch:60,type:'Studio'},{id:'lg_d5',batId:'bat_d2',nom:'Apt B',loyer:820,ch:90,type:'F2'},{id:'lg_d6',batId:'bat_d2',nom:'Apt C',loyer:760,ch:80,type:'F2'}];
   lcs=[
@@ -6097,7 +6106,6 @@ function activateDemo(){
     {id:'lc_d4',lgId:'lg_d5',prenom:'Sophie',nom:'RENARD',tel:'04/554.66.77',email:'s.renard@demo.be',jour:1,ent:'2020-06-01',fin:'',urg:'',notes:''},
     {id:'lc_d5',lgId:'lg_d6',prenom:'Pierre',nom:'LAMBERT',tel:'04/665.77.88',email:'p.lambert@demo.be',jour:1,ent:'2024-01-01',fin:'',urg:'',notes:''}
   ];
-  // 18 months of payments
   const makeP=(lcId,mois,rec,du,stat)=>({id:'py_'+lcId+'_'+mois,lcId,mois,rec,du,stat,date:mois+'-05',mode:'virement'});
   pys=[];
   [['lc_d1',750+80],['lc_d2',900+100],['lc_d3',650+70],['lc_d4',820+90],['lc_d5',760+80]].forEach(([id,tot])=>{
@@ -6107,26 +6115,36 @@ function activateDemo(){
     });
   });
   pys.push(makeP('lc_d2','2026-04',0,1000,'retard'));
-  // Meter readings from 2024
   cos=[
     {id:'co_d1',nom:'Compteur Eau D1',type:'eau',unit:'m3',lgId:'lg_d1',notes:''},
     {id:'co_d2',nom:'Compteur Elec D1',type:'elec',unit:'kWh',lgId:'lg_d1',notes:''},
     {id:'co_d3',nom:'Compteur Eau D2',type:'eau',unit:'m3',lgId:'lg_d2',notes:''}
   ];
   rls=[
-    // Eau - bat_d1 - apt 101
     {id:'rl1',coId:'co_d1',date:'2024-01-01',val:1200,notes:''},{id:'rl2',coId:'co_d1',date:'2024-04-01',val:1285,notes:''},{id:'rl3',coId:'co_d1',date:'2024-07-01',val:1340,notes:''},{id:'rl4',coId:'co_d1',date:'2024-10-01',val:1410,notes:''},{id:'rl5',coId:'co_d1',date:'2025-01-01',val:1490,notes:''},{id:'rl6',coId:'co_d1',date:'2025-04-01',val:1565,notes:''},{id:'rl7',coId:'co_d1',date:'2025-07-01',val:1620,notes:''},{id:'rl8',coId:'co_d1',date:'2025-10-01',val:1695,notes:''},{id:'rl9',coId:'co_d1',date:'2026-01-01',val:1780,notes:''},
-    // Elec - bat_d1 - apt 101
     {id:'rl10',coId:'co_d2',date:'2024-01-01',val:8400,notes:''},{id:'rl11',coId:'co_d2',date:'2024-04-01',val:8710,notes:''},{id:'rl12',coId:'co_d2',date:'2024-07-01',val:9100,notes:''},{id:'rl13',coId:'co_d2',date:'2024-10-01',val:9480,notes:''},{id:'rl14',coId:'co_d2',date:'2025-01-01',val:9850,notes:''},{id:'rl15',coId:'co_d2',date:'2025-04-01',val:10180,notes:''},{id:'rl16',coId:'co_d2',date:'2025-07-01',val:10500,notes:''},{id:'rl17',coId:'co_d2',date:'2025-10-01',val:10850,notes:''},{id:'rl18',coId:'co_d2',date:'2026-01-01',val:11200,notes:''},
-    // Eau - bat_d2 - apt 202
     {id:'rl19',coId:'co_d3',date:'2024-01-01',val:540,notes:''},{id:'rl20',coId:'co_d3',date:'2024-07-01',val:612,notes:''},{id:'rl21',coId:'co_d3',date:'2025-01-01',val:680,notes:''},{id:'rl22',coId:'co_d3',date:'2025-07-01',val:749,notes:''},{id:'rl23',coId:'co_d3',date:'2026-01-01',val:820,notes:''}
-  ]
+  ];
   ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'},{id:'en_d2',lgId:'lg_d3',tit:'Peinture couloir',prio:'normal',stat:'planifié',date:'2026-06-15',notes:''}];
-  dcs=[];rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
-  const p={id:'demo_'+Date.now(),name:'Démo',role:'lecture',avatar:'🎭',pin:''};
-  doLogin(p);
-  setTimeout(()=>{rDash();nav('dashboard');},50);
-  showToast('🎭 Mode démo — données fictives uniquement');
+  rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
+}
+
+// APPROCHE A (v2.12) : un reload garantit qu'aucune référence DOM ou variable
+// résiduelle ne peut afficher de vraies données. Le bootstrap se charge de la
+// suite via sessionStorage.ks_demo_pending.
+//
+// Test E2E manuel d'isolation démo :
+//   1. Login Admin → modifier un truc (ex: ajouter une période travaux)
+//   2. Menu 💾 → Se déconnecter → écran de login
+//   3. Cliquer "🎭 Démo"
+//   4. Vérifier que la modification N'APPARAÎT PAS en démo (dashboard, Loyers, Banque)
+//   5. F5 dans la session démo (NB : retour à login normal — comportement attendu)
+//   6. Login Admin → vérifier que les vraies données sont intactes
+function activateDemo(){
+  if(typeof driveSignOut === 'function') driveSignOut();
+  sessionStorage.setItem('ks_isolated','1');
+  sessionStorage.setItem('ks_demo_pending','1');
+  location.reload();
 }
 
 function editPay(id){
