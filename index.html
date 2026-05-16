@@ -604,7 +604,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Analyse</div>
     <div class="sb-item" data-p="annuel" data-tip="Tableau annuel"><span class="sb-icon">📈</span><span class="sb-lbl">Tableau annuel</span></div>
     <div class="sb-sec">Intelligence</div>
-    <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
+    <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
   <div class="sb-foot"><div>Keystone v2.17</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 16/05/2026</div></div>
@@ -617,7 +617,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
       <div id="ptitle">Tableau de bord</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <div id="tdate" style="font-size:.69rem;color:var(--t3)"><span class="profile-badge role-admin" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">👑 Admin</span></div>
+      <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
       <button id="logoutBtn" class="btn btn-s btn-xs" onclick="logout()" title="Se déconnecter" style="font-size: 0.7rem; padding: 3px 8px;">🚪</button>
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
@@ -1041,6 +1041,12 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <div class="fg"><label>Adresse</label><input id="blrAddr" placeholder="Ex : 4130 Tilff"></div>
   <div class="fr"><div class="fg"><label>IBAN</label><input id="blrIban" placeholder="BE.. .... .... ...."></div><div class="fg"><label>BIC</label><input id="blrBic" placeholder="GKCCBEBB"></div></div>
   <button class="btn btn-p btn-sm" style="width:100%" onclick="saveBailleur()">💾 Enregistrer les paramètres bailleur</button>
+</div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+  <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase">🤖 Assistant IA <span style="font-weight:400;text-transform:none;color:var(--t3)">(proxy)</span></div>
+  <div style="font-size:.71rem;color:var(--t3);margin-bottom:8px;line-height:1.5">URL du Cloudflare Worker. Tant qu'elle est vide, l'entrée « Assistant IA » du menu reste masquée. Déploiement : voir DEPLOY-AI-PROXY.md.</div>
+  <div class="fg"><input id="dataAiProxy" placeholder="https://votre-worker.workers.dev"></div>
+  <button class="btn btn-p btn-sm" style="width:100%" onclick="saveAiProxyData()">💾 Enregistrer l'URL du proxy IA</button>
 </div>
 <div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
       <hr style="margin:16px 0;border:none;border-top:1px solid var(--bd)">
@@ -3701,12 +3707,16 @@ function openDataMgr(){
   document.getElementById('sLg').textContent=lgs.length;document.getElementById('sLc').textContent=lcs.length;
   document.getElementById('sPy').textContent=pys.length;document.getElementById('sRl').textContent=rls.length;
   fillBailleur();
+  const _ap=document.getElementById('dataAiProxy');if(_ap)_ap.value=AI_PROXY_URL||'';
   openM('mData');
 }
 
-// ═══ PARAMÈTRES BAILLEUR (constantes globales, pour la génération de documents) ═══
+// ═══ PARAMÈTRES BAILLEUR (pour la génération de documents) ═══
+// Respecte l'isolation : en session isolée (App vide / Démo) on lit/écrit une
+// copie '_ksi_ks_bailleur', jamais la vraie clé 'ks_bailleur' du compte réel.
+function _bailleurKey(){ return window._ksIsolated ? '_ksi_ks_bailleur' : 'ks_bailleur'; }
 function getBailleur(){
-  try{ return Object.assign({nom:'',adresse:'',iban:'',bic:''}, JSON.parse(localStorage.getItem('ks_bailleur')||'{}')); }
+  try{ return Object.assign({nom:'',adresse:'',iban:'',bic:''}, JSON.parse(localStorage.getItem(_bailleurKey())||'{}')); }
   catch(e){ return {nom:'',adresse:'',iban:'',bic:''}; }
 }
 function fillBailleur(){
@@ -3715,7 +3725,7 @@ function fillBailleur(){
 }
 function saveBailleur(){
   const g=id=>((document.getElementById(id)||{value:''}).value||'').trim();
-  localStorage.setItem('ks_bailleur',JSON.stringify({nom:g('blrNom'),adresse:g('blrAddr'),iban:g('blrIban'),bic:g('blrBic')}));
+  localStorage.setItem(_bailleurKey(),JSON.stringify({nom:g('blrNom'),adresse:g('blrAddr'),iban:g('blrIban'),bic:g('blrBic')}));
   showToast('✅ Paramètres bailleur enregistrés');
 }
 
@@ -4605,16 +4615,38 @@ function initAssistant(){
   }
 }
 
-// Enregistre l'URL du proxy IA (Cloudflare Worker) en localStorage.
-function saveAiProxy(){
-  const pi=document.getElementById('aiProxyInput');
-  const v=(pi&&pi.value||'').trim().replace(/\/+$/,'');
-  if(v&&!/^https:\/\//i.test(v)){showToast('L\'URL doit commencer par https://');return;}
-  if(v)localStorage.setItem('ks_ai_proxy',v);else localStorage.removeItem('ks_ai_proxy');
+// Masque l'entrée "Assistant IA" (menu latéral + nav mobile) tant que le proxy
+// IA n'est pas configuré ; respecte aussi la permission seeAssistantIA.
+function applyAssistantVisibility(){
+  let show=!!AI_PROXY_URL;
+  if(show && currentProfile && currentProfile.role!=='admin' && currentProfile.role!=='masteradmin'){
+    const perms=getPermissions()[currentProfile.role]||{};
+    if(perms.seeAssistantIA===false) show=false;
+  }
+  const sb=document.getElementById('sbAssistant');
+  if(sb) sb.style.display=show?'':'none';
+  document.querySelectorAll('.mn-item[data-p="assistant"]').forEach(el=>{el.style.display=show?'':'none';});
+}
+// Cœur : applique et persiste l'URL du proxy IA. Renvoie true si acceptée.
+function setAiProxy(url){
+  const v=((url||'')+'').trim().replace(/\/+$/,'');
+  if(v&&!/^https:\/\//i.test(v)){ showToast('L\'URL doit commencer par https://'); return false; }
+  if(v)localStorage.setItem('ks_ai_proxy',v); else localStorage.removeItem('ks_ai_proxy');
   AI_PROXY_URL=v;
-  showToast(v?'✅ Assistant IA configuré':'URL du proxy effacée');
+  applyAssistantVisibility();
   const cfgB=document.getElementById('aiConfigBanner');
   if(cfgB)cfgB.style.display=v?'none':'';
+  return true;
+}
+// Depuis le bandeau de la page Assistant.
+function saveAiProxy(){
+  const pi=document.getElementById('aiProxyInput');
+  if(setAiProxy(pi?pi.value:''))showToast(AI_PROXY_URL?'✅ Assistant IA configuré':'URL du proxy effacée');
+}
+// Depuis la modale Gestion des données (reste accessible même si l'entrée de menu est masquée).
+function saveAiProxyData(){
+  const pi=document.getElementById('dataAiProxy');
+  if(setAiProxy(pi?pi.value:''))showToast(AI_PROXY_URL?'✅ Assistant IA activé — entrée de menu affichée':'URL du proxy effacée');
 }
 
 // Saisie vocale : remplit le champ texte de l'assistant via Web Speech API.
@@ -5728,6 +5760,7 @@ function savePermissions(){
   showToast('✅ Permissions enregistrées');
   closeM('mProfiles');
   applyRoleRestrictions();
+  applyAssistantVisibility();
 }
 
 function renderBatAccessGrid(){
@@ -5820,6 +5853,8 @@ function checkLogin(){
 function showLoginScreen(){
   const screen = document.getElementById('loginScreen');
   if(screen) screen.style.display='flex';
+  // Aucune session active : pas de badge de profil dans la barre du haut.
+  const _td=document.getElementById('tdate');if(_td)_td.innerHTML='';
   // v2.14 finding #4 : revenir à l'écran principal (loginStep1) et purger l'état
   // résiduel du pavé PIN — sinon une déconnexion depuis Admin atterrit sur
   // "Accès administrateur" avec les ronds PIN restés remplis du login précédent.
@@ -5922,7 +5957,7 @@ function loginNewEmpty(){
   if(typeof driveSignOut === 'function') driveSignOut();
   window._ksIsolated=true;
   sessionStorage.setItem('ks_isolated','1');
-  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));localStorage.removeItem('_ksi_ks_bailleur');
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
   bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];
   // v2.17 : rôle 'admin' (et non 'lecture') — le mode "Application vide" sert à
@@ -5943,7 +5978,7 @@ function loginNewCode(){
     if(typeof driveSignOut === 'function') driveSignOut();
     window._ksIsolated=true;
     sessionStorage.setItem('ks_isolated','1');
-    Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+    Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));localStorage.removeItem('_ksi_ks_bailleur');
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
     bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];
     if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
@@ -6003,6 +6038,7 @@ function doLogin(profile){
   const screen = document.getElementById('loginScreen');
   if(screen) screen.style.display='none';
   applyRoleRestrictions();
+  applyAssistantVisibility();
   const lb=document.getElementById('logoutBtn');
   if(lb) lb.style.display='';
   showToast('Bienvenue, '+profile.name+' !');
@@ -6080,7 +6116,7 @@ function logout(){
   localStorage.removeItem('ks_current_profile');
   sessionStorage.removeItem('ks_isolated');
   sessionStorage.removeItem('ks_demo');  // v2.15 : sortir du mode démo
-  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
+  Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));localStorage.removeItem('_ksi_ks_bailleur');
   // Clear Drive credentials (force re-auth au prochain login)
   driveToken=null; driveFileId=null; driveEmail=null;
   localStorage.removeItem('ks_drive');
@@ -6849,6 +6885,7 @@ setTimeout(async ()=>{
   if(md) md.style.display='flex'; // shown for admin by default, toggleTopMenu hides for others
   if(mp) mp.style.display='flex';
   checkLogin();
+  applyAssistantVisibility();
 },300);
 setTimeout(checkOnboarding, 1200);
 
