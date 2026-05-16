@@ -5826,7 +5826,7 @@ function saveNewProfile(){
   const name=(document.getElementById('newProfileName')?.value||'').replace(/[<>]/g,'').trim();
   const role=document.getElementById('newProfileRole')?.value;
   const pin=document.getElementById('newProfilePin')?.value.trim();
-  const avatar=document.getElementById('newProfileAvatar')?.value.trim()||ROLE_ICONS[role]||'👤';
+  const avatar=(document.getElementById('newProfileAvatar')?.value||'').replace(/[<>]/g,'').trim()||ROLE_ICONS[role]||'👤';
   if(!name){ alert('Nom requis'); return; }
   if(pin&&pin.length!==4){ alert('Le PIN doit être 4 chiffres'); return; }
   const profiles=getProfiles();
