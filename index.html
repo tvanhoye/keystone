@@ -1034,7 +1034,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
           <option value="gestionnaire" selected>Gestionnaire</option>
           <option value="lecture">Lecture seule</option>
         </select>
-        <button class="btn btn-p" style="width:100%;justify-content:center" onclick="(()=>{const s=document.getElementById('codeGenBat');s.innerHTML='<option value=&quot;&quot;>-- Choisir --</option>'+bats.map(b=>'<option value=&quot;'+b.id+'&quot;>'+b.nom+'</option>').join('');})();generateProjectCode()">🔑 Générer le code</button>
+        <button class="btn btn-p" style="width:100%;justify-content:center" onclick="(()=>{const s=document.getElementById('codeGenBat');s.innerHTML='<option value=&quot;&quot;>-- Choisir --</option>'+bats.map(b=>'<option value=&quot;'+b.id+'&quot;>'+esc(b.nom)+'</option>').join('');})();generateProjectCode()">🔑 Générer le code</button>
         <div style="display:flex;gap:6px;align-items:center">
           <input id="codeGenOutput" style="display:none;flex:1;padding:6px;border:1px solid var(--bd);border-radius:4px;font-size:.6rem;font-family:monospace;background:var(--bg);color:var(--t1)" readonly>
           <button class="btn btn-s" onclick="copyProjectCode()" style="display:none" id="codeGenCopyBtn">📋</button>
@@ -1059,6 +1059,7 @@ const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('
 const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));localStorage.setItem('ks_last_local_change',String(Date.now()));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
+const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
 let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp'),tds=ld('td');
 const gLg=id=>lgs.find(l=>l.id===id)||{nom:'—',loyer:0,ch:0};
@@ -1224,7 +1225,7 @@ function openM(id){
       if(dl){
         // Extract unique street names (without apt numbers)
         const addrs=[...new Set(lgs.map(l=>l.addr).filter(Boolean))];
-        dl.innerHTML=addrs.map(a=>`<option value="${a}">`).join('');
+        dl.innerHTML=addrs.map(a=>`<option value="${esc(a)}">`).join('');
       }
     }, 10);
   }
@@ -1238,7 +1239,7 @@ function fillLogCompteurs(selectedIds){
     const checked = selectedIds && selectedIds.includes(comp.id) ? 'checked' : '';
     const ico = {eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
     return `<label style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid var(--bd);border-radius:999px;cursor:pointer;font-size:.7rem;background:var(--sf);white-space:nowrap;line-height:1.5">
-      <input type="checkbox" value="${comp.id}" ${checked} style="accent-color:var(--ac)"> ${ico} ${comp.nom}
+      <input type="checkbox" value="${comp.id}" ${checked} style="accent-color:var(--ac)"> ${ico} ${esc(comp.nom)}
     </label>`;
   }).join('');
 }
@@ -1253,29 +1254,29 @@ function fillSels(){
   // Bâtiment selector in compteur modal
   const cBatSel=document.getElementById('cBat');
   if(cBatSel){
-    cBatSel.innerHTML='<option value="">Sélectionner...</option>'+bats.map(b=>`<option value="${b.id}">${b.nom}</option>`).join('');
+    cBatSel.innerHTML='<option value="">Sélectionner...</option>'+bats.map(b=>`<option value="${b.id}">${esc(b.nom)}</option>`).join('');
   }
   // Bâtiment selector in logement modal
   const lBatSel=document.getElementById('lBat');
   if(lBatSel){
     const cv=lBatSel.value;
-    lBatSel.innerHTML='<option value="">Aucun / Maison individuelle</option>'+bats.map(b=>'<option value="'+b.id+'">'+b.nom+' — '+b.addr+'</option>').join('');
+    lBatSel.innerHTML='<option value="">Aucun / Maison individuelle</option>'+bats.map(b=>'<option value="'+b.id+'">'+esc(b.nom)+' — '+esc(b.addr)+'</option>').join('');
     if(cv)lBatSel.value=cv;
   }
   ['locLog','entLog','rapLog','cLog'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
     const cv=el.value,req=sid==='locLog';
-    el.innerHTML='<option value="">'+(req?'Sélectionner…':'Tous / Immeuble')+'</option>'+lgs.map(l=>'<option value="'+l.id+'">'+l.nom+'</option>').join('');
+    el.innerHTML='<option value="">'+(req?'Sélectionner…':'Tous / Immeuble')+'</option>'+lgs.map(l=>'<option value="'+l.id+'">'+esc(l.nom)+'</option>').join('');
     if(cv)el.value=cv;
   });
   ['payLoc','docLoc'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
     const cv=el.value,req=sid==='payLoc';
-    el.innerHTML='<option value="">'+(req?'Sélectionner…':'Aucun')+'</option>'+lcs.map(l=>'<option value="'+l.id+'">'+lcFull(l)+'</option>').join('');
+    el.innerHTML='<option value="">'+(req?'Sélectionner…':'Aucun')+'</option>'+lcs.map(l=>'<option value="'+l.id+'">'+esc(lcFull(l))+'</option>').join('');
     if(cv)el.value=cv;
   });
   const rc=document.getElementById('relComp');
-  if(rc){rc.innerHTML='<option value="">Sélectionner…</option>'+cos.map(c=>'<option value="'+c.id+'">'+c.nom+'</option>').join('');}
+  if(rc){rc.innerHTML='<option value="">Sélectionner…</option>'+cos.map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');}
   const pd=document.getElementById('payDate');if(pd&&!pd.value)pd.value=tod();
   const dd=document.getElementById('docDate');if(dd&&!dd.value)dd.value=tod();
   const pm=document.getElementById('payMois');if(pm&&!pm.value)pm.value=tmth();
@@ -1354,12 +1355,12 @@ Object.entries(retardsByLc).forEach(([lcId,pays])=>{
   urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom,p:'entretien'}));
   visLcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
-  ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'" style="cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'""><span>'+a.i+'</span><div><strong>'+a.ti+'</strong><br><span style="opacity:.8">'+a.s+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
+  ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'" style="cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'""><span>'+a.i+'</span><div><strong>'+esc(a.ti)+'</strong><br><span style="opacity:.8">'+esc(a.s)+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
   const pr=rps.filter(r=>r.stat!=='fait').sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
-  document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editRap(\''+r.id+'\')"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+r.tit+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
+  document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editRap(\''+r.id+'\')"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+esc(r.tit)+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
   const rec = selBatId ? pys.filter(p=>visLcIds.has(p.lcId)).slice(-8).reverse() : pys.slice(-8).reverse();
-  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+lcFull(l)+'</td><td class="mono">'+ p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
-  document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+'</div></div><button class="btn btn-xs btn-s" onclick="event.stopPropagation();doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
+  document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+esc(lcFull(l))+'</td><td class="mono">'+ p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
+  document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+esc(e.tit)+'</div><div class="mm">'+esc(gLg(e.lgId).nom)+'</div></div><button class="btn btn-xs btn-s" onclick="event.stopPropagation();doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
 }
 
 // ═══ BÂTIMENTS ═══
@@ -1382,8 +1383,8 @@ function rBats(){
     return`<div class="card" style="padding:14px;cursor:pointer;margin-bottom:10px" onclick="editBat('${b.id}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
         <div style="flex:1">
-          <div style="font-weight:800;font-size:.92rem;margin-bottom:3px">🏗 ${b.nom}</div>
-          <div style="font-size:.74rem;color:var(--t2)">📍 ${b.addr}</div>
+          <div style="font-weight:800;font-size:.92rem;margin-bottom:3px">🏗 ${esc(b.nom)}</div>
+          <div style="font-size:.74rem;color:var(--t2)">📍 ${esc(b.addr)}</div>
           ${b.annee?`<div style="font-size:.68rem;color:var(--t3);margin-top:2px">Construction ${b.annee}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
@@ -1391,7 +1392,7 @@ function rBats(){
           <div style="font-size:.62rem;color:var(--t3)">logement${nbLg>1?'s':''}</div>
         </div>
       </div>
-      ${b.notes?`<div style="font-size:.72rem;color:var(--t2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">${b.notes}</div>`:''}
+      ${b.notes?`<div style="font-size:.72rem;color:var(--t2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">${esc(b.notes)}</div>`:''}
       <div style="display:flex;justify-content:flex-end;margin-top:8px">
         <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delBat('${b.id}')">✕ Supprimer</button>
       </div>
@@ -1663,8 +1664,8 @@ function rLgs(){
       return '<div class="lg-list-item" onclick="editLg(\''+l.id+'\')">'+
         '<div class="lg-list-ico" style="background:linear-gradient(135deg,'+cc+','+cc+'88)">'+(pEmo[l.type]||'🏠')+'</div>'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-weight:700;font-size:.84rem">'+l.nom+'</div>'+
-          '<div style="font-size:.69rem;color:var(--t2)">'+(lc?'👤 '+lcFull(lc):'<em>Vacant</em>')+(l.surf?' · 📐'+l.surf+'m²':'')+(l.batId?' · 🏗'+gBat(l.batId).nom:'')+'</div>'+
+          '<div style="font-weight:700;font-size:.84rem">'+esc(l.nom)+'</div>'+
+          '<div style="font-size:.69rem;color:var(--t2)">'+(lc?'👤 '+esc(lcFull(lc)):'<em>Vacant</em>')+(l.surf?' · 📐'+l.surf+'m²':'')+(l.batId?' · 🏗'+esc(gBat(l.batId).nom):'')+'</div>'+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0">'+
           '<div style="font-family:monospace;font-weight:800;font-size:.84rem;color:var(--ac)">'+(l.loyer+l.ch)+'€</div>'+
@@ -1681,8 +1682,8 @@ function rLgs(){
       lgs.map(l=>{
         const lc=lcs.find(x=>x.lgId===l.id);
         return '<tr style="cursor:pointer" onclick="editLg(\''+l.id+'\')">'+
-          '<td><strong>'+l.nom+'</strong>'+(l.batId?'<div style="font-size:.62rem;color:var(--ac)">'+gBat(l.batId).nom+'</div>':'')+'</td>'+
-          '<td>'+(lc?lcFull(lc):'<em style="color:var(--t3)">Vacant</em>')+'</td>'+
+          '<td><strong>'+esc(l.nom)+'</strong>'+(l.batId?'<div style="font-size:.62rem;color:var(--ac)">'+esc(gBat(l.batId).nom)+'</div>':'')+'</td>'+
+          '<td>'+(lc?esc(lcFull(lc)):'<em style="color:var(--t3)">Vacant</em>')+'</td>'+
           '<td>'+(l.surf?l.surf+' m²':'—')+'</td>'+
           '<td class="mono" style="font-weight:700">'+(l.loyer+l.ch)+'€</td>'+
           '<td>'+(lc?'<span class="badge bg">occupé</span>':'<span class="badge bx">vacant</span>')+'</td>'+
@@ -1696,18 +1697,18 @@ function rLgs(){
     g.innerHTML=lgs.map(l=>{
       const lc=lcs.find(x=>x.lgId===l.id);const cc=pCol[l.type]||'#555';
       const _travauxNow = !lc && isTravauxNow(l);
-      const _statusLine = lc ? '👤 '+lcFull(lc) : (_travauxNow ? '🏗 En travaux' : '<em>Vacant</em>');
+      const _statusLine = lc ? '👤 '+esc(lcFull(lc)) : (_travauxNow ? '🏗 En travaux' : '<em>Vacant</em>');
       const _statusBadge = lc ? '<span class="badge bg"><span class="dot"></span>occupé</span>'
                               : (_travauxNow ? '<span class="badge bo"><span class="dot"></span>travaux</span>'
                                              : '<span class="badge bx"><span class="dot"></span>vacant</span>');
       return '<div class="pc" onclick="editLg(\''+l.id+'\')" style="cursor:pointer">'+
-        '<div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+l.type+'</span></div>'+
+        '<div class="pt" style="background:linear-gradient(135deg,'+cc+','+cc+'99)">'+(pEmo[l.type]||'🏠')+'<span class="ptag">'+esc(l.type)+'</span></div>'+
         '<div class="pb">'+
-          '<div class="pn">'+l.nom+'</div>'+
-          '<div class="pa">📍 '+(l.addr||gBat(l.batId).addr||'—')+'</div>'+
+          '<div class="pn">'+esc(l.nom)+'</div>'+
+          '<div class="pa">📍 '+esc(l.addr||gBat(l.batId).addr||'—')+'</div>'+
           (l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+
           '<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+_statusLine+'</div>'+
-          (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏗 '+gBat(l.batId).nom+'</div>':'')+
+          (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏗 '+esc(gBat(l.batId).nom)+'</div>':'')+
           '<div class="pf">'+
             '<span class="pr">'+(l.loyer+l.ch)+'€<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+
             _statusBadge+
@@ -1740,7 +1741,7 @@ function editLg(id){
     const dl=document.getElementById('addrList');
     if(dl){
       const addrs=[...new Set(lgs.map(x=>x.addr).filter(Boolean))];
-      dl.innerHTML=addrs.map(a=>`<option value="${a}">`).join('');
+      dl.innerHTML=addrs.map(a=>`<option value="${esc(a)}">`).join('');
     }
   }, 10);
   document.getElementById('lHistWrap').style.display='block';renderLoyerHist(l);
@@ -1954,7 +1955,7 @@ function rLcs(f){
   tb.innerHTML=list.map(l=>{
     const lg=gLg(l.lgId);const d=dTo(l.fin);
     const bb=d===null?'<span class="badge bx">—</span>':d<0?'<span class="badge br">Expiré</span>':d<=60?'<span class="badge bo">⚠ '+d+'j</span>':'<span class="badge bg">OK</span>';
-    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+lcFull(l)+'</strong><div style="font-size:.67rem;color:var(--t2)">'+(l.email||'')+'</div></td><td style="font-size:.77rem">'+lg.nom+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
+    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+esc(lcFull(l))+'</strong><div style="font-size:.67rem;color:var(--t2)">'+esc(l.email||'')+'</div></td><td style="font-size:.77rem">'+esc(lg.nom)+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
   }).join('');
 }
 function filterLc(v){rLcs(v);}
@@ -2160,7 +2161,7 @@ function renderPayGrid(){
       const _firstLc = lgLcs[0] || null;
       const _lcName = _firstLc ? (_firstLc.prenom+' '+_firstLc.nom).trim() : 'Vacant';
       const _hasAnyLc = lgLcs.length > 0;
-      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${lg.nom}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_hasAnyLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${lgLcs.length>1?lgLcs.length+' locataires':_lcName}</div></td>`;
+      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${esc(lg.nom)}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_hasAnyLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${lgLcs.length>1?lgLcs.length+' locataires':esc(_lcName)}</div></td>`;
     }
 
     cols.forEach(col=>{
@@ -2575,7 +2576,7 @@ function buildSVGChart(grouped, comp, chartType, colMain, colLight, coId){
     bg+=`<line x1="${PL}" x2="${W-PR}" y1="${f1(y)}" y2="${f1(y)}" stroke="#e2ddd2" stroke-width="${i===0?1.5:0.6}"/>`;
     bg+=`<text x="${PL-6}" y="${f1(y+4)}" text-anchor="end" font-size="9" fill="#a09890">${vs}</text>`;
   }
-  bg+=`<text transform="rotate(-90)" x="${f1(-(PT+cH/2))}" y="12" text-anchor="middle" font-size="8" fill="#a09890">${comp.unit}</text>`;
+  bg+=`<text transform="rotate(-90)" x="${f1(-(PT+cH/2))}" y="12" text-anchor="middle" font-size="8" fill="#a09890">${esc(comp.unit)}</text>`;
   bg+=`<line x1="${PL}" x2="${W-PR}" y1="${f1(PT+cH)}" y2="${f1(PT+cH)}" stroke="#c8c4bc" stroke-width="1.5"/>`;
 
   displayItems.forEach((g,i)=>{
@@ -2701,7 +2702,7 @@ function buildSVGChart(grouped, comp, chartType, colMain, colLight, coId){
 function rCharges(){
   // Refresh compteur list in modal
   const cl=document.getElementById('compList');
-  if(cl)cl.innerHTML=cos.length?cos.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:.8rem"><span>${cIco[c.type]||'📊'}</span><span style="flex:1;font-weight:600">${c.nom}</span><span style="font-size:.69rem;color:var(--t3)">${c.unit}</span><button class="btn btn-d btn-xs" onclick="delComp('${c.id}')">✕</button></div>`).join(''):'<p style="font-size:.77rem;color:var(--t3)">Aucun compteur</p>';
+  if(cl)cl.innerHTML=cos.length?cos.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:.8rem"><span>${cIco[c.type]||'📊'}</span><span style="flex:1;font-weight:600">${esc(c.nom)}</span><span style="font-size:.69rem;color:var(--t3)">${esc(c.unit)}</span><button class="btn btn-d btn-xs" onclick="delComp('${c.id}')">✕</button></div>`).join(''):'<p style="font-size:.77rem;color:var(--t3)">Aucun compteur</p>';
 
   const cont=document.getElementById('chargesC');
   if(!cos.length){cont.innerHTML='<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">Aucun compteur.<br><br><button class="btn btn-p" onclick="openM(\'mComp\')">Ajouter</button></div></div>';return;}
@@ -2716,13 +2717,14 @@ function rCharges(){
     }
   }
   cont.innerHTML=renderCos.map(comp=>{
+    const uUnit=esc(comp.unit), uNom=esc(comp.nom), uNotes=esc(comp.notes||'');
     const cRels=rls.filter(r=>r.coId===comp.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
     const isBi=comp.type==='elec_bi';
     const col=cColMain[comp.type]||'#555';
     const light=cColLight[comp.type]||'var(--s2)';
     const series=getConsoSeries(comp.id);
     const lastR=cRels[cRels.length-1];
-    const lastIdx=lastR?(isBi?`HP: ${(lastR.hp||0).toFixed(0)} / HC: ${(lastR.hc||0).toFixed(0)}`:(lastR.idx||0).toFixed(1)+' '+comp.unit):'—';
+    const lastIdx=lastR?(isBi?`HP: ${(lastR.hp||0).toFixed(0)} / HC: ${(lastR.hc||0).toFixed(0)}`:(lastR.idx||0).toFixed(1)+' '+uUnit):'—';
 
     // Stats
     const totalConso=series.reduce((a,s)=>a+s.total,0);
@@ -2745,15 +2747,15 @@ function rCharges(){
     // Legend
     let legend='';
     if(isBi)legend=`<span><span style="display:inline-block;width:12px;height:4px;background:${cColHP};border-radius:2px"></span> HP</span><span><span style="display:inline-block;width:12px;height:4px;background:${cColHC};border-radius:2px"></span> HC</span>`;
-    else legend=`<span><span style="display:inline-block;width:12px;height:4px;background:${col};border-radius:2px"></span> ${comp.unit}</span><span><span style="display:inline-block;width:12px;height:4px;background:#c0392b;border-radius:2px"></span> Élevé</span><span><span style="display:inline-block;width:12px;height:4px;background:#2d5a3d;border-radius:2px"></span> Bas</span>`;
+    else legend=`<span><span style="display:inline-block;width:12px;height:4px;background:${col};border-radius:2px"></span> ${uUnit}</span><span><span style="display:inline-block;width:12px;height:4px;background:#c0392b;border-radius:2px"></span> Élevé</span><span><span style="display:inline-block;width:12px;height:4px;background:#2d5a3d;border-radius:2px"></span> Bas</span>`;
 
     // Relevés table
     const relRows=cRels.map((r,i)=>{
       const prev=i>0?cRels[i-1]:null;
       let idxStr,consoStr='—',dc='var(--t2)';
       if(isBi){idxStr=`HP:${(r.hp||0).toFixed(0)} / HC:${(r.hc||0).toFixed(0)}`;if(prev){const dH=(r.hp||0)-(prev.hp||0),dC=(r.hc||0)-(prev.hc||0);consoStr=`HP+${dH.toFixed(0)} HC+${dC.toFixed(0)} = ${(dH+dC).toFixed(0)} kWh`;dc=col;}}
-      else{idxStr=(r.idx||0).toFixed(1)+' '+comp.unit;if(prev){const d=(r.idx||0)-(prev.idx||0);consoStr=`+${d.toFixed(1)} ${comp.unit}`;dc=col;}}
-      return`<tr><td>${fD(r.date)}</td><td class="mono" style="font-weight:700">${idxStr}</td><td style="color:${dc};font-weight:600;font-family:monospace">${consoStr}</td><td style="font-size:.69rem;color:var(--t3)">${r.notes||''}</td><td><div style="display:flex;gap:3px"><button class="btn btn-xs btn-s" onclick="editRel('${r.id}')">✏</button><button class="btn btn-xs btn-d" onclick="delRel('${r.id}')">✕</button></div></td></tr>`;
+      else{idxStr=(r.idx||0).toFixed(1)+' '+uUnit;if(prev){const d=(r.idx||0)-(prev.idx||0);consoStr=`+${d.toFixed(1)} ${uUnit}`;dc=col;}}
+      return`<tr><td>${fD(r.date)}</td><td class="mono" style="font-weight:700">${idxStr}</td><td style="color:${dc};font-weight:600;font-family:monospace">${consoStr}</td><td style="font-size:.69rem;color:var(--t3)">${esc(r.notes||'')}</td><td><div style="display:flex;gap:3px"><button class="btn btn-xs btn-s" onclick="editRel('${r.id}')">✏</button><button class="btn btn-xs btn-d" onclick="delRel('${r.id}')">✕</button></div></td></tr>`;
     }).join('');
 
     return`<div class="comp-card">
@@ -2761,8 +2763,8 @@ function rCharges(){
       <div class="comp-head">
         <div class="comp-ico" style="background:${light}">${cIco[comp.type]||'📊'}</div>
         <div class="comp-meta">
-          <div class="comp-nom">${comp.nom}</div>
-          <div class="comp-sub">${comp.notes||''} · ${comp.unit} · ${cRels.length} relevés</div>
+          <div class="comp-nom">${uNom}</div>
+          <div class="comp-sub">${uNotes} · ${uUnit} · ${cRels.length} relevés</div>
         </div>
         <div class="comp-actions">
           <span class="comp-last" style="color:${col}">Dernier: ${lastIdx}</span>
@@ -2773,8 +2775,8 @@ function rCharges(){
 
       <!-- Stat pills -->
       ${series.length?`<div class="stat-row">
-        <div class="stat-pill"><span class="stat-pill-val">${totalConso.toFixed(0)}</span><span class="stat-pill-lbl">Total ${comp.unit}</span></div>
-        <div class="stat-pill"><span class="stat-pill-val">${avgPerDay.toFixed(2)}</span><span class="stat-pill-lbl">${comp.unit}/jour</span></div>
+        <div class="stat-pill"><span class="stat-pill-val">${totalConso.toFixed(0)}</span><span class="stat-pill-lbl">Total ${uUnit}</span></div>
+        <div class="stat-pill"><span class="stat-pill-val">${avgPerDay.toFixed(2)}</span><span class="stat-pill-lbl">${uUnit}/jour</span></div>
         <div class="stat-pill"><span class="stat-pill-val" style="color:#c0392b">${maxS.total.toFixed(0)}</span><span class="stat-pill-lbl">Max période</span></div>
         <div class="stat-pill"><span class="stat-pill-val" style="color:#2d5a3d">${minS.total.toFixed(0)}</span><span class="stat-pill-lbl">Min période</span></div>
         ${(()=>{
@@ -3104,9 +3106,9 @@ function refreshChart(coId){
         const prevYearTotal=prevG.filter(g=>g.hasData&&g.total>0).reduce((a,g)=>a+g.total,0);
         if(realData.length>=1&&futureSlots.length>0){
           let html='<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:8px 0;border-top:1px solid var(--bd);margin-top:4px;font-size:.76rem">';
-          html+='<span>📊 Réel: <strong>'+realTotal.toFixed(0)+' '+comp.unit+'</strong></span>';
-          html+='<span style="color:'+col+'">〰 Projection: <strong>~'+projTotal.toFixed(0)+' '+comp.unit+'</strong></span>';
-          if(prevYearTotal>0){const diff=Math.round((projTotal/prevYearTotal-1)*100);const color=diff>0?'var(--wa)':'var(--ac)';html+='<span style="color:'+color+'">'+(diff>0?'↗':'↘')+' '+Math.abs(diff)+'% vs an dernier ('+prevYearTotal.toFixed(0)+' '+comp.unit+')</span>';}
+          html+='<span>📊 Réel: <strong>'+realTotal.toFixed(0)+' '+esc(comp.unit)+'</strong></span>';
+          html+='<span style="color:'+col+'">〰 Projection: <strong>~'+projTotal.toFixed(0)+' '+esc(comp.unit)+'</strong></span>';
+          if(prevYearTotal>0){const diff=Math.round((projTotal/prevYearTotal-1)*100);const color=diff>0?'var(--wa)':'var(--ac)';html+='<span style="color:'+color+'">'+(diff>0?'↗':'↘')+' '+Math.abs(diff)+'% vs an dernier ('+prevYearTotal.toFixed(0)+' '+esc(comp.unit)+')</span>';}
           html+='</div>';
           projEl.innerHTML=html;projEl.style.display='block';
         }else{projEl.style.display='none';}
@@ -3138,7 +3140,7 @@ function updateRelFields(){
   if(comp&&comp.type==='elec_bi'){
     f.innerHTML='<div class="fr"><div class="fg"><label>Index HP (kWh) *</label><input id="relHP" type="number" step="0.01"></div><div class="fg"><label>Index HC (kWh) *</label><input id="relHC" type="number" step="0.01"></div></div>';
   }else{
-    const u=comp?comp.unit:'';
+    const u=comp?esc(comp.unit):'';
     f.innerHTML='<div class="fr"><div class="fg"><label>Index * ('+u+')</label><input id="relIdx" type="number" step="0.01"></div><div class="fg"></div></div>';
   }
 }
@@ -3210,7 +3212,7 @@ function renderCreditsTab(){
     const moisRestants=cr.duree&&cr.debut?Math.max(0,cr.duree-Math.round((new Date()-new Date(cr.debut))/864e5/30.5)):null;
     return `<div style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editCredit('${cr.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-weight:700">${cr.nom}</div><div style="font-size:.7rem;color:var(--t2)">${bat.nom||'Général'}${cr.taux?' · '+cr.taux+'%':''}${cr.notes?' · '+cr.notes:''}</div></div>
+        <div><div style="font-weight:700">${esc(cr.nom)}</div><div style="font-size:.7rem;color:var(--t2)">${esc(bat.nom||'Général')}${cr.taux?' · '+cr.taux+'%':''}${cr.notes?' · '+esc(cr.notes):''}</div></div>
         <div style="text-align:right"><div style="font-weight:800;font-family:monospace;color:#c0392b;font-size:.92rem">${fE(cr.mens)}/mois</div>${moisRestants!==null?`<div style="font-size:.65rem;color:var(--t3)">${Math.ceil(moisRestants/12)} ans restants</div>`:''}</div>
       </div>
       <div style="display:flex;gap:16px;margin-top:6px;font-size:.7rem;color:var(--t2)">
@@ -3226,7 +3228,7 @@ function renderChargesTab(){
     const bat=gBat(ch.batId);
     const mensEq=ch.freq==='mensuel'?ch.montant:ch.freq==='trimestriel'?ch.montant/3:ch.montant/12;
     return `<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editCharge('${ch.id}')">
-      <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${ch.nom}</div><div style="font-size:.67rem;color:var(--t2)">${ch.cat} · ${bat.nom||'Général'} · ${ch.freq}</div></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${esc(ch.nom)}</div><div style="font-size:.67rem;color:var(--t2)">${ch.cat} · ${esc(bat.nom||'Général')} · ${ch.freq}</div></div>
       <div style="text-align:right"><div style="font-weight:700;font-family:monospace">${fE(ch.montant)}</div><div style="font-size:.62rem;color:var(--t3)">≈${fE(Math.round(mensEq))}/mois</div></div>
       <span class="badge ${ch.paye==='oui'?'bg':'bx'}" style="cursor:pointer" onclick="event.stopPropagation();ch.paye=ch.paye==='oui'?'non':'oui';sv('ch',chs);rBanqueTab()">${ch.paye==='oui'?'✓ Payé':'En attente'}</span>
       <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delCharge('${ch.id}')">✕</button>
@@ -3240,7 +3242,7 @@ function renderDepensesTab(){
     +'<div class="card">'+sorted.map(dp=>{
     const bat=gBat(dp.batId);
     return `<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editDepense('${dp.id}')">
-      <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${dp.nom}</div><div style="font-size:.67rem;color:var(--t2)">${dp.cat} · ${bat.nom||'Général'} · ${fD(dp.date)}</div></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${esc(dp.nom)}</div><div style="font-size:.67rem;color:var(--t2)">${dp.cat} · ${esc(bat.nom||'Général')} · ${fD(dp.date)}</div></div>
       <div style="font-weight:700;font-family:monospace;color:#c0392b">${fE(dp.montant)}</div>
       <span class="badge ${dp.paye==='oui'?'bg':'bx'}">${dp.paye==='oui'?'✓':'En att.'}</span>
       <button class="btn btn-d btn-xs" onclick="event.stopPropagation();dps=dps.filter(x=>x.id!=='${dp.id}');sv('dp',dps);rBanqueTab()">✕</button>
@@ -3251,7 +3253,7 @@ function rBanque(){
   // Populate bat selectors
   ['crBat','chBat','dpBat'].forEach(sid=>{
     const sel=document.getElementById(sid);
-    if(sel){ sel.innerHTML='<option value="">Général / Tous bâtiments</option>'+bats.map(b=>`<option value="${b.id}">${b.nom}</option>`).join(''); }
+    if(sel){ sel.innerHTML='<option value="">Général / Tous bâtiments</option>'+bats.map(b=>`<option value="${b.id}">${esc(b.nom)}</option>`).join(''); }
   });
 
   const totalMens = crs.reduce((a,cr)=>a+cr.mens,0);
@@ -3282,7 +3284,7 @@ function rBanque(){
       const pct=cr.capital>0?Math.round((1-cr.reste/cr.capital)*100):0;
       return `<div style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editCredit('${cr.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><div style="font-weight:700">${cr.nom}</div><div style="font-size:.7rem;color:var(--t2)">${bat.nom||'Général'}${cr.taux?' · '+cr.taux+'%':''}</div></div>
+          <div><div style="font-weight:700">${esc(cr.nom)}</div><div style="font-size:.7rem;color:var(--t2)">${esc(bat.nom||'Général')}${cr.taux?' · '+cr.taux+'%':''}</div></div>
           <div style="text-align:right"><div style="font-weight:800;font-family:monospace;color:#c0392b">${fE(cr.mens)}/mois</div><div style="font-size:.68rem;color:var(--t3)">Restant: ${fE(cr.reste||0)}</div></div>
         </div>
         ${cr.capital>0?`<div style="margin-top:8px;background:var(--s2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--ac);height:100%;width:${pct}%;border-radius:4px"></div></div><div style="font-size:.62rem;color:var(--t3);margin-top:2px">${pct}% remboursé</div>`:''}
@@ -3299,7 +3301,7 @@ function rBanque(){
       const bat=gBat(ch.batId);
       const mensEq=ch.freq==='mensuel'?ch.montant:ch.freq==='trimestriel'?ch.montant/3:ch.montant/12;
       return `<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editCharge('${ch.id}')">
-        <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${ch.nom}</div><div style="font-size:.67rem;color:var(--t2)">${ch.cat} · ${bat.nom||'Général'} · ${ch.freq}</div></div>
+        <div style="flex:1"><div style="font-weight:600;font-size:.8rem">${esc(ch.nom)}</div><div style="font-size:.67rem;color:var(--t2)">${ch.cat} · ${esc(bat.nom||'Général')} · ${ch.freq}</div></div>
         <div style="text-align:right"><div style="font-weight:700;font-family:monospace">${fE(ch.montant)}</div><div style="font-size:.62rem;color:var(--t3)">≈ ${fE(Math.round(mensEq))}/mois</div></div>
         <span class="badge ${ch.paye==='oui'?'bg':'bx'}">${ch.paye==='oui'?'✓ Payé':'En attente'}</span>
         <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delCharge('${ch.id}')">✕</button>
@@ -3439,7 +3441,7 @@ function rEnts(f){
   let list=f==='tous'?ens:ens.filter(e=>e.prio===f);
   const cont=document.getElementById('entL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Aucune intervention</div></div>';return;}
-  cont.innerHTML=list.map(e=>'<div class="mi" onclick="editEnt(\''+e.id+'\')" style="cursor:pointer"><div class="mico" style="background:'+(ePBg[e.prio]||'var(--s2)')+'">'+ePIco[e.prio]+'</div><div class="mb"><div class="mt">'+e.tit+'</div><div class="mm">'+gLg(e.lgId).nom+(e.prest?' · '+e.prest:'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+fD(e.date)+(e.desc?' — '+e.desc:'')+'</div></div><div class="mac">'+(e.prio!=='terminé'?'<button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editEnt(\''+e.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delEnt(\''+e.id+'\')">✕</button></div></div>').join('');
+  cont.innerHTML=list.map(e=>'<div class="mi" onclick="editEnt(\''+e.id+'\')" style="cursor:pointer"><div class="mico" style="background:'+(ePBg[e.prio]||'var(--s2)')+'">'+ePIco[e.prio]+'</div><div class="mb"><div class="mt">'+esc(e.tit)+'</div><div class="mm">'+esc(gLg(e.lgId).nom)+(e.prest?' · '+esc(e.prest):'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+fD(e.date)+(e.desc?' — '+esc(e.desc):'')+'</div></div><div class="mac">'+(e.prio!=='terminé'?'<button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editEnt(\''+e.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delEnt(\''+e.id+'\')">✕</button></div></div>').join('');
 }
 function tabEnt(f,el){document.querySelectorAll('#entTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rEnts(f);}
 function editEnt(id){
@@ -3465,7 +3467,7 @@ function rDocs(f){
   docF=f;let list=f==='tous'?dcs:dcs.filter(d=>d.type===f);
   const cont=document.getElementById('docL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">Aucun document</div></div>';return;}
-  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+(dIco[d.type]||'📎')+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+d.nom+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+lcFull(l):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
+  cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+(dIco[d.type]||'📎')+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+esc(d.nom)+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+esc(lcFull(l)):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
 }
 function tabDoc(f,el){document.querySelectorAll('#docTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rDocs(f);}
 function editDoc(id){
@@ -3491,7 +3493,7 @@ function rRaps(){
     const d=dTo(r.date);const cl=r.stat==='fait'?'bx':d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';
     const lbl=r.stat==='fait'?'Fait':d<0?Math.abs(d)+'j passé':d===0?'Auj.':d+'j';
     const lg=lgs.find(l=>l.id===r.lgId);
-    return'<div class="mi" onclick="editRap(\''+r.id+'\')" style="'+(r.stat==='fait'?'cursor:pointer;opacity:.5':'cursor:pointer')+'"><div class="mico" style="background:var(--s2)">🔔</div><div class="mb"><div class="mt">'+r.tit+'</div><div class="mm">'+r.cat+(lg?' · '+lg.nom:'')+'</div><div class="mf">'+fD(r.date)+(r.notes?' — '+r.notes:'')+'</div></div><div class="mac"><span class="badge '+cl+'">'+lbl+'</span>'+(r.stat!=='fait'?'<button class="btn btn-xs btn-s" onclick="doneRap(\''+r.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editRap(\''+r.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delRap(\''+r.id+'\')">✕</button></div></div>';
+    return'<div class="mi" onclick="editRap(\''+r.id+'\')" style="'+(r.stat==='fait'?'cursor:pointer;opacity:.5':'cursor:pointer')+'"><div class="mico" style="background:var(--s2)">🔔</div><div class="mb"><div class="mt">'+esc(r.tit)+'</div><div class="mm">'+r.cat+(lg?' · '+esc(lg.nom):'')+'</div><div class="mf">'+fD(r.date)+(r.notes?' — '+esc(r.notes):'')+'</div></div><div class="mac"><span class="badge '+cl+'">'+lbl+'</span>'+(r.stat!=='fait'?'<button class="btn btn-xs btn-s" onclick="doneRap(\''+r.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editRap(\''+r.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delRap(\''+r.id+'\')">✕</button></div></div>';
   }).join('');
 }
 function editRap(id){
@@ -3520,7 +3522,7 @@ function rTodo(){
   const sorted=[...tds].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.created||0)-(a.created||0));
   c.innerHTML=sorted.map(t=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--bd)">'
     +'<input type="checkbox" '+(t.done?'checked':'')+' onclick="toggleTodo(\''+t.id+'\')" style="width:17px;height:17px;cursor:pointer;accent-color:var(--ac);flex-shrink:0">'
-    +'<span style="flex:1;font-size:.85rem;'+(t.done?'text-decoration:line-through;color:var(--t3)':'')+'">'+t.text+'</span>'
+    +'<span style="flex:1;font-size:.85rem;'+(t.done?'text-decoration:line-through;color:var(--t3)':'')+'">'+esc(t.text)+'</span>'
     +'<button class="btn btn-d btn-xs" onclick="delTodo(\''+t.id+'\')">✕</button>'
     +'</div>').join('');
 }
@@ -3618,13 +3620,13 @@ function rAnnuel(){
   const eEl=document.getElementById('anTE');eEl.textContent=(totE>=0?'+':'')+fE(totE);eEl.style.color=totE>=0?'var(--ac)':'var(--wa)';
   document.getElementById('anEntTot').textContent=totEnt?'-'+fE(totEnt):'';
   const eL=document.getElementById('anEntL');
-  eL.innerHTML=entAn.length?entAn.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:.77rem"><div><div style="font-weight:600">'+e.tit+'</div><div style="font-size:.67rem;color:var(--t2)">'+gLg(e.lgId).nom+(e.date?' · '+fD(e.date):'')+'</div></div><span style="font-family:monospace;font-weight:700;color:var(--wa)">-'+fE(e.cout)+'</span></div>').join(''):'<div class="empty" style="padding:10px"><div style="font-size:1.2rem">✅</div><div class="empty-text">Aucune dépense</div></div>';
+  eL.innerHTML=entAn.length?entAn.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:.77rem"><div><div style="font-weight:600">'+esc(e.tit)+'</div><div style="font-size:.67rem;color:var(--t2)">'+esc(gLg(e.lgId).nom)+(e.date?' · '+fD(e.date):'')+'</div></div><span style="font-family:monospace;font-weight:700;color:var(--wa)">-'+fE(e.cout)+'</span></div>').join(''):'<div class="empty" style="padding:10px"><div style="font-size:1.2rem">✅</div><div class="empty-text">Aucune dépense</div></div>';
   document.getElementById('anTaux').innerHTML=months.filter(m=>new Date(m.mStr+'-15')<=new Date()).map(m=>{const cl=m.taux>=100?'var(--ac)':m.taux>=80?'var(--go)':'var(--wa)';return'<div style="display:flex;align-items:center;gap:9px;padding:4px 0;border-bottom:1px solid var(--bd)"><span style="font-size:.71rem;color:var(--t2);width:26px">'+m.label+'</span><div style="flex:1;height:7px;background:var(--s2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.min(m.taux,100)+'%;background:'+cl+';border-radius:3px"></div></div><span style="font-family:monospace;font-size:.71rem;font-weight:700;color:'+cl+';width:33px;text-align:right">'+m.taux+'%</span></div>';}).join('');
   const rentData=lgs.map(lg=>{const lAn=(lg.loyer+lg.ch)*12;const entLg=ens.filter(e=>e.lgId===lg.id&&e.prio==='terminé'&&e.cout>0&&e.date&&e.date.startsWith(yrStr)).reduce((a,e)=>a+e.cout,0);const lc=lcs.find(l=>l.lgId===lg.id);return{lg,lc,lAn,entLg,surf:lg.surf||0};}).sort((a,b)=>b.lAn-a.lAn);
   const maxL=Math.max(...rentData.map(r=>r.lAn),1);
   const rc=['#f5c842','#c0c0c0','#cd7f32'];
-  document.getElementById('anRent').innerHTML=rentData.map((r,i)=>{const pct=Math.round(r.lAn/maxL*100);const pm=r.surf&&r.lg.loyer?Math.round(r.lg.loyer/r.surf):'—';return'<div class="rent-row"><div class="rent-rank" style="background:'+(i<3?rc[i]:'var(--s2)')+';color:'+(i<3?'#000':'var(--t2)')+'">'+(i+1)+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%">'+r.lg.nom+'</span><span style="font-family:monospace;font-size:.77rem;font-weight:700;color:var(--ac)">'+fE(r.lAn)+'/an</span></div><div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:'+pct+'%;background:var(--ac);border-radius:3px"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:.64rem;color:var(--t3)">'+(pm!=='—'?pm+'€/m²/mois':'')+'</span><span style="font-size:.64rem;color:var(--t2)">'+(r.lc?'👤 '+lcFull(r.lc):'Vacant')+'</span>'+(r.entLg?'<span style="font-size:.64rem;color:var(--wa)">🔧 -'+fE(r.entLg)+'</span>':'')+'</div></div></div>';}).join('');
-  document.getElementById('anOcc').innerHTML=lgs.map(lg=>{const lc=lcs.find(l=>l.lgId===lg.id);let occ=0;if(lc){const yS=new Date(year+'-01-01'),yE=new Date(year+'-12-31');const lS=new Date(lc.ent||year+'-01-01'),lE=lc.fin?new Date(lc.fin):yE;const s=new Date(Math.max(lS,yS)),e=new Date(Math.min(lE,yE));const yD=(yE-yS)/864e5+1,oD=Math.max(0,(e-s)/864e5+1);occ=Math.min(100,Math.round(oD/yD*100));}const cl=occ>=90?'var(--ac)':occ>=50?'var(--go)':'var(--wa)';return'<div style="padding:7px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.77rem;font-weight:600">'+lg.nom+'</span><span style="font-family:monospace;font-size:.74rem;font-weight:700;color:'+cl+'">'+occ+'%</span></div><div class="occ-bar"><div class="occ-fill" style="width:'+occ+'%;background:'+cl+'"></div></div></div>';}).join('');
+  document.getElementById('anRent').innerHTML=rentData.map((r,i)=>{const pct=Math.round(r.lAn/maxL*100);const pm=r.surf&&r.lg.loyer?Math.round(r.lg.loyer/r.surf):'—';return'<div class="rent-row"><div class="rent-rank" style="background:'+(i<3?rc[i]:'var(--s2)')+';color:'+(i<3?'#000':'var(--t2)')+'">'+(i+1)+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%">'+esc(r.lg.nom)+'</span><span style="font-family:monospace;font-size:.77rem;font-weight:700;color:var(--ac)">'+fE(r.lAn)+'/an</span></div><div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:'+pct+'%;background:var(--ac);border-radius:3px"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:.64rem;color:var(--t3)">'+(pm!=='—'?pm+'€/m²/mois':'')+'</span><span style="font-size:.64rem;color:var(--t2)">'+(r.lc?'👤 '+esc(lcFull(r.lc)):'Vacant')+'</span>'+(r.entLg?'<span style="font-size:.64rem;color:var(--wa)">🔧 -'+fE(r.entLg)+'</span>':'')+'</div></div></div>';}).join('');
+  document.getElementById('anOcc').innerHTML=lgs.map(lg=>{const lc=lcs.find(l=>l.lgId===lg.id);let occ=0;if(lc){const yS=new Date(year+'-01-01'),yE=new Date(year+'-12-31');const lS=new Date(lc.ent||year+'-01-01'),lE=lc.fin?new Date(lc.fin):yE;const s=new Date(Math.max(lS,yS)),e=new Date(Math.min(lE,yE));const yD=(yE-yS)/864e5+1,oD=Math.max(0,(e-s)/864e5+1);occ=Math.min(100,Math.round(oD/yD*100));}const cl=occ>=90?'var(--ac)':occ>=50?'var(--go)':'var(--wa)';return'<div style="padding:7px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.77rem;font-weight:600">'+esc(lg.nom)+'</span><span style="font-family:monospace;font-size:.74rem;font-weight:700;color:'+cl+'">'+occ+'%</span></div><div class="occ-bar"><div class="occ-fill" style="width:'+occ+'%;background:'+cl+'"></div></div></div>';}).join('');
 }
 function isFutureMois(m){return new Date(m+'-15')>new Date();}
 
@@ -4872,7 +4874,7 @@ function obStepLogement(){
     <div class="ob-field"><label>Compteurs associés</label>
       <div style="display:flex;flex-wrap:wrap;gap:6px">${cos.map(comp=>{
         const ico={eau:'💧',gaz:'🔥',elec_mono:'⚡',elec_bi:'⚡',autre:'📊'}[comp.type]||'📊';
-        return `<label class="ob-check"><input type="checkbox" value="${comp.id}"> ${ico} ${comp.nom}</label>`;
+        return `<label class="ob-check"><input type="checkbox" value="${comp.id}"> ${ico} ${esc(comp.nom)}</label>`;
       }).join('')}</div>
     </div>
   </div>
@@ -4914,9 +4916,9 @@ function obStepCompteurs(){
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--s2);border-radius:var(--rs);margin-bottom:6px">
       <span style="font-size:1.3rem">${ico}</span>
       <div style="flex:1">
-        <div style="font-weight:700;font-size:.82rem">${comp.nom}</div>
+        <div style="font-weight:700;font-size:.82rem">${esc(comp.nom)}</div>
         <div style="font-size:.68rem;color:var(--t2)">${rls.filter(r=>r.coId===comp.id).length} relevés · Dernier: ${lastRel?fD(lastRel.date):'—'}</div>
-        <div style="font-size:.68rem;color:${linkedLgs.length?'var(--ac)':'var(--wa)'}">${linkedLgs.length?'✓ Lié à: '+linkedLgs.map(l=>l.nom).join(', '):'⚠ Aucun logement associé — éditez vos logements'}</div>
+        <div style="font-size:.68rem;color:${linkedLgs.length?'var(--ac)':'var(--wa)'}">${linkedLgs.length?'✓ Lié à: '+linkedLgs.map(l=>esc(l.nom)).join(', '):'⚠ Aucun logement associé — éditez vos logements'}</div>
       </div>
       <span class="badge ${rls.filter(r=>r.coId===comp.id).length>0?'bg':'bx'}">${rls.filter(r=>r.coId===comp.id).length>0?'✓ OK':'Vide'}</span>
     </div>`;
@@ -5246,7 +5248,7 @@ function renderBatAccessGrid(){
   if(!profiles.length){ cont.innerHTML='<div style="color:var(--t2);font-size:.76rem">Aucun utilisateur non-admin.</div>'; return; }
   let html='<table style="width:100%;border-collapse:collapse;font-size:.75rem">';
   html+='<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--bd)">Bâtiment</th>';
-  profiles.forEach(p=>{ html+=`<th style="text-align:center;padding:6px;border-bottom:2px solid var(--bd)">${p.avatar||'👤'} ${p.name}</th>`; });
+  profiles.forEach(p=>{ html+=`<th style="text-align:center;padding:6px;border-bottom:2px solid var(--bd)">${esc(p.avatar||'👤')} ${esc(p.name)}</th>`; });
   html+='</tr></thead><tbody>';
   bats.forEach(bat=>{
     html+=`<tr><td style="padding:6px 8px;border-bottom:1px solid var(--bd);font-weight:600">${bat.nom}</td>`;
@@ -5359,8 +5361,8 @@ function renderProfileGrid(){
   
   grid.innerHTML = sortedProfiles.map(p=>`
     <div class="profile-btn" onclick="selectProfile('${p.id}')" id="pbtn_${p.id}">
-      <div class="profile-avatar">${p.avatar||ROLE_ICONS[p.role]||'👤'}</div>
-      <div class="profile-name">${p.name}</div>
+      <div class="profile-avatar">${esc(p.avatar||ROLE_ICONS[p.role]||'👤')}</div>
+      <div class="profile-name">${esc(p.name)}</div>
       <div class="profile-role ${ROLE_COLORS[p.role]||''}">${ROLE_LABELS[p.role]||p.role}</div>
       ${recentIds.includes(p.id)?'<div style="font-size:.55rem;color:var(--ac);margin-top:2px">✓ Récent</div>':''}
     </div>`).join('')
@@ -5472,8 +5474,8 @@ function loginShowUsers(){
   if(grid){
     grid.style.gridTemplateColumns = profiles.length<=2?'1fr 1fr':profiles.length<=3?'1fr 1fr 1fr':'1fr 1fr';
     grid.innerHTML = profiles.map(p=>`<div class="profile-btn" id="pbtn_${p.id}" onclick="selectProfile('${p.id}')">
-      <div class="profile-avatar">${p.avatar||'👤'}</div>
-      <div class="profile-name">${p.name}</div>
+      <div class="profile-avatar">${esc(p.avatar||'👤')}</div>
+      <div class="profile-name">${esc(p.name)}</div>
       <div class="profile-role">${ROLE_LABELS[p.role]||p.role}</div>
     </div>`).join('');
   }
@@ -5540,7 +5542,7 @@ function applyRoleRestrictions(){
     const tdate=document.getElementById('tdate');
     if(tdate){
       const badgeClass = role==='masteradmin'?'role-masteradmin':'role-admin';
-      const badge=`<span class="profile-badge ${badgeClass}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">${currentProfile.avatar||ROLE_ICONS[role]} ${currentProfile.name}</span>`;
+      const badge=`<span class="profile-badge ${badgeClass}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Gérer les profils">${esc(currentProfile.avatar||ROLE_ICONS[role])} ${esc(currentProfile.name)}</span>`;
       tdate.innerHTML=badge;
     }
     const lb=document.getElementById('logoutBtn');
@@ -5575,7 +5577,7 @@ function applyRoleRestrictions(){
   // Show profile badge in topbar
   const tdate = document.getElementById('tdate');
   if(tdate){
-    const badge=`<span class="profile-badge ${ROLE_COLORS[role]||''}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Options">${currentProfile.avatar||ROLE_ICONS[role]} ${currentProfile.name}</span>`;
+    const badge=`<span class="profile-badge ${ROLE_COLORS[role]||''}" style="margin-left:8px;cursor:pointer" onclick="showProfileManager()" title="Options">${esc(currentProfile.avatar||ROLE_ICONS[role])} ${esc(currentProfile.name)}</span>`;
     tdate.innerHTML=badge;
   }
   // Show logout button
