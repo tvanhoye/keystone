@@ -950,6 +950,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 <input id="lAddr" list="addrList" autocomplete="off" placeholder="Laisser vide si bâtiment sélectionné">
 <datalist id="addrList"></datalist>
 </div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div id="lHistWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">📈 Historique du loyer (indexations)</label><button type="button" class="btn btn-s btn-xs" onclick="openIndexModal()">+ Indexer</button></div><div id="lHistList" style="font-size:.78rem"></div></div><div id="lTravauxWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">🏗 Périodes de travaux</label><button type="button" class="btn btn-s btn-xs" onclick="openTravauxModal()">+ Ajouter période</button></div><div id="lTravauxList" style="font-size:.78rem"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
+<div class="fg"><label>Contenu / description <span style="font-weight:400;color:var(--t3);font-size:.65rem">(pour bail &amp; état des lieux — ex : 2 pièces, cabine de douche, WC, kitchenette…)</span></label><textarea id="lContenu" placeholder="Description détaillée du logement"></textarea></div>
+<div class="fg"><label>Clés / accès remis <span style="font-weight:400;color:var(--t3);font-size:.65rem">(pour l'état des lieux)</span></label><input id="lCles" placeholder="Ex : 2 clés porte d'entrée, 1 clé boîte aux lettres"></div>
 <div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
 <div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
 </div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div><div class="overlay" id="mIdx"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">📈 Nouvelle indexation</span><button class="mclose" onclick="closeM('mIdx')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>À partir du *</label><input id="idxFrom" type="date"></div></div><div class="fr"><div class="fg"><label>Loyer HC (€) *</label><input id="idxLoyer" type="number"></div><div class="fg"><label>Charges (€)</label><input id="idxCh" type="number"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mIdx')">Annuler</button><button class="btn btn-p" onclick="addIndex()">Ajouter</button></div></div></div><div class="overlay" id="mTravaux"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">🏗 Période de travaux</span><button class="mclose" onclick="closeM('mTravaux')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>Début *</label><input id="trvDebut" type="date"></div><div class="fg"><label>Fin <span style="font-weight:400;color:var(--t3);font-size:.65rem">(vide = en cours)</span></label><input id="trvFin" type="date"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mTravaux')">Annuler</button><button class="btn btn-p" onclick="addTravaux()">Ajouter</button></div></div></div></div>
@@ -959,7 +961,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <button type="button" class="btn btn-s btn-xs" onclick="document.getElementById('locFin').value=''" title="Bail indéterminé">∞ Indét.</button>
 </div>
 <div style="font-size:.65rem;color:var(--t3);margin-top:2px">Laisser vide = bail à durée indéterminée</div>
-</div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
+</div></div><div class="fr"><div class="fg"><label>Civilité</label><select id="locCiv"><option value=""></option><option>M.</option><option>Mme</option><option>Mlle</option></select></div><div class="fg"><label>Adresse (domicile)</label><input id="locAddr" placeholder="Adresse personnelle du locataire"></div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="fg"><label>Forcer statut</label><select id="payStatutOverride" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="">Auto (calculé)</option><option value="travaux">🏗 Travaux</option></select></div>
       <div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mComp"><div class="modal"><div class="mh"><span class="mtitle">Gérer les compteurs</span><button class="mclose" onclick="closeM('mComp')">✕</button></div><div class="mbody"><div id="compList" style="margin-bottom:14px"></div><div style="background:var(--s2);border-radius:var(--rs);padding:14px"><p style="font-size:.74rem;font-weight:700;margin-bottom:10px">＋ Nouveau compteur</p><div class="fr"><div class="fg"><label>Nom</label><input id="cNom"></div><div class="fg"><label>Type</label><select id="cType"><option value="eau">💧 Eau</option><option value="gaz">🔥 Gaz</option><option value="elec_mono">⚡ Électricité mono</option><option value="elec_bi">⚡ Élec. bihoraire HP/HC</option><option value="autre">📊 Autre</option></select></div></div><div class="fr"><div class="fg"><label>Unité</label><input id="cUnit" placeholder="kWh ou m³"></div><div class="fg"><label>Logement</label><select id="cLog"><option value="">Tous / Immeuble</option></select></div></div><button class="btn btn-p btn-sm" onclick="saveComp()">Ajouter</button></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mComp')">Fermer</button></div></div></div>
@@ -1033,7 +1035,14 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 <div class="overlay" id="mEnt"><div class="modal"><div class="mh"><span class="mtitle" id="mEntT">Intervention</span><button class="mclose" onclick="closeM('mEnt')">✕</button></div><div class="mbody"><input type="hidden" id="entId"><div class="fr"><div class="fg"><label>Titre *</label><input id="entTit"></div><div class="fg"><label>Priorité</label><select id="entPrio"><option value="urgent">🔴 Urgent</option><option value="planifié">🟡 Planifié</option><option value="terminé">🟢 Terminé</option></select></div></div><div class="fr"><div class="fg"><label>Logement</label><select id="entLog"><option value="">Tous</option></select></div><div class="fg"><label>Date</label><input id="entDate" type="date"></div></div><div class="fr"><div class="fg"><label>Prestataire</label><input id="entPrest"></div><div class="fg"><label>Coût (€)</label><input id="entCout" type="number"></div></div><div class="fg"><label>Description</label><textarea id="entDesc"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mEnt')">Annuler</button><button class="btn btn-p" onclick="saveEnt()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mDoc"><div class="modal"><div class="mh"><span class="mtitle" id="mDocT">Document</span><button class="mclose" onclick="closeM('mDoc')">✕</button></div><div class="mbody"><input type="hidden" id="docId"><div class="fr"><div class="fg"><label>Nom *</label><input id="docNom"></div><div class="fg"><label>Type</label><select id="docType"><option value="bail">Bail</option><option value="quittance">Quittance</option><option value="etat">État des lieux</option><option value="autre">Autre</option></select></div></div><div class="fr"><div class="fg"><label>Locataire</label><select id="docLoc"><option value="">Aucun</option></select></div><div class="fg"><label>Date</label><input id="docDate" type="date"></div></div><div class="fg"><label>Notes</label><textarea id="docNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDoc')">Annuler</button><button class="btn btn-p" onclick="saveDoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mRap"><div class="modal"><div class="mh"><span class="mtitle" id="mRapT">Rappel</span><button class="mclose" onclick="closeM('mRap')">✕</button></div><div class="mbody"><input type="hidden" id="rapId"><div class="fr"><div class="fg"><label>Titre *</label><input id="rapTit"></div><div class="fg"><label>Catégorie</label><select id="rapCat"><option>Entretien</option><option>Bail</option><option>Assurance</option><option>Fiscal</option><option>Autre</option></select></div></div><div class="fr"><div class="fg"><label>Date échéance *</label><input id="rapDate" type="date"></div><div class="fg"><label>Logement</label><select id="rapLog"><option value="">Tous</option></select></div></div><div class="fg"><label>Notes</label><textarea id="rapNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mRap')">Annuler</button><button class="btn btn-p" onclick="saveRap()">Enregistrer</button></div></div></div>
-<div class="overlay" id="mData"><div class="modal" style="max-width:440px"><div class="mh"><span class="mtitle">💾 Gestion des données</span><button class="mclose" onclick="closeM('mData')">✕</button></div><div class="mbody"><p style="font-size:.77rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Données stockées localement — exportez régulièrement.</p><div style="background:var(--acl);border:1px solid rgba(45,90,61,.15);border-radius:var(--rs);padding:10px;margin-bottom:14px;font-size:.77rem;color:var(--ac)"><strong>✅ Données protégées</strong> — jamais écrasées automatiquement.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-p" style="width:100%;justify-content:center" onclick="exportData()">📤 Exporter mes données (JSON)</button><label class="btn btn-s" style="width:100%;justify-content:center;cursor:pointer">📥 Importer des données (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label><button class="btn btn-d" style="width:100%;justify-content:center" onclick="clearAll()">🗑 Effacer toutes les données</button></div><div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
+<div class="overlay" id="mData"><div class="modal" style="max-width:440px"><div class="mh"><span class="mtitle">💾 Gestion des données</span><button class="mclose" onclick="closeM('mData')">✕</button></div><div class="mbody"><p style="font-size:.77rem;color:var(--t2);margin-bottom:14px;line-height:1.5">Données stockées localement — exportez régulièrement.</p><div style="background:var(--acl);border:1px solid rgba(45,90,61,.15);border-radius:var(--rs);padding:10px;margin-bottom:14px;font-size:.77rem;color:var(--ac)"><strong>✅ Données protégées</strong> — jamais écrasées automatiquement.</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-p" style="width:100%;justify-content:center" onclick="exportData()">📤 Exporter mes données (JSON)</button><label class="btn btn-s" style="width:100%;justify-content:center;cursor:pointer">📥 Importer des données (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label><button class="btn btn-d" style="width:100%;justify-content:center" onclick="clearAll()">🗑 Effacer toutes les données</button></div><div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+  <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase">🏠 Paramètres bailleur <span style="font-weight:400;text-transform:none;color:var(--t3)">(pour la génération de documents)</span></div>
+  <div class="fg"><label>Nom</label><input id="blrNom" placeholder="Ex : M. VAN HOYE Thomas"></div>
+  <div class="fg"><label>Adresse</label><input id="blrAddr" placeholder="Ex : 4130 Tilff"></div>
+  <div class="fr"><div class="fg"><label>IBAN</label><input id="blrIban" placeholder="BE.. .... .... ...."></div><div class="fg"><label>BIC</label><input id="blrBic" placeholder="GKCCBEBB"></div></div>
+  <button class="btn btn-p btn-sm" style="width:100%" onclick="saveBailleur()">💾 Enregistrer les paramètres bailleur</button>
+</div>
+<div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
       <hr style="margin:16px 0;border:none;border-top:1px solid var(--bd)">
       <div style="font-size:.78rem;font-weight:700;color:var(--ac);margin-bottom:10px">🔗 Partager un projet</div>
       <p style="font-size:.72rem;color:var(--t2);margin-bottom:10px">Générez un code à donner à un collègue pour qu'il rejoigne ce projet.</p>
@@ -1744,6 +1753,7 @@ function editLg(id){
   document.getElementById('lAddr').value=l.addr;document.getElementById('lSurf').value=l.surf||'';
   document.getElementById('lLoyer').value=l.loyer||'';document.getElementById('lCh').value=l.ch||'';
   document.getElementById('lDep').value=l.dep||'';document.getElementById('lNotes').value=l.notes||'';
+  document.getElementById('lContenu').value=l.contenu||'';document.getElementById('lCles').value=l.cles||'';
   fillSels();
   // fillSels() reconstruit les <option> du select #lBat — il faut donc fixer sa value
   // APRÈS, sinon l'option courante n'existe pas encore et la sélection retombe sur "Aucun".
@@ -1775,10 +1785,10 @@ function saveLog(){
   const loyerHist=Array.isArray(window._pendingHist)?window._pendingHist:existingHist;
   const existingTravaux=eid?((lgs.find(x=>x.id===eid)||{}).travaux||[]):[];
   const travaux=Array.isArray(window._pendingTravaux)?window._pendingTravaux:existingTravaux;
-  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist,travaux};
+  const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,contenu:document.getElementById('lContenu').value,cles:document.getElementById('lCles').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist,travaux};
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
-  ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes','lContenu','lCles'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
   window._pendingHist=null;
   window._pendingTravaux=null;
   closeM('mLog');rLgs();
@@ -1982,6 +1992,7 @@ function editLc(id){
     document.getElementById('locLog').value=l.lgId||'';document.getElementById('locJour').value=l.jour||1;
     document.getElementById('locEnt').value=l.ent||'';document.getElementById('locFin').value=l.fin||'';
     document.getElementById('locUrg').value=l.urg||'';document.getElementById('locNotes').value=l.notes||'';
+    document.getElementById('locCiv').value=l.civilite||'';document.getElementById('locAddr').value=l.adresse||'';
     document.getElementById('mLoc').classList.add('open');setTimeout(()=>injectModalNav('mLoc'),50);
   },10);
 }
@@ -1995,7 +2006,7 @@ function saveLoc(){
   if(!ent) missing.push("Date d'entrée");
   if(missing.length){alert('Champs manquants : '+missing.join(', '));return;}
   const eid=document.getElementById('locId').value;
-  const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,notes:(document.getElementById('locNotes')||{value:''}).value};
+  const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,civilite:(document.getElementById('locCiv')||{value:''}).value,adresse:(document.getElementById('locAddr')||{value:''}).value,notes:(document.getElementById('locNotes')||{value:''}).value};
   if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
   sv('lc',lcs);document.getElementById('locId').value='';document.getElementById('mLocT').textContent='Ajouter un locataire';
   closeM('mLoc');rLcs();
@@ -3678,7 +3689,23 @@ function importData(input){
 function openDataMgr(){
   document.getElementById('sLg').textContent=lgs.length;document.getElementById('sLc').textContent=lcs.length;
   document.getElementById('sPy').textContent=pys.length;document.getElementById('sRl').textContent=rls.length;
+  fillBailleur();
   openM('mData');
+}
+
+// ═══ PARAMÈTRES BAILLEUR (constantes globales, pour la génération de documents) ═══
+function getBailleur(){
+  try{ return Object.assign({nom:'',adresse:'',iban:'',bic:''}, JSON.parse(localStorage.getItem('ks_bailleur')||'{}')); }
+  catch(e){ return {nom:'',adresse:'',iban:'',bic:''}; }
+}
+function fillBailleur(){
+  const b=getBailleur(), set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+  set('blrNom',b.nom);set('blrAddr',b.adresse);set('blrIban',b.iban);set('blrBic',b.bic);
+}
+function saveBailleur(){
+  const g=id=>((document.getElementById(id)||{value:''}).value||'').trim();
+  localStorage.setItem('ks_bailleur',JSON.stringify({nom:g('blrNom'),adresse:g('blrAddr'),iban:g('blrIban'),bic:g('blrBic')}));
+  showToast('✅ Paramètres bailleur enregistrés');
 }
 
 // ═══ SIDEBAR ═══
@@ -4032,6 +4059,8 @@ const AI_TOOLS = [
   {name:'add_locataire',description:'Crée un nouveau locataire, éventuellement rattaché à un logement.',
    input_schema:{type:'object',properties:{
      prenom:{type:'string'},nom:{type:'string'},
+     civilite:{type:'string',enum:['M.','Mme','Mlle'],description:'Civilité'},
+     adresse:{type:'string',description:'Adresse du domicile du locataire'},
      logement:{type:'string',description:'Nom du logement loué'},
      email:{type:'string'},tel:{type:'string'},
      date_entree:{type:'string',description:'YYYY-MM-DD'},
@@ -4061,6 +4090,8 @@ const AI_TOOLS = [
      loyer:{type:'number',description:'Loyer hors charges (€/mois)'},
      charges:{type:'number',description:'Charges (€/mois)'},
      garantie:{type:'number',description:'Garantie locative (€)'},
+     contenu:{type:'string',description:'Description détaillée du logement (utilisée pour le bail et l\'état des lieux)'},
+     cles:{type:'string',description:'Clés / accès remis (utilisé pour l\'état des lieux)'},
      notes:{type:'string'}
    },required:['nom','loyer']}},
   {name:'add_compteur',description:'Crée un compteur (eau, gaz, électricité).',
@@ -4175,7 +4206,7 @@ function executeAITool(name,input){
       if(!input.prenom||!input.nom)return 'Prénom et nom requis pour créer un locataire.';
       let lg=null;
       if(input.logement){const _lg=_aiPick(lgs,input.logement,l=>l.nom,'logements');if(_lg.msg)return _lg.msg;if(!_lg.item)return 'Logement introuvable : "'+input.logement+'".';lg=_lg.item;}
-      lcs.push({id:uid(),prenom:input.prenom,nom:input.nom,lgId:lg?lg.id:'',email:input.email||'',tel:input.tel||'',jour:+input.jour_paiement||1,ent:input.date_entree||tod(),fin:'',urg:'',notes:'Créé via assistant IA'});
+      lcs.push({id:uid(),prenom:input.prenom,nom:input.nom,civilite:_enum(input.civilite,['M.','Mme','Mlle'],''),adresse:input.adresse||'',lgId:lg?lg.id:'',email:input.email||'',tel:input.tel||'',jour:+input.jour_paiement||1,ent:input.date_entree||tod(),fin:'',urg:'',notes:'Créé via assistant IA'});
       sv('lc',lcs);
       if(curP==='locataires'&&typeof rLcs==='function')rLcs();
       return '✅ Locataire créé : '+input.prenom+' '+input.nom+(lg?' — '+lg.nom:' (sans logement rattaché)')+'.';
@@ -4209,7 +4240,7 @@ function executeAITool(name,input){
       let batId='';
       if(input.batiment){const _b=_aiPick(bats,input.batiment,b=>b.nom,'bâtiments');if(_b.msg)return _b.msg;if(!_b.item)return 'Bâtiment introuvable : "'+input.batiment+'".';batId=_b.item.id;}
       if(!batId&&!input.adresse)return 'Précise une adresse OU un bâtiment de rattachement pour le logement.';
-      const lg={id:uid(),nom:input.nom,type:_enum(input.type,['Appartement','Studio','Maison','Commerce','Garage'],'Appartement'),addr:input.adresse||'',surf:+input.surface||0,loyer:+input.loyer||0,ch:+input.charges||0,dep:+input.garantie||0,notes:input.notes||'',compteurs:[],batId,loyerHist:[],travaux:[]};
+      const lg={id:uid(),nom:input.nom,type:_enum(input.type,['Appartement','Studio','Maison','Commerce','Garage'],'Appartement'),addr:input.adresse||'',surf:+input.surface||0,loyer:+input.loyer||0,ch:+input.charges||0,dep:+input.garantie||0,notes:input.notes||'',contenu:input.contenu||'',cles:input.cles||'',compteurs:[],batId,loyerHist:[],travaux:[]};
       lgs.push(lg);sv('lg',lgs);
       if(curP==='logements'&&typeof rLgs==='function')rLgs();
       return '✅ Logement créé : '+lg.nom+' — loyer '+(lg.loyer+lg.ch)+'€ CC'+(batId?' (bâtiment '+gBat(batId).nom+')':'')+'.';
