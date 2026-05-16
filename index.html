@@ -831,6 +831,16 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
         <button class="btn btn-s btn-sm" onclick="clearChat()">🗑 Effacer</button>
       </div>
 
+      <!-- Configuration du proxy IA (affiché tant que non configuré) -->
+      <div id="aiConfigBanner" style="display:none;background:var(--acl);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:.8rem;font-weight:700;margin-bottom:4px">⚙️ Assistant IA — configuration requise</div>
+        <div style="font-size:.72rem;color:var(--t2);margin-bottom:8px;line-height:1.5">Collez l'URL de votre proxy IA (Cloudflare Worker). Déploiement : voir <strong>DEPLOY-AI-PROXY.md</strong> dans le dépôt du projet.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="aiProxyInput" placeholder="https://votre-worker.workers.dev" style="flex:1;min-width:200px;border:1.5px solid var(--bd);border-radius:var(--rs);padding:8px 11px;font-family:inherit;font-size:.78rem;outline:none;background:var(--sf)">
+          <button class="btn btn-p btn-sm" onclick="saveAiProxy()">Enregistrer</button>
+        </div>
+      </div>
+
       <!-- Suggestions rapides -->
       <div id="aiSuggestions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
 
@@ -3996,7 +4006,7 @@ let isLoading = false;
 // serveur et relaie les requêtes vers api.anthropic.com. À remplir par
 // l'administrateur après déploiement du worker. Tant qu'elle est vide,
 // l'assistant affiche un message de configuration au lieu de planter.
-const AI_PROXY_URL = (typeof localStorage!=='undefined' && localStorage.getItem('ks_ai_proxy')) || '';
+let AI_PROXY_URL = (typeof localStorage!=='undefined' && localStorage.getItem('ks_ai_proxy')) || '';
 
 // Outils exposés au modèle : il les appelle pour enregistrer des infos dictées.
 const AI_TOOLS = [
@@ -4031,18 +4041,96 @@ const AI_TOOLS = [
      mois:{type:'string',description:'Mois au format YYYY-MM'},
      montant_recu:{type:'number'},montant_du:{type:'number'},
      mode:{type:'string',description:'Virement, Chèque, Espèces, Prélèvement...'}
-   },required:['locataire','mois','montant_recu']}}
+   },required:['locataire','mois','montant_recu']}},
+  {name:'add_batiment',description:'Crée un bâtiment / immeuble.',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string'},adresse:{type:'string'},
+     nb_logements:{type:'number',description:'Nombre de logements prévus'},
+     annee:{type:'number',description:'Année de construction'},
+     notes:{type:'string'}
+   },required:['nom','adresse']}},
+  {name:'add_logement',description:'Crée un logement (appartement, studio, maison...).',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string',description:'Nom ou numéro du logement'},
+     type:{type:'string',enum:['Appartement','Studio','Maison','Commerce','Garage'],description:'Défaut : Appartement'},
+     batiment:{type:'string',description:'Nom du bâtiment de rattachement (facultatif)'},
+     adresse:{type:'string',description:'Adresse (obligatoire si aucun bâtiment)'},
+     surface:{type:'number',description:'Surface en m²'},
+     loyer:{type:'number',description:'Loyer hors charges (€/mois)'},
+     charges:{type:'number',description:'Charges (€/mois)'},
+     garantie:{type:'number',description:'Garantie locative (€)'},
+     notes:{type:'string'}
+   },required:['nom','loyer']}},
+  {name:'add_compteur',description:'Crée un compteur (eau, gaz, électricité).',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string'},
+     type:{type:'string',enum:['eau','gaz','elec_mono','elec_bi','autre'],description:'Défaut : eau'},
+     unite:{type:'string',description:'Unité affichée (kWh, m³...)'},
+     logement:{type:'string',description:'Nom du logement (facultatif, sinon compteur immeuble)'}
+   },required:['nom']}},
+  {name:'add_depense',description:'Enregistre une dépense ponctuelle.',
+   input_schema:{type:'object',properties:{
+     libelle:{type:'string'},montant:{type:'number'},
+     date:{type:'string',description:'YYYY-MM-DD (défaut : aujourd\'hui)'},
+     categorie:{type:'string',enum:['Travaux','Assurance','Taxe','Précompte immobilier','Revenu cadastral','Frais de gestion','Honoraires','Divers'],description:'Défaut : Divers'},
+     batiment:{type:'string',description:'Bâtiment concerné (facultatif)'},
+     paye:{type:'boolean',description:'Dépense déjà payée ?'},
+     notes:{type:'string'}
+   },required:['libelle','montant']}},
+  {name:'add_charge',description:'Crée une charge récurrente (assurance, syndic, taxe...).',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string'},montant:{type:'number'},
+     frequence:{type:'string',enum:['mensuel','trimestriel','annuel'],description:'Défaut : mensuel'},
+     categorie:{type:'string',enum:['Assurance','Syndic','Taxe','Entretien','Gestion','Autre'],description:'Défaut : Autre'},
+     batiment:{type:'string',description:'Bâtiment concerné (facultatif)'},
+     paye:{type:'boolean',description:'Déjà payée ce mois ?'},
+     notes:{type:'string'}
+   },required:['nom','montant']}},
+  {name:'add_credit',description:'Enregistre un crédit / emprunt immobilier.',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string'},mensualite:{type:'number'},
+     capital:{type:'number',description:'Capital emprunté'},
+     restant:{type:'number',description:'Capital restant dû'},
+     taux:{type:'number',description:'Taux en %'},
+     duree_mois:{type:'number',description:'Durée totale en mois'},
+     date_debut:{type:'string',description:'YYYY-MM-DD'},
+     batiment:{type:'string',description:'Bâtiment concerné (facultatif)'},
+     notes:{type:'string'}
+   },required:['nom','mensualite']}},
+  {name:'add_document',description:'Référence un document (bail, quittance, état des lieux...).',
+   input_schema:{type:'object',properties:{
+     nom:{type:'string'},
+     type:{type:'string',enum:['bail','quittance','etat','autre'],description:'Défaut : autre'},
+     locataire:{type:'string',description:'Locataire associé (facultatif)'},
+     date:{type:'string',description:'YYYY-MM-DD'},
+     notes:{type:'string'}
+   },required:['nom']}},
+  {name:'add_rappel',description:'Crée un rappel / une échéance.',
+   input_schema:{type:'object',properties:{
+     titre:{type:'string'},
+     date:{type:'string',description:'Date d\'échéance YYYY-MM-DD'},
+     categorie:{type:'string',enum:['Entretien','Bail','Assurance','Fiscal','Autre'],description:'Défaut : Autre'},
+     logement:{type:'string',description:'Logement concerné (facultatif)'},
+     notes:{type:'string'}
+   },required:['titre','date']}}
 ];
 
 // Normalise pour recherche tolérante (minuscule, sans accents).
 function _aiNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
-// Recherche floue dans une collection : par id exact, puis nom exact, puis inclusion.
-function _aiFind(coll,q,nameFn){
-  if(!q)return null;
+// Recherche floue dans une collection. Renvoie un objet :
+//   {item}        — résolution unique (id exact, nom exact, ou inclusion unique)
+//   {item:null}   — non trouvé
+//   {msg}         — plusieurs correspondances : message à relayer pour lever l'ambiguïté
+const _enum=(v,list,def)=>list.indexOf(v)>=0?v:def;
+function _aiPick(coll,q,nameFn,label){
   const n=_aiNorm(q);
-  return coll.find(x=>x.id===q)
-    || coll.find(x=>_aiNorm(nameFn(x))===n)
-    || coll.find(x=>{const xn=_aiNorm(nameFn(x));return xn&&(xn.includes(n)||n.includes(xn));});
+  if(!n) return {item:null};
+  const exact=coll.find(x=>x.id===q) || coll.find(x=>_aiNorm(nameFn(x))===n);
+  if(exact) return {item:exact};
+  const part=coll.filter(x=>{const xn=_aiNorm(nameFn(x));return xn&&(xn.includes(n)||n.includes(xn));});
+  if(part.length===1) return {item:part[0]};
+  if(part.length>1) return {msg:'Plusieurs '+label+' correspondent à « '+q+' » : '+part.map(nameFn).join(' / ')+'. Demande à l\'utilisateur de préciser lequel.'};
+  return {item:null};
 }
 // Exécute une action demandée par le modèle. Renvoie un message (string) qui
 // sera renvoyé au modèle comme tool_result pour qu'il confirme en langage naturel.
@@ -4054,7 +4142,9 @@ function executeAITool(name,input){
       return t?('✅ Tâche ajoutée : "'+t.text+'"'):'Échec : texte de tâche vide.';
     }
     if(name==='add_releve'){
-      const co=_aiFind(cos,input.compteur,c=>c.nom);
+      const _co=_aiPick(cos,input.compteur,c=>c.nom,'compteurs');
+      if(_co.msg)return _co.msg;
+      const co=_co.item;
       if(!co)return 'Compteur introuvable : "'+(input.compteur||'')+'". Compteurs disponibles : '+(cos.map(c=>c.nom).join(', ')||'aucun')+'.';
       const date=input.date||tod();
       const rec={id:uid(),coId:co.id,date,notes:'Saisi via assistant IA'};
@@ -4071,8 +4161,8 @@ function executeAITool(name,input){
     }
     if(name==='add_entretien'){
       if(!input.titre)return 'Titre d\'entretien manquant.';
-      const lg=input.logement?_aiFind(lgs,input.logement,l=>l.nom):null;
-      if(input.logement&&!lg)return 'Logement introuvable : "'+input.logement+'".';
+      let lg=null;
+      if(input.logement){const _lg=_aiPick(lgs,input.logement,l=>l.nom,'logements');if(_lg.msg)return _lg.msg;if(!_lg.item)return 'Logement introuvable : "'+input.logement+'".';lg=_lg.item;}
       const prio=['urgent','planifié','terminé'].includes(input.priorite)?input.priorite:'planifié';
       ens.push({id:uid(),tit:input.titre,prio,lgId:lg?lg.id:'',date:input.date||'',prest:input.prestataire||'',cout:+input.cout||0,desc:input.description||''});
       sv('en',ens);
@@ -4081,15 +4171,17 @@ function executeAITool(name,input){
     }
     if(name==='add_locataire'){
       if(!input.prenom||!input.nom)return 'Prénom et nom requis pour créer un locataire.';
-      const lg=input.logement?_aiFind(lgs,input.logement,l=>l.nom):null;
-      if(input.logement&&!lg)return 'Logement introuvable : "'+input.logement+'".';
+      let lg=null;
+      if(input.logement){const _lg=_aiPick(lgs,input.logement,l=>l.nom,'logements');if(_lg.msg)return _lg.msg;if(!_lg.item)return 'Logement introuvable : "'+input.logement+'".';lg=_lg.item;}
       lcs.push({id:uid(),prenom:input.prenom,nom:input.nom,lgId:lg?lg.id:'',email:input.email||'',tel:input.tel||'',jour:+input.jour_paiement||1,ent:input.date_entree||tod(),fin:'',urg:'',notes:'Créé via assistant IA'});
       sv('lc',lcs);
       if(curP==='locataires'&&typeof rLcs==='function')rLcs();
       return '✅ Locataire créé : '+input.prenom+' '+input.nom+(lg?' — '+lg.nom:' (sans logement rattaché)')+'.';
     }
     if(name==='add_paiement'){
-      const lc=_aiFind(lcs,input.locataire,l=>l.prenom+' '+l.nom);
+      const _lc=_aiPick(lcs,input.locataire,l=>l.prenom+' '+l.nom,'locataires');
+      if(_lc.msg)return _lc.msg;
+      const lc=_lc.item;
       if(!lc)return 'Locataire introuvable : "'+(input.locataire||'')+'".';
       if(!input.mois||!/^\d{4}-\d{2}$/.test(input.mois))return 'Mois invalide : attendu YYYY-MM.';
       const rec=+input.montant_recu;
@@ -4101,6 +4193,78 @@ function executeAITool(name,input){
       sv('py',pys);
       if(curP==='paiements'&&typeof setPayView==='function')setPayView(payView);
       return '✅ Paiement enregistré : '+lcFull(lc)+' '+input.mois+' — '+rec+'€ ('+stat+').';
+    }
+    if(name==='add_batiment'){
+      if(!input.nom||!input.adresse)return 'Nom et adresse requis pour créer un bâtiment.';
+      const b={id:uid(),nom:input.nom,addr:input.adresse,nbLg:+input.nb_logements||0,annee:+input.annee||0,notes:input.notes||''};
+      bats.push(b);sv('bt',bats);
+      if(curP==='batiments'&&typeof rBats==='function')rBats();
+      return '✅ Bâtiment créé : '+b.nom+' ('+b.addr+').';
+    }
+    if(name==='add_logement'){
+      if(!input.nom)return 'Nom du logement requis.';
+      if(input.loyer==null)return 'Loyer requis pour créer un logement.';
+      let batId='';
+      if(input.batiment){const _b=_aiPick(bats,input.batiment,b=>b.nom,'bâtiments');if(_b.msg)return _b.msg;if(!_b.item)return 'Bâtiment introuvable : "'+input.batiment+'".';batId=_b.item.id;}
+      if(!batId&&!input.adresse)return 'Précise une adresse OU un bâtiment de rattachement pour le logement.';
+      const lg={id:uid(),nom:input.nom,type:_enum(input.type,['Appartement','Studio','Maison','Commerce','Garage'],'Appartement'),addr:input.adresse||'',surf:+input.surface||0,loyer:+input.loyer||0,ch:+input.charges||0,dep:+input.garantie||0,notes:input.notes||'',compteurs:[],batId,loyerHist:[],travaux:[]};
+      lgs.push(lg);sv('lg',lgs);
+      if(curP==='logements'&&typeof rLgs==='function')rLgs();
+      return '✅ Logement créé : '+lg.nom+' — loyer '+(lg.loyer+lg.ch)+'€ CC'+(batId?' (bâtiment '+gBat(batId).nom+')':'')+'.';
+    }
+    if(name==='add_compteur'){
+      if(!input.nom)return 'Nom du compteur requis.';
+      let lgId='';
+      if(input.logement){const _l=_aiPick(lgs,input.logement,l=>l.nom,'logements');if(_l.msg)return _l.msg;if(!_l.item)return 'Logement introuvable : "'+input.logement+'".';lgId=_l.item.id;}
+      const co={id:uid(),nom:input.nom,type:_enum(input.type,['eau','gaz','elec_mono','elec_bi','autre'],'eau'),unit:input.unite||'',lgId,notes:''};
+      cos.push(co);sv('co',cos);
+      if(curP==='charges'&&typeof rCharges==='function')rCharges();
+      return '✅ Compteur créé : '+co.nom+(lgId?' — '+gLg(lgId).nom:' (immeuble)')+'.';
+    }
+    if(name==='add_depense'){
+      if(!input.libelle||input.montant==null)return 'Libellé et montant requis pour une dépense.';
+      let batId='';
+      if(input.batiment){const _b=_aiPick(bats,input.batiment,b=>b.nom,'bâtiments');if(_b.msg)return _b.msg;if(!_b.item)return 'Bâtiment introuvable : "'+input.batiment+'".';batId=_b.item.id;}
+      const dp={id:uid(),nom:input.libelle,batId,montant:+input.montant||0,date:input.date||tod(),cat:_enum(input.categorie,['Travaux','Assurance','Taxe','Précompte immobilier','Revenu cadastral','Frais de gestion','Honoraires','Divers'],'Divers'),paye:input.paye?'oui':'non',notes:input.notes||''};
+      dps.push(dp);sv('dp',dps);
+      if(curP==='banque'&&typeof rBanque==='function')rBanque();
+      return '✅ Dépense enregistrée : '+dp.nom+' — '+dp.montant+'€ ('+dp.cat+').';
+    }
+    if(name==='add_charge'){
+      if(!input.nom||input.montant==null)return 'Nom et montant requis pour une charge récurrente.';
+      let batId='';
+      if(input.batiment){const _b=_aiPick(bats,input.batiment,b=>b.nom,'bâtiments');if(_b.msg)return _b.msg;if(!_b.item)return 'Bâtiment introuvable : "'+input.batiment+'".';batId=_b.item.id;}
+      const ch={id:uid(),nom:input.nom,batId,montant:+input.montant||0,freq:_enum(input.frequence,['mensuel','trimestriel','annuel'],'mensuel'),cat:_enum(input.categorie,['Assurance','Syndic','Taxe','Entretien','Gestion','Autre'],'Autre'),paye:input.paye?'oui':'non',notes:input.notes||''};
+      chs.push(ch);sv('ch',chs);
+      if(curP==='banque'&&typeof rBanque==='function')rBanque();
+      return '✅ Charge récurrente créée : '+ch.nom+' — '+ch.montant+'€/'+ch.freq+'.';
+    }
+    if(name==='add_credit'){
+      if(!input.nom||input.mensualite==null)return 'Nom et mensualité requis pour un crédit.';
+      let batId='';
+      if(input.batiment){const _b=_aiPick(bats,input.batiment,b=>b.nom,'bâtiments');if(_b.msg)return _b.msg;if(!_b.item)return 'Bâtiment introuvable : "'+input.batiment+'".';batId=_b.item.id;}
+      const cr={id:uid(),nom:input.nom,batId,capital:+input.capital||0,reste:+input.restant||0,mens:+input.mensualite||0,taux:+input.taux||0,duree:+input.duree_mois||0,debut:input.date_debut||'',fin:'',notes:input.notes||''};
+      crs.push(cr);sv('cr',crs);
+      if(curP==='banque'&&typeof rBanque==='function')rBanque();
+      return '✅ Crédit enregistré : '+cr.nom+' — '+cr.mens+'€/mois.';
+    }
+    if(name==='add_document'){
+      if(!input.nom)return 'Nom du document requis.';
+      let lcId='';
+      if(input.locataire){const _l=_aiPick(lcs,input.locataire,l=>l.prenom+' '+l.nom,'locataires');if(_l.msg)return _l.msg;if(!_l.item)return 'Locataire introuvable : "'+input.locataire+'".';lcId=_l.item.id;}
+      const d={id:uid(),nom:input.nom,type:_enum(input.type,['bail','quittance','etat','autre'],'autre'),lcId,date:input.date||'',notes:input.notes||''};
+      dcs.push(d);sv('dc',dcs);
+      if(curP==='documents'&&typeof rDocs==='function')rDocs(typeof docF!=='undefined'?docF:'tous');
+      return '✅ Document référencé : '+d.nom+(lcId?' — '+lcFull(gLc(lcId)):'')+'.';
+    }
+    if(name==='add_rappel'){
+      if(!input.titre||!input.date)return 'Titre et date d\'échéance requis pour un rappel.';
+      let lgId='';
+      if(input.logement){const _l=_aiPick(lgs,input.logement,l=>l.nom,'logements');if(_l.msg)return _l.msg;if(!_l.item)return 'Logement introuvable : "'+input.logement+'".';lgId=_l.item.id;}
+      const r={id:uid(),tit:input.titre,cat:_enum(input.categorie,['Entretien','Bail','Assurance','Fiscal','Autre'],'Autre'),date:input.date,lgId,notes:input.notes||'',stat:'actif'};
+      rps.push(r);sv('rp',rps);
+      if(curP==='rappels'&&typeof rRaps==='function')rRaps();
+      return '✅ Rappel créé : "'+r.tit+'" pour le '+r.date+'.';
     }
     return 'Outil inconnu : '+name;
   }catch(e){return 'Erreur lors de l\'exécution : '+e.message;}
@@ -4128,6 +4292,25 @@ function initAssistant(){
   // Affiche le bouton micro si la reconnaissance vocale est dispo (Chrome/Edge).
   const mic=document.getElementById('aiMicBtn');
   if(mic && (window.SpeechRecognition||window.webkitSpeechRecognition)) mic.style.display='';
+  // Bandeau de configuration : visible tant que le proxy IA n'est pas renseigné.
+  const cfgB=document.getElementById('aiConfigBanner');
+  if(cfgB){
+    cfgB.style.display=AI_PROXY_URL?'none':'';
+    const pi=document.getElementById('aiProxyInput');
+    if(pi)pi.value=AI_PROXY_URL||'';
+  }
+}
+
+// Enregistre l'URL du proxy IA (Cloudflare Worker) en localStorage.
+function saveAiProxy(){
+  const pi=document.getElementById('aiProxyInput');
+  const v=(pi&&pi.value||'').trim().replace(/\/+$/,'');
+  if(v&&!/^https:\/\//i.test(v)){showToast('L\'URL doit commencer par https://');return;}
+  if(v)localStorage.setItem('ks_ai_proxy',v);else localStorage.removeItem('ks_ai_proxy');
+  AI_PROXY_URL=v;
+  showToast(v?'✅ Assistant IA configuré':'URL du proxy effacée');
+  const cfgB=document.getElementById('aiConfigBanner');
+  if(cfgB)cfgB.style.display=v?'none':'';
 }
 
 // Saisie vocale : remplit le champ texte de l'assistant via Web Speech API.
@@ -4229,11 +4412,11 @@ Règles :
 - Sois direct et actionnable
 
 ACTIONS — tu peux ENREGISTRER des informations dans l'application :
-- Quand l'utilisateur dicte une donnée à sauvegarder (relevé de compteur, nouveau locataire, entretien, paiement, tâche à faire), utilise l'outil approprié (add_releve, add_locataire, add_entretien, add_paiement, add_todo).
-- Référence les compteurs / logements / locataires par leur NOM tel qu'il apparaît dans le contexte ci-dessous.
-- S'il manque une information obligatoire pour agir, NE DEVINE PAS : demande-la à l'utilisateur.
-- Après chaque action réussie, confirme en une phrase claire en langage naturel.
-- Si l'outil renvoie une erreur (ex: compteur introuvable), explique-la et propose une correction.
+- Outils de création disponibles : bâtiment, logement, locataire, paiement, compteur, relevé de compteur, entretien, dépense, charge récurrente, crédit, document, rappel, et tâche to-do.
+- CONFIRMATION OBLIGATOIRE : avant d'appeler un outil de création, RÉSUME en clair ce que tu vas enregistrer (les champs clés) et demande explicitement à l'utilisateur de confirmer. N'appelle l'outil qu'après un accord clair (« oui », « ok », « vas-y »...). Seule exception : une simple tâche to-do, que tu peux ajouter directement.
+- Référence les bâtiments / logements / locataires / compteurs par leur NOM tel qu'il apparaît dans le contexte ci-dessous.
+- S'il manque une information obligatoire, ou si une référence est ambiguë (ex : deux locataires de nom proche), NE DEVINE PAS : demande une précision à l'utilisateur.
+- Après chaque action réussie, confirme en une phrase claire. Si l'outil renvoie une erreur ou une demande de précision, relaie-la fidèlement à l'utilisateur.
 
 ${buildContext()}`;
 }
@@ -4247,7 +4430,8 @@ async function sendMessage(text){
   if(!AI_PROXY_URL){
     addMessage('user', msg);
     if(!text)input.value='';
-    addMessage('bot','⚠️ **Assistant non configuré.**\n\nL\'URL du proxy IA (`AI_PROXY_URL`) n\'est pas renseignée. L\'administrateur doit déployer le Cloudflare Worker et renseigner son URL.','error');
+    addMessage('bot','⚠️ **Assistant non configuré.**\n\nRenseignez l\'URL du proxy IA dans le bandeau de configuration ci-dessus. Déploiement du Cloudflare Worker : voir `DEPLOY-AI-PROXY.md` dans le dépôt.','error');
+    const cfgB=document.getElementById('aiConfigBanner');if(cfgB)cfgB.style.display='';
     return;
   }
 
