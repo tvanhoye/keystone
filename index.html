@@ -607,7 +607,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.16</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 15/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.17</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 16/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -5434,7 +5434,10 @@ function loginNewEmpty(){
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
   bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];
-  const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'lecture',avatar:'👤',pin:''};
+  // v2.17 : rôle 'admin' (et non 'lecture') — le mode "Application vide" sert à
+  // monter un projet de zéro ; avec 'lecture' (canAdd:false) applyRoleRestrictions()
+  // masquait définitivement les boutons "＋ Ajouter" du toolbar dès la 1re entité.
+  const p={id:'guest_'+Date.now(),name:'Utilisateur',role:'admin',avatar:'👤',pin:''};
   doLogin(p);
   setTimeout(()=>{rDash();nav('dashboard');},50);
   showToast('📂 Application vide — aucune donnée du projet principal');
@@ -5523,7 +5526,9 @@ function doLogin(profile){
     ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
     crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');
   }
-  rP(curP);
+  // v2.17 : un (re)login ramène toujours au Dashboard plutôt que de rester sur
+  // la dernière page consultée d'un mode précédent.
+  nav('dashboard');
   if(profile.role==='masteradmin'&&typeof driveInit==='function')setTimeout(driveInit,400);
 }
 
