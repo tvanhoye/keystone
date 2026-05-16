@@ -6148,6 +6148,9 @@ function renderProfileManager(){
   const profiles = getProfiles();
   const cont = document.getElementById('profileManagerList');
   if(!cont) return;
+  // admin ET masteradmin peuvent gérer les profils (le profil Admin par défaut
+  // est masteradmin — il était exclu par l'ancienne condition role==='admin').
+  const canManage = !!currentProfile && (currentProfile.role==='admin'||currentProfile.role==='masteradmin');
   cont.innerHTML = profiles.map(p=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
       <span style="font-size:1.2rem">${esc(p.avatar||ROLE_ICONS[p.role]||'👤')}</span>
@@ -6156,8 +6159,8 @@ function renderProfileManager(){
         <div class="profile-badge ${ROLE_COLORS[p.role]||''}" style="margin-top:2px">${ROLE_LABELS[p.role]||p.role}</div>
       </div>
       <div style="display:flex;gap:4px">
-        ${currentProfile&&currentProfile.role==='admin'?`<button class="btn btn-s btn-xs" onclick="editProfile('${p.id}')">✏</button>`:''}
-        ${currentProfile&&currentProfile.role==='admin'&&p.id!=='admin_default'?`<button class="btn btn-d btn-xs" onclick="deleteProfile('${p.id}')">✕</button>`:''}
+        ${canManage?`<button class="btn btn-s btn-xs" onclick="editProfile('${p.id}')" title="Modifier">✏</button>`:''}
+        ${canManage&&p.id!=='admin_default'?`<button class="btn btn-d btn-xs" onclick="deleteProfile('${p.id}')" title="Supprimer">✕</button>`:''}
       </div>
     </div>`).join('');
 }
