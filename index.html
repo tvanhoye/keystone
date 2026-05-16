@@ -907,7 +907,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <div id="profileTabUsers">
     <div id="profileManagerList"></div>
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
-      <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase">＋ Nouvel utilisateur</div>
+      <div id="newProfileTitle" style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase">＋ Nouvel utilisateur</div>
+      <input type="hidden" id="editProfileId">
       <div class="fr">
         <div class="fg"><label>Prénom * <span style="font-size:.6rem;color:var(--t3)">(affiché sur l'écran login)</span></label><input id="newProfileName" placeholder="Ex: Marie"></div>
         <div class="fg"><label>Avatar</label><input id="newProfileAvatar" placeholder="😊" maxlength="2"></div>
@@ -919,7 +920,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
         </select></div>
         <div class="fg"><label>PIN (4 chiffres) *</label><input id="newProfilePin" type="password" maxlength="4" placeholder="1234" inputmode="numeric"></div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="saveNewProfile()">＋ Créer l'utilisateur</button>
+      <button id="newProfileBtn" class="btn btn-p" style="width:100%;margin-top:8px" onclick="saveNewProfile()">＋ Créer l'utilisateur</button>
+      <button id="cancelEditProfileBtn" class="btn btn-s" style="width:100%;margin-top:6px;display:none" onclick="cancelEditProfile()">Annuler la modification</button>
     </div>
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
       <button class="btn btn-s btn-xs" onclick="logout()">🚪 Se déconnecter</button>
@@ -5799,6 +5801,7 @@ function showProfileManager(){
   if(window._ksIsolated){ showToast('🔒 Non disponible en session isolée'); return; }
   if(!currentProfile){ return; }
   openM('mProfiles');
+  if(typeof cancelEditProfile==='function')cancelEditProfile();
   renderProfileManager();
 }
 
@@ -5829,7 +5832,21 @@ function saveNewProfile(){
   const avatar=(document.getElementById('newProfileAvatar')?.value||'').replace(/[<>]/g,'').trim()||ROLE_ICONS[role]||'👤';
   if(!name){ alert('Nom requis'); return; }
   if(pin&&pin.length!==4){ alert('Le PIN doit être 4 chiffres'); return; }
+  const editId=document.getElementById('editProfileId')?.value||'';
   const profiles=getProfiles();
+  if(editId){
+    const i=profiles.findIndex(p=>p.id===editId);
+    if(i<0){ alert('Profil introuvable'); return; }
+    // Le rôle d'un compte admin/masteradmin n'est pas représentable dans le
+    // sélecteur (gestionnaire/lecture) : on le préserve tel quel.
+    const keepRole=(profiles[i].role==='masteradmin'||profiles[i].role==='admin');
+    profiles[i]={...profiles[i], name, prenom:name, role:keepRole?profiles[i].role:role, pin:pin||'', avatar};
+    saveProfiles(profiles);
+    cancelEditProfile();
+    renderProfileManager();
+    showToast('Profil modifié — '+name);
+    return;
+  }
   profiles.push({id:uid(), name, prenom:name, role, pin:pin||'', avatar});
   saveProfiles(profiles);
   renderProfileManager();
@@ -5837,10 +5854,35 @@ function saveNewProfile(){
   showToast('Profil créé — '+name);
 }
 
+// Pré-remplit le formulaire avec un profil existant pour modification.
+function editProfile(id){
+  const p=getProfiles().find(x=>x.id===id);
+  if(!p){ showToast('Profil introuvable'); return; }
+  const set=(eid,v)=>{const e=document.getElementById(eid);if(e)e.value=v;};
+  set('editProfileId',p.id);
+  set('newProfileName',p.name||'');
+  set('newProfileAvatar',p.avatar||'');
+  set('newProfilePin',p.pin||'');
+  const rs=document.getElementById('newProfileRole');
+  if(rs&&(p.role==='gestionnaire'||p.role==='lecture'))rs.value=p.role;
+  const t=document.getElementById('newProfileTitle');if(t)t.textContent='✏ Modifier l\'utilisateur';
+  const b=document.getElementById('newProfileBtn');if(b)b.textContent='💾 Enregistrer les modifications';
+  const c=document.getElementById('cancelEditProfileBtn');if(c)c.style.display='';
+}
+
+// Repasse le formulaire en mode création.
+function cancelEditProfile(){
+  ['editProfileId','newProfileName','newProfilePin','newProfileAvatar'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const t=document.getElementById('newProfileTitle');if(t)t.textContent='＋ Nouvel utilisateur';
+  const b=document.getElementById('newProfileBtn');if(b)b.textContent='＋ Créer l\'utilisateur';
+  const c=document.getElementById('cancelEditProfileBtn');if(c)c.style.display='none';
+}
+
 function deleteProfile(id){
   if(!confirm('Supprimer ce profil ?')) return;
   const profiles=getProfiles().filter(p=>p.id!==id);
   saveProfiles(profiles);
+  if((document.getElementById('editProfileId')||{}).value===id)cancelEditProfile();
   renderProfileManager();
 }
 
