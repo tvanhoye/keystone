@@ -1062,6 +1062,17 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
         </div>
       </div></div></div></div>
 
+<div class="overlay" id="mDocVars"><div class="modal" style="max-width:560px"><div class="mh"><span class="mtitle">📄 Génération de document — variables</span><button class="mclose" onclick="closeM('mDocVars')">✕</button></div><div class="mbody">
+  <div class="fg"><label>Type de document</label><select id="docGenType" onchange="docGenReload()"><option value="bail">Contrat de bail</option><option value="edl_entree">État des lieux — entrée</option><option value="edl_sortie">État des lieux — sortie</option></select></div>
+  <div style="font-size:.72rem;color:var(--t2);margin:4px 0 10px">Vérifiez et complétez les variables ci-dessous (PEB, signature, remarques…), puis validez. Le document sera ensuite présenté pour confirmation avant tout envoi.</div>
+  <div id="docGenFields"></div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocVars')">Annuler</button><button class="btn btn-p" onclick="docGenProduce()">Générer le document →</button></div></div></div>
+
+<div class="overlay" id="mDocConfirm"><div class="modal" style="max-width:460px"><div class="mh"><span class="mtitle">📄 Document prêt</span><button class="mclose" onclick="closeM('mDocConfirm')">✕</button></div><div class="mbody">
+  <div id="docConfirmInfo" style="font-size:.82rem;line-height:1.6"></div>
+  <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">Téléchargez le document et vérifiez-le avant tout envoi. L'envoi par e-mail n'est pas encore disponible (prévu ultérieurement).</div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
+
 <div id="sb-overlay" onclick="closeMobSb()"></div>
 <nav id="mob-nav"><div class="mn-items">
   <button class="mn-item active" data-p="dashboard" onclick="mobNav(this)"><span class="mn-ico">🏠</span>Accueil</button>
@@ -1977,7 +1988,7 @@ function rLcs(f){
   tb.innerHTML=list.map(l=>{
     const lg=gLg(l.lgId);const d=dTo(l.fin);
     const bb=d===null?'<span class="badge bx">—</span>':d<0?'<span class="badge br">Expiré</span>':d<=60?'<span class="badge bo">⚠ '+d+'j</span>':'<span class="badge bg">OK</span>';
-    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+esc(lcFull(l))+'</strong><div style="font-size:.67rem;color:var(--t2)">'+esc(l.email||'')+'</div></td><td style="font-size:.77rem">'+esc(lg.nom)+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
+    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+esc(lcFull(l))+'</strong><div style="font-size:.67rem;color:var(--t2)">'+esc(l.email||'')+'</div></td><td style="font-size:.77rem">'+esc(lg.nom)+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();openDocGen(\'bail\',\''+l.id+'\')" title="Générer un document (bail / état des lieux)">📄</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
   }).join('');
 }
 function filterLc(v){rLcs(v);}
@@ -3708,6 +3719,252 @@ function saveBailleur(){
   showToast('✅ Paramètres bailleur enregistrés');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// GÉNÉRATION DE DOCUMENTS (bail & état des lieux)
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Mini-ZIP : lecture / écriture d'archives STORED (sans dépendance) ───
+const _crcTable=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
+function _crc32(b){let c=~0;for(let i=0;i<b.length;i++)c=_crcTable[(c^b[i])&0xff]^(c>>>8);return (~c)>>>0;}
+// Parse un ZIP dont toutes les entrées sont STORED. Renvoie [{name,data:Uint8Array}].
+function _unzip(bytes){
+  const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  let eocd=-1;
+  for(let i=bytes.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;} }
+  if(eocd<0) throw new Error('archive invalide (EOCD)');
+  const count=dv.getUint16(eocd+10,true);
+  let off=dv.getUint32(eocd+16,true);
+  const entries=[];
+  for(let n=0;n<count;n++){
+    if(dv.getUint32(off,true)!==0x02014b50) throw new Error('archive invalide (CDH)');
+    const method=dv.getUint16(off+10,true);
+    const compSize=dv.getUint32(off+20,true);
+    const nameLen=dv.getUint16(off+28,true);
+    const extraLen=dv.getUint16(off+30,true);
+    const commLen=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true);
+    const name=new TextDecoder().decode(bytes.subarray(off+46,off+46+nameLen));
+    if(method!==0) throw new Error('entrée non STORED : '+name);
+    const dataStart=lho+30+dv.getUint16(lho+26,true)+dv.getUint16(lho+28,true);
+    entries.push({name,data:bytes.subarray(dataStart,dataStart+compSize)});
+    off+=46+nameLen+extraLen+commLen;
+  }
+  return entries;
+}
+// Reconstruit un ZIP STORED depuis [{name,data:Uint8Array}].
+function _zip(entries){
+  const enc=new TextEncoder(),parts=[],central=[];
+  let offset=0;
+  for(const e of entries){
+    const nameB=enc.encode(e.name),data=e.data,crc=_crc32(data);
+    const lh=new Uint8Array(30+nameB.length),lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);
+    lv.setUint32(14,crc,true);lv.setUint32(18,data.length,true);
+    lv.setUint32(22,data.length,true);lv.setUint16(26,nameB.length,true);
+    lh.set(nameB,30);
+    parts.push(lh,data);
+    const ch=new Uint8Array(46+nameB.length),cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);
+    cv.setUint32(16,crc,true);cv.setUint32(20,data.length,true);
+    cv.setUint32(24,data.length,true);cv.setUint16(28,nameB.length,true);
+    cv.setUint32(42,offset,true);
+    ch.set(nameB,46);
+    central.push(ch);
+    offset+=lh.length+data.length;
+  }
+  let cdSize=0;central.forEach(c=>cdSize+=c.length);
+  const eocd=new Uint8Array(22),ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(8,entries.length,true);ev.setUint16(10,entries.length,true);
+  ev.setUint32(12,cdSize,true);ev.setUint32(16,offset,true);
+  const all=[...parts,...central,eocd];
+  let total=0;all.forEach(p=>total+=p.length);
+  const out=new Uint8Array(total);
+  let pos=0;all.forEach(p=>{out.set(p,pos);pos+=p.length;});
+  return out;
+}
+
+// ─── Fusion : remplace les {{variables}} dans le DOCX ───
+function _xmlVal(v){
+  const s=String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // un saut de ligne devient un <w:br/> Word (les placeholders sont dans des <w:t>)
+  return s.replace(/\r?\n/g,'</w:t><w:br/><w:t xml:space="preserve">');
+}
+function _docxMerge(zipBytes,vars){
+  const entries=_unzip(zipBytes),td=new TextDecoder(),te=new TextEncoder();
+  for(const e of entries){
+    if(/^word\/(document|header\d+|footer\d+)\.xml$/.test(e.name)){
+      let xml=td.decode(e.data);
+      xml=xml.replace(/\{\{([\w.]+)\}\}/g,(m,k)=>_xmlVal(vars[k]));
+      e.data=te.encode(xml);
+    }
+  }
+  return _zip(entries);
+}
+
+// ─── Nombre → lettres (français de Belgique : septante / nonante) ───
+function _nbEnLettres(n){
+  n=Math.floor(Math.abs(+n||0));
+  if(n===0)return 'zéro';
+  const u=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];
+  const diz={2:'vingt',3:'trente',4:'quarante',5:'cinquante',6:'soixante',7:'septante',8:'quatre-vingt',9:'nonante'};
+  function sousMille(x){
+    let s='';
+    const c=Math.floor(x/100),r=x%100;
+    if(c){ s+=(c>1?u[c]+' ':'')+'cent'+(c>1&&r===0?'s':''); if(r)s+=' '; }
+    if(r<20){ s+=u[r]; }
+    else{
+      const d=Math.floor(r/10),un=r%10;
+      s+=(d===8&&un===0)?'quatre-vingts':diz[d];
+      if(un)s+=((un===1&&d!==8)?' et ':'-')+u[un];
+    }
+    return s;
+  }
+  let out='';
+  const mil=Math.floor(n/1000),reste=n%1000;
+  if(mil){ out+=(mil>1?sousMille(mil)+' ':'')+'mille'; if(reste)out+=' '; }
+  if(reste)out+=sousMille(reste);
+  return out;
+}
+function _frDate(s){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?m[3]+'/'+m[2]+'/'+m[1]:(s||'');}
+function _moisEntre(d1,d2){
+  if(!d1||!d2)return '';
+  const a=new Date(d1),b=new Date(d2);
+  if(isNaN(a)||isNaN(b))return '';
+  return String(Math.max(0,Math.round((b-a)/864e5/30.44)));
+}
+
+// ─── Champs des documents (modale de validation des variables) ───
+const DOC_FIELDS={
+  bail:[
+    {k:'bailleur.nom',l:'Bailleur — nom'},{k:'bailleur.adresse',l:'Bailleur — adresse'},
+    {k:'bailleur.iban',l:'Bailleur — IBAN'},{k:'bailleur.bic',l:'Bailleur — BIC'},
+    {k:'loc.civilite',l:'Locataire — civilité'},{k:'loc.prenom',l:'Locataire — prénom'},
+    {k:'loc.nom',l:'Locataire — nom'},{k:'loc.adresse',l:'Locataire — adresse'},
+    {k:'loc.email',l:'Locataire — email'},{k:'loc.tel',l:'Locataire — téléphone'},
+    {k:'loc.contactUrgence',l:'Locataire — contact d\'urgence'},
+    {k:'lgt.adresse',l:'Logement — adresse'},
+    {k:'lgt.contenu',l:'Logement — contenu / description',t:'textarea'},
+    {k:'bail.dateDebut',l:'Bail — date de début',t:'date'},
+    {k:'bail.dateFin',l:'Bail — date de fin',t:'date'},
+    {k:'bail.dureeMois',l:'Bail — durée (mois)'},
+    {k:'bail.loyer',l:'Bail — loyer hors charges (€)'},
+    {k:'bail.loyerLettres',l:'Bail — loyer en toutes lettres'},
+    {k:'bail.jourPaiement',l:'Bail — jour de paiement'},
+    {k:'bail.garantie',l:'Bail — garantie locative (€)'},
+    {k:'bail.dateSignature',l:'Bail — date de signature',t:'date'},
+    {k:'bail.lieuSignature',l:'Bail — lieu de signature'},
+    {k:'bail.pebRef',l:'Bail — référence du certificat PEB'},
+    {k:'bail.remarques',l:'Bail — remarques particulières',t:'textarea'}
+  ],
+  edl:[
+    {k:'bailleur.nom',l:'Bailleur — nom'},{k:'bailleur.adresse',l:'Bailleur — adresse'},
+    {k:'loc.civilite',l:'Locataire — civilité'},{k:'loc.prenom',l:'Locataire — prénom'},
+    {k:'loc.nom',l:'Locataire — nom'},{k:'loc.adresse',l:'Locataire — adresse'},
+    {k:'loc.contactUrgence',l:'Locataire — contact d\'urgence'},
+    {k:'lgt.adresse',l:'Logement — adresse'},
+    {k:'lgt.cles',l:'Logement — clés / accès remis'},
+    {k:'edl.type',l:'Type (ENTRÉE ou SORTIE)'},
+    {k:'edl.date',l:'Date de l\'état des lieux',t:'date'},
+    {k:'edl.conclusion',l:'Conclusion',t:'textarea'}
+  ]
+};
+const DOC_DATEKEYS=['bail.dateDebut','bail.dateFin','bail.dateSignature','edl.date'];
+const DOC_LABELS={bail:'Contrat de bail',edl_entree:'État des lieux d\'entrée',edl_sortie:'État des lieux de sortie'};
+
+let _docGen={lcId:'',type:'bail',blob:null,filename:''};
+
+// Pré-remplit les variables depuis les données existantes.
+function _collectDocVars(type,lc){
+  const lg=gLg(lc.lgId),bat=gBat(lg.batId),blr=getBailleur(),loyer=+lg.loyer||0;
+  const v={
+    'bailleur.nom':blr.nom,'bailleur.adresse':blr.adresse,'bailleur.iban':blr.iban,'bailleur.bic':blr.bic,
+    'loc.civilite':lc.civilite||'','loc.prenom':lc.prenom||'','loc.nom':lc.nom||'',
+    'loc.adresse':lc.adresse||'','loc.email':lc.email||'','loc.tel':lc.tel||'','loc.contactUrgence':lc.urg||'',
+    'lgt.adresse':lg.addr||bat.addr||'','lgt.contenu':lg.contenu||'','lgt.cles':lg.cles||''
+  };
+  if(type==='bail'){
+    v['bail.dateDebut']=lc.ent||'';v['bail.dateFin']=lc.fin||'';
+    v['bail.dureeMois']=_moisEntre(lc.ent,lc.fin);
+    v['bail.loyer']=loyer?String(loyer):'';
+    v['bail.loyerLettres']=loyer?(_nbEnLettres(loyer)+' euros'):'';
+    v['bail.jourPaiement']=lc.jour||'';
+    v['bail.garantie']=loyer?String(loyer*2):'';
+    v['bail.dateSignature']=tod();v['bail.lieuSignature']='';v['bail.pebRef']='';v['bail.remarques']='';
+  }else{
+    v['edl.type']=type==='edl_sortie'?'SORTIE':'ENTRÉE';
+    v['edl.date']=tod();v['edl.conclusion']='';
+  }
+  return v;
+}
+
+// Ouvre l'assistant de génération (étape 3 : validation des variables).
+function openDocGen(type,lcId){
+  const lc=lcs.find(x=>x.id===lcId);
+  if(!lc){ showToast('Locataire introuvable'); return; }
+  if(!lc.lgId||gLg(lc.lgId).nom==='—'){ showToast('⚠️ Ce locataire n\'est rattaché à aucun logement.'); return; }
+  _docGen={lcId:lcId,type:(type||'bail'),blob:null,filename:''};
+  const sel=document.getElementById('docGenType');if(sel)sel.value=_docGen.type;
+  docGenRenderFields();
+  openM('mDocVars');
+}
+function docGenReload(){ docGenRenderFields(); }
+function docGenRenderFields(){
+  const type=(document.getElementById('docGenType')||{value:'bail'}).value;
+  _docGen.type=type;
+  const lc=lcs.find(x=>x.id===_docGen.lcId);
+  if(!lc)return;
+  const vars=_collectDocVars(type,lc);
+  const fields=type==='bail'?DOC_FIELDS.bail:DOC_FIELDS.edl;
+  document.getElementById('docGenFields').innerHTML=fields.map(f=>{
+    const id='dvf_'+f.k.replace(/\./g,'_');
+    const raw=vars[f.k]==null?'':String(vars[f.k]);
+    if(f.t==='textarea')return '<div class="fg"><label>'+f.l+'</label><textarea id="'+id+'">'+esc(raw)+'</textarea></div>';
+    const it=f.t==='date'?'date':'text';
+    return '<div class="fg"><label>'+f.l+'</label><input type="'+it+'" id="'+id+'" value="'+esc(raw)+'"></div>';
+  }).join('');
+}
+// Étape 4 : fusion template + variables.
+async function docGenProduce(){
+  const type=_docGen.type;
+  const fields=type==='bail'?DOC_FIELDS.bail:DOC_FIELDS.edl;
+  const vars={};
+  fields.forEach(f=>{
+    const el=document.getElementById('dvf_'+f.k.replace(/\./g,'_'));
+    let val=el?el.value:'';
+    if(DOC_DATEKEYS.indexOf(f.k)>=0)val=_frDate(val);
+    vars[f.k]=val;
+  });
+  const tpl=type==='bail'?'Template_Bail.docx':'Template_EDL.docx';
+  try{
+    const resp=await fetch('docs-templates/'+tpl,{cache:'no-store'});
+    if(!resp.ok)throw new Error('template introuvable ('+resp.status+')');
+    const merged=_docxMerge(new Uint8Array(await resp.arrayBuffer()),vars);
+    const lc=lcs.find(x=>x.id===_docGen.lcId)||{prenom:'',nom:''};
+    const base=type==='bail'?'Bail':(type==='edl_sortie'?'EDL_sortie':'EDL_entree');
+    _docGen.filename=(base+'_'+(lc.prenom||'')+'_'+(lc.nom||'')).replace(/[^\w-]+/g,'_').replace(/_+$/,'')+'.docx';
+    _docGen.blob=new Blob([merged],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    closeM('mDocVars');
+    document.getElementById('docConfirmInfo').innerHTML=
+      'Document généré : <strong>'+esc(_docGen.filename)+'</strong><br>'+
+      'Type : '+esc(DOC_LABELS[type]||type)+'<br>'+
+      'Locataire : '+esc(lcFull(lc))+'.';
+    openM('mDocConfirm');
+  }catch(e){
+    showToast('⚠️ Échec de génération : '+e.message);
+  }
+}
+// Étape 5/6 : confirmation → téléchargement (envoi e-mail : phase 2).
+function docGenDownload(){
+  if(!_docGen.blob){ showToast('Aucun document généré'); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(_docGen.blob);
+  a.download=_docGen.filename||'document.docx';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  showToast('⬇ Document téléchargé');
+}
+
 // ═══ SIDEBAR ═══
 function toggleSb(){
   const sb=document.getElementById('sb');const btn=sb.querySelector('.sb-toggle');
@@ -4145,7 +4402,12 @@ const AI_TOOLS = [
      categorie:{type:'string',enum:['Entretien','Bail','Assurance','Fiscal','Autre'],description:'Défaut : Autre'},
      logement:{type:'string',description:'Logement concerné (facultatif)'},
      notes:{type:'string'}
-   },required:['titre','date']}}
+   },required:['titre','date']}},
+  {name:'generer_document',description:'Ouvre l\'assistant de génération d\'un document (contrat de bail ou état des lieux) pour un locataire. Cet outil NE génère PAS le document : il ouvre l\'écran de validation des variables que l\'utilisateur doit vérifier, compléter puis valider. Le document est ensuite présenté pour confirmation avant tout envoi.',
+   input_schema:{type:'object',properties:{
+     type:{type:'string',enum:['bail','edl_entree','edl_sortie'],description:'bail = contrat de bail ; edl_entree = état des lieux d\'entrée ; edl_sortie = état des lieux de sortie'},
+     locataire:{type:'string',description:'Nom du locataire concerné'}
+   },required:['type','locataire']}}
 ];
 
 // Normalise pour recherche tolérante (minuscule, sans accents).
@@ -4299,6 +4561,15 @@ function executeAITool(name,input){
       if(curP==='rappels'&&typeof rRaps==='function')rRaps();
       return '✅ Rappel créé : "'+r.tit+'" pour le '+r.date+'.';
     }
+    if(name==='generer_document'){
+      const _lc=_aiPick(lcs,input.locataire,l=>l.prenom+' '+l.nom,'locataires');
+      if(_lc.msg)return _lc.msg;
+      if(!_lc.item)return 'Locataire introuvable : "'+(input.locataire||'')+'".';
+      if(!_lc.item.lgId||gLg(_lc.item.lgId).nom==='—')return 'Le locataire '+lcFull(_lc.item)+' n\'est rattaché à aucun logement — impossible de générer le document.';
+      const t=_enum(input.type,['bail','edl_entree','edl_sortie'],'bail');
+      if(typeof openDocGen==='function')openDocGen(t,_lc.item.id);
+      return '✅ Écran de validation des variables ouvert pour le document ('+(DOC_LABELS[t]||t)+') de '+lcFull(_lc.item)+'. Indique à l\'utilisateur qu\'il doit vérifier et compléter les variables (PEB, signature, remarques…), valider, puis confirmer le document avant tout envoi.';
+    }
     return 'Outil inconnu : '+name;
   }catch(e){return 'Erreur lors de l\'exécution : '+e.message;}
 }
@@ -4450,6 +4721,7 @@ ACTIONS — tu peux ENREGISTRER des informations dans l'application :
 - Référence les bâtiments / logements / locataires / compteurs par leur NOM tel qu'il apparaît dans le contexte ci-dessous.
 - S'il manque une information obligatoire, ou si une référence est ambiguë (ex : deux locataires de nom proche), NE DEVINE PAS : demande une précision à l'utilisateur.
 - Après chaque action réussie, confirme en une phrase claire. Si l'outil renvoie une erreur ou une demande de précision, relaie-la fidèlement à l'utilisateur.
+- DOCUMENTS : pour produire un contrat de bail ou un état des lieux, utilise l'outil generer_document. Il OUVRE l'écran de validation des variables — il ne génère jamais le document directement. Préviens l'utilisateur qu'il doit vérifier/compléter les variables, valider, puis confirmer le document (double validation obligatoire). Cas typiques : nouveau locataire → propose bail + état des lieux d'entrée ; départ d'un locataire → propose l'état des lieux de sortie.
 
 ${buildContext()}`;
 }
