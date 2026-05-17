@@ -699,7 +699,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- LOCATAIRES -->
     <div class="page" id="page-locataires">
-      <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button id="btnOldLc" class="btn btn-s" onclick="toggleOldLc()">👥 Anciens locataires</button><button class="btn btn-p" onclick="openM('mLoc')">＋ Ajouter</button></div></div>
+      <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button id="btnOldLc" class="btn btn-s" onclick="toggleOldLc()">👥 Anciens locataires</button><button class="btn btn-p" onclick="openNewLoc()">＋ Ajouter</button></div></div>
       <div class="card"><div class="tblw"><table><thead><tr>
   <th style="cursor:pointer" onclick="sortLcs('nom')">Nom ↕</th>
   <th style="cursor:pointer" onclick="sortLcs('logement')">Logement ↕</th>
@@ -1998,6 +1998,15 @@ function rLcs(f){
   }).join('');
 }
 function filterLc(v){rLcs(v);}
+// Ouvre la modale locataire en mode création, TOUS les champs vidés — évite
+// qu'une valeur (e-mail, nom…) d'un locataire précédent persiste dans le formulaire.
+function openNewLoc(){
+  ['locId','locPre','locNom','locEmail','locTel','locEnt','locFin','locUrg','locCiv','locAddr','locNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const lg=document.getElementById('locLog');if(lg)lg.value='';
+  const j=document.getElementById('locJour');if(j)j.value='1';
+  const t=document.getElementById('mLocT');if(t)t.textContent='Ajouter un locataire';
+  openM('mLoc');
+}
 function editLc(id){
   const l=lcs.find(x=>x.id===id);if(!l)return;
   document.getElementById('mLocT').textContent='Modifier le locataire';
@@ -3882,7 +3891,9 @@ const DOC_FIELDS={
 const DOC_DATEKEYS=['bail.dateDebut','bail.dateFin','bail.dateSignature','edl.date'];
 const DOC_LABELS={bail:'Contrat de bail',edl_entree:'État des lieux d\'entrée',edl_sortie:'État des lieux de sortie'};
 
-let _docGen={lcId:'',type:'bail',blob:null,filename:''};
+// État de la génération en cours. Entièrement réinitialisé à chaque openDocGen :
+// aucune valeur (e-mail, nom de fichier…) ne survit d'une génération à l'autre.
+let _docGen={lcId:'',type:'bail',blob:null,filename:'',email:''};
 
 // Pré-remplit les variables depuis les données existantes.
 function _collectDocVars(type,lc){
@@ -3913,7 +3924,7 @@ function openDocGen(type,lcId){
   const lc=lcs.find(x=>x.id===lcId);
   if(!lc){ showToast('Locataire introuvable'); return; }
   if(!lc.lgId||gLg(lc.lgId).nom==='—'){ showToast('⚠️ Ce locataire n\'est rattaché à aucun logement.'); return; }
-  _docGen={lcId:lcId,type:(type||'bail'),blob:null,filename:''};
+  _docGen={lcId:lcId,type:(type||'bail'),blob:null,filename:'',email:''};
   const sel=document.getElementById('docGenType');if(sel)sel.value=_docGen.type;
   docGenRenderFields();
   openM('mDocVars');
@@ -3950,7 +3961,10 @@ async function docGenProduce(){
     const resp=await fetch('docs-templates/'+tpl,{cache:'no-store'});
     if(!resp.ok)throw new Error('template introuvable ('+resp.status+')');
     const merged=_docxMerge(new Uint8Array(await resp.arrayBuffer()),vars);
-    const lc=lcs.find(x=>x.id===_docGen.lcId)||{prenom:'',nom:''};
+    const lc=lcs.find(x=>x.id===_docGen.lcId)||{prenom:'',nom:'',email:''};
+    // E-mail figé dans _docGen au moment de la génération, depuis le locataire
+    // courant uniquement — jamais hérité d'une génération précédente.
+    _docGen.email=((lc.email||'')+'').trim();
     const base=type==='bail'?'Bail':(type==='edl_sortie'?'EDL_sortie':'EDL_entree');
     _docGen.filename=(base+'_'+(lc.prenom||'')+'_'+(lc.nom||'')).replace(/[^\w-]+/g,'_').replace(/_+$/,'')+'.docx';
     _docGen.blob=new Blob([merged],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
@@ -3959,8 +3973,8 @@ async function docGenProduce(){
       'Document généré : <strong>'+esc(_docGen.filename)+'</strong><br>'+
       'Type : '+esc(DOC_LABELS[type]||type)+'<br>'+
       'Locataire : '+esc(lcFull(lc))+'.'+
-      (lc.email
-        ? '<br><span style="color:var(--t3)">E-mail : '+esc(lc.email)+'</span>'
+      (_docGen.email
+        ? '<br><span style="color:var(--t3)">E-mail : '+esc(_docGen.email)+'</span>'
         : '<br><span style="color:var(--wa)">⚠️ Ce locataire n\'a pas d\'adresse e-mail — l\'envoi ne sera pas disponible.</span>');
     openM('mDocConfirm');
   }catch(e){
@@ -3977,12 +3991,13 @@ function docGenDownload(){
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
   showToast('⬇ Document téléchargé');
 }
-// Envoi semi-manuel via mailto: (phase 1). Le user attache lui-même le .docx
-// téléchargé ; mailto ne gère pas les pièces jointes et n'envoie rien seul.
+// Envoi semi-manuel (phase 1) : ouvre la rédaction Gmail web pré-remplie.
+// L'utilisateur joint lui-même le .docx téléchargé et envoie depuis Gmail.
 function docGenEmail(){
   const lc=lcs.find(x=>x.id===_docGen.lcId);
   if(!lc){ showToast('Locataire introuvable'); return; }
-  const email=((lc.email||'')+'').trim();
+  // E-mail figé lors de la génération (cf. docGenProduce) — jamais une valeur résiduelle.
+  const email=_docGen.email||'';
   if(!email){ showToast('⚠️ Ce locataire n\'a pas d\'adresse e-mail.'); return; }
   const lg=gLg(lc.lgId),bat=gBat(lg.batId),adr=lg.addr||bat.addr||'';
   const type=_docGen.type;
@@ -4032,7 +4047,7 @@ function closeMobSb(){
   ov.style.display='none';
 }
 function mobNav(el){const p=el.dataset.p;if(p==='more'){toggleMobSb();return;}document.querySelectorAll('.mn-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');nav(p);}
-function mobFab(){const m={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openM('mLoc'),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap')};if(m[curP])m[curP]();}
+function mobFab(){const m={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap')};if(m[curP])m[curP]();}
 
 
 
