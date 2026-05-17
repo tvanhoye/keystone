@@ -1366,6 +1366,8 @@ function rDash(){
   const ret=tmP.filter(p=>p.stat==='retard').length;
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
   const br=document.getElementById('bRet');if(br){br.textContent=ret;br.style.display=ret?'':'none';}
+  // Badge "Loyers" de la nav mobile : même source que le badge desktop (bRet).
+  const mbr=document.getElementById('mobBR');if(mbr){mbr.textContent=ret;mbr.style.display=ret?'':'none';}
   const bu=document.getElementById('bUrg');if(bu){bu.textContent=urg.length;bu.style.display=urg.length?'':'none';}
   document.getElementById('kpiG').innerHTML=
     '<div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
@@ -3609,8 +3611,11 @@ function rAnnuel(){
   const labels=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
   for(let m=1;m<=12;m++){
     const mStr=year+'-'+String(m).padStart(2,'0');
-    const attendu=lcs.reduce((a,lc)=>{const lg=gLg(lc.lgId);return a+lg.loyer+lg.ch;},0);
+    // Attendu = somme réelle des loyers DUS de ce mois (depuis ig3_py), et non
+    // une constante (loyers actuels × 12) : seuls les mois réellement enregistrés
+    // comptent — pas de mois fictifs, pas de parc « actuel » plaqué sur le passé.
     const mP=pys.filter(p=>p.mois===mStr);
+    const attendu=mP.reduce((a,p)=>a+(p.du||0),0);
     const recu=mP.reduce((a,p)=>a+(p.rec||0),0);
     const taux=attendu>0?Math.round(recu/attendu*100):0;
     months.push({m,mStr,attendu,recu,taux,label:labels[m-1]});
@@ -3665,7 +3670,7 @@ function rAnnuel(){
   const eL=document.getElementById('anEntL');
   eL.innerHTML=entAn.length?entAn.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:.77rem"><div><div style="font-weight:600">'+esc(e.tit)+'</div><div style="font-size:.67rem;color:var(--t2)">'+esc(gLg(e.lgId).nom)+(e.date?' · '+fD(e.date):'')+'</div></div><span style="font-family:monospace;font-weight:700;color:var(--wa)">-'+fE(e.cout)+'</span></div>').join(''):'<div class="empty" style="padding:10px"><div style="font-size:1.2rem">✅</div><div class="empty-text">Aucune dépense</div></div>';
   document.getElementById('anTaux').innerHTML=months.filter(m=>new Date(m.mStr+'-15')<=new Date()).map(m=>{const cl=m.taux>=100?'var(--ac)':m.taux>=80?'var(--go)':'var(--wa)';return'<div style="display:flex;align-items:center;gap:9px;padding:4px 0;border-bottom:1px solid var(--bd)"><span style="font-size:.71rem;color:var(--t2);width:26px">'+m.label+'</span><div style="flex:1;height:7px;background:var(--s2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.min(m.taux,100)+'%;background:'+cl+';border-radius:3px"></div></div><span style="font-family:monospace;font-size:.71rem;font-weight:700;color:'+cl+';width:33px;text-align:right">'+m.taux+'%</span></div>';}).join('');
-  const rentData=lgs.map(lg=>{const lAn=(lg.loyer+lg.ch)*12;const entLg=ens.filter(e=>e.lgId===lg.id&&e.prio==='terminé'&&e.cout>0&&e.date&&e.date.startsWith(yrStr)).reduce((a,e)=>a+e.cout,0);const lc=lcs.find(l=>l.lgId===lg.id);return{lg,lc,lAn,entLg,surf:lg.surf||0};}).sort((a,b)=>b.lAn-a.lAn);
+  const rentData=lgs.map(lg=>{const lAn=(lg.loyer+lg.ch)*12;const entLg=ens.filter(e=>e.lgId===lg.id&&e.prio==='terminé'&&e.cout>0&&e.date&&e.date.startsWith(yrStr)).reduce((a,e)=>a+e.cout,0);const lc=lcs.find(l=>l.lgId===lg.id&&isActiveLc(l));return{lg,lc,lAn,entLg,surf:lg.surf||0};}).sort((a,b)=>b.lAn-a.lAn);
   const maxL=Math.max(...rentData.map(r=>r.lAn),1);
   const rc=['#f5c842','#c0c0c0','#cd7f32'];
   document.getElementById('anRent').innerHTML=rentData.map((r,i)=>{const pct=Math.round(r.lAn/maxL*100);const pm=r.surf&&r.lg.loyer?Math.round(r.lg.loyer/r.surf):'—';return'<div class="rent-row"><div class="rent-rank" style="background:'+(i<3?rc[i]:'var(--s2)')+';color:'+(i<3?'#000':'var(--t2)')+'">'+(i+1)+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%">'+esc(r.lg.nom)+'</span><span style="font-family:monospace;font-size:.77rem;font-weight:700;color:var(--ac)">'+fE(r.lAn)+'/an</span></div><div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:'+pct+'%;background:var(--ac);border-radius:3px"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:.64rem;color:var(--t3)">'+(pm!=='—'?pm+'€/m²/mois':'')+'</span><span style="font-size:.64rem;color:var(--t2)">'+(r.lc?'👤 '+esc(lcFull(r.lc)):'Vacant')+'</span>'+(r.entLg?'<span style="font-size:.64rem;color:var(--wa)">🔧 -'+fE(r.entLg)+'</span>':'')+'</div></div></div>';}).join('');
