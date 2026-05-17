@@ -1099,6 +1099,23 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
+// ─── Robustesse formulaires ───
+// Échap ferme la modale ouverte.
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(function(o){if(o.id&&typeof closeM==='function')closeM(o.id);});
+});
+// Anti double-soumission : ignore les re-clics rapprochés (<700 ms) sur un bouton
+// primaire de modale — évite la création de doublons au double/triple-clic.
+document.addEventListener('click',function(e){
+  const b=e.target&&e.target.closest?e.target.closest('.modal .btn-p'):null;
+  if(!b)return;
+  if(b._busy){e.stopImmediatePropagation();e.preventDefault();return;}
+  b._busy=true;setTimeout(function(){b._busy=false;},700);
+},true);
+// Limite de longueur des principaux champs nom / titre.
+['batNom','lNom','locPre','locNom','entTit','docNom','rapTit','crNom','chNom','dpNom','cNom'].forEach(function(id){
+  const e=document.getElementById(id);if(e)e.maxLength=120;
+});
 let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp'),tds=ld('td');
 const gLg=id=>lgs.find(l=>l.id===id)||{nom:'—',loyer:0,ch:0};
 const gLc=id=>lcs.find(l=>l.id===id);
@@ -1454,6 +1471,8 @@ function saveBat(){
   if(!nom||!addr){alert('Nom et adresse requis');return;}
   const eid=document.getElementById('batId').value;
   const obj={nom,addr,nbLg:parseInt(document.getElementById('batNbLg').value)||0,annee:parseInt(document.getElementById('batAnnee').value)||0,notes:document.getElementById('batNotes').value};
+  if(obj.nbLg<0){alert('Le nombre de logements ne peut pas être négatif.');return;}
+  if(obj.annee&&(obj.annee<1800||obj.annee>new Date().getFullYear()+5)){alert('Année de construction invalide (1800 – '+(new Date().getFullYear()+5)+').');return;}
   if(eid){const i=bats.findIndex(x=>x.id===eid);bats[i]={...bats[i],...obj};}
   else{bats.push({id:uid(),...obj});}
   sv('bt',bats);
@@ -1795,6 +1814,7 @@ function saveLog(){
   const existingTravaux=eid?((lgs.find(x=>x.id===eid)||{}).travaux||[]):[];
   const travaux=Array.isArray(window._pendingTravaux)?window._pendingTravaux:existingTravaux;
   const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,contenu:document.getElementById('lContenu').value,cles:document.getElementById('lCles').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist,travaux};
+  if(loyer<0||obj.ch<0||obj.dep<0||obj.surf<0){alert('Le loyer, les charges, la garantie et la surface ne peuvent pas être négatifs.');return;}
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes','lContenu','lCles'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
@@ -2027,6 +2047,8 @@ function saveLoc(){
   if(!lgId) missing.push('Logement');
   if(!ent) missing.push("Date d'entrée");
   if(missing.length){alert('Champs manquants : '+missing.join(', '));return;}
+  const finV=document.getElementById('locFin').value;
+  if(finV&&ent&&new Date(finV)<new Date(ent)){alert('La date de fin de bail est antérieure à la date d\'entrée.');return;}
   const eid=document.getElementById('locId').value;
   const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,civilite:(document.getElementById('locCiv')||{value:''}).value,adresse:(document.getElementById('locAddr')||{value:''}).value,notes:(document.getElementById('locNotes')||{value:''}).value};
   if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
@@ -3388,6 +3410,7 @@ function saveCredit(){
   const nom=document.getElementById('crNom').value.trim();
   const mens=parseFloat(document.getElementById('crMens').value);
   if(!nom||isNaN(mens)){alert('Nom et mensualité requis');return;}
+  if(mens<0){alert('La mensualité ne peut pas être négative.');return;}
   const eid=document.getElementById('crId').value;
   const obj={nom,batId:document.getElementById('crBat').value,
     capital:parseFloat(document.getElementById('crCapital').value)||0,
@@ -3422,6 +3445,7 @@ function saveCharge(){
   const nom=document.getElementById('chNom').value.trim();
   const montant=parseFloat(document.getElementById('chMontant').value);
   if(!nom||isNaN(montant)){alert('Libellé et montant requis');return;}
+  if(montant<0){alert('Le montant ne peut pas être négatif.');return;}
   const eid=document.getElementById('chId').value;
   const obj={nom,batId:document.getElementById('chBat').value,
     montant,freq:document.getElementById('chFreq').value,
@@ -3454,6 +3478,7 @@ function saveDepense(){
   const montant=parseFloat(document.getElementById('dpMontant').value);
   const date=document.getElementById('dpDate').value;
   if(!nom||isNaN(montant)||!date){alert('Libellé, montant et date requis');return;}
+  if(montant<0){alert('Le montant ne peut pas être négatif.');return;}
   const eid=document.getElementById('dpId').value;
   const obj={nom,batId:document.getElementById('dpBat').value,montant,date,
     cat:document.getElementById('dpCat').value,
@@ -3955,6 +3980,8 @@ async function docGenProduce(){
     if(DOC_DATEKEYS.indexOf(f.k)>=0)val=_frDate(val);
     vars[f.k]=val;
   });
+  if(!String(vars['bailleur.nom']||'').trim()
+     && !confirm('⚠️ Le nom du bailleur n\'est pas renseigné — le document sera incomplet. Générer quand même ?')) return;
   const tpl=type==='bail'?'Template_Bail.docx':'Template_EDL.docx';
   try{
     const resp=await fetch('docs-templates/'+tpl,{cache:'no-store'});
@@ -7125,6 +7152,8 @@ function savePay(){
   const rec=parseFloat(recVal);
   const duVal=document.getElementById('payDu').value;
   const du=duVal!==''&&!isNaN(parseFloat(duVal))?parseFloat(duVal):rec;
+  if(rec<0||du<0){ alert('Les montants ne peuvent pas être négatifs.'); return; }
+  if(du>0 && rec>du*3 && !confirm('Le montant reçu ('+rec+'€) dépasse largement le montant dû ('+du+'€). Enregistrer quand même ?')) return;
   const override=document.getElementById('payStatutOverride')?.value||'';
   const stat=override||(rec>=du?'payé':(rec>0?'partiel':'retard'));
   const eid=document.getElementById('payId').value;
