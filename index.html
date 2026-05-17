@@ -1076,8 +1076,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
 <div class="overlay" id="mDocConfirm"><div class="modal" style="max-width:460px"><div class="mh"><span class="mtitle">📄 Document prêt</span><button class="mclose" onclick="closeM('mDocConfirm')">✕</button></div><div class="mbody">
   <div id="docConfirmInfo" style="font-size:.82rem;line-height:1.6"></div>
-  <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">1. <strong>Téléchargez</strong> le document et vérifiez-le. 2. <strong>Ouvrir l'e-mail</strong> pré-remplit un message pour le locataire — joignez-y le fichier téléchargé, puis envoyez depuis votre messagerie.</div>
-</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" onclick="docGenEmail()">✉ Ouvrir l'e-mail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
+  <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">1. <strong>Téléchargez</strong> le document et vérifiez-le. 2. <strong>Rédiger dans Gmail</strong> ouvre un message pré-rempli pour le locataire — joignez-y le fichier téléchargé, puis envoyez depuis Gmail.</div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" onclick="docGenEmail()">✉ Rédiger dans Gmail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
 
 <div id="sb-overlay" onclick="closeMobSb()"></div>
 <nav id="mob-nav"><div class="mn-items">
@@ -3994,13 +3994,15 @@ function docGenEmail(){
     +'Vous trouverez en pièce jointe '+docNom+(adr?' concernant le logement situé '+adr:'')+'.\n\n'
     +'⚠️ Important : pensez à JOINDRE le fichier « '+(_docGen.filename||'document.docx')+' » que vous venez de télécharger — ce message ne l\'attache pas automatiquement.\n\n'
     +'Cordialement,\n'+(blr.nom||'');
-  const href='mailto:'+email+'?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
-  // Déclenchement via un <a> cliqué : méthode la plus fiable pour passer la main
-  // au gestionnaire mailto du système (plus robuste que window.location.href).
-  const a=document.createElement('a');
-  a.href=href; a.style.display='none';
-  document.body.appendChild(a); a.click(); a.remove();
-  showToast('✉ Brouillon e-mail ouvert. Si rien ne s\'ouvre, vérifiez l\'application e-mail par défaut de votre système.');
+  // Ouvre la fenêtre de rédaction Gmail (web) dans un nouvel onglet : fonctionne
+  // sans application e-mail installée sur le système. La pièce jointe reste à
+  // ajouter manuellement (phase 2 : envoi automatique via le Worker + API Gmail).
+  const url='https://mail.google.com/mail/?view=cm&fs=1'
+    +'&to='+encodeURIComponent(email)
+    +'&su='+encodeURIComponent(sujet)
+    +'&body='+encodeURIComponent(corps);
+  window.open(url,'_blank','noopener');
+  showToast('✉ Rédaction Gmail ouverte — joignez le fichier téléchargé avant d\'envoyer.');
 }
 
 // ═══ SIDEBAR ═══
