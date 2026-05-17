@@ -1360,11 +1360,7 @@ function rDash(){
   // v2.14 finding #4 : occupation = logements DISTINCTS ayant un locataire actif
   // aujourd'hui (pas le total des locataires — sinon les baux successifs gonflent
   // le compte au-delà de 100%, ex 18 locataires / 14 logements = 129%).
-  const _today=new Date();
-  const occ=new Set(visLcs.filter(l=>{
-    const ent=l.ent?new Date(l.ent):null,fin=l.fin?new Date(l.fin):null;
-    return (!ent||ent<=_today)&&(!fin||fin>=_today);
-  }).map(l=>l.lgId)).size;
+  const occ=new Set(visLcs.filter(isActiveLc).map(l=>l.lgId)).size;
   const totL=visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
   const ret=tmP.filter(p=>p.stat==='retard').length;
@@ -1562,17 +1558,11 @@ function renderDashCharts(){
   </svg>`;
 
   // ── Chart 2: Taux d'occupation — compact per building ──
-  const nowD2 = new Date();
   let occ2html = '';
   bats.forEach(bat=>{
     const batLgs = lgs.filter(l=>l.batId===bat.id);
     if(!batLgs.length) return;
-    const occupied = lcs.filter(lc=>{
-      if(!batLgs.find(l=>l.id===lc.lgId)) return false;
-      const ent=lc.ent?new Date(lc.ent):null;
-      const fin=lc.fin?new Date(lc.fin):null;
-      return (!ent||ent<=nowD2)&&(!fin||fin>=nowD2);
-    }).length;
+    const occupied = lcs.filter(lc=>batLgs.find(l=>l.id===lc.lgId)&&isActiveLc(lc)).length;
     const pct=Math.round(occupied/batLgs.length*100);
     const col=pct>=90?'#2d5a3d':pct>=70?'#b5780a':'#c0392b';
     occ2html+=`<div style="margin-bottom:10px">
@@ -1587,7 +1577,7 @@ function renderDashCharts(){
   });
   if(!bats.length){
     const totalLgs=lgs.length||1;
-    const nowOcc=lcs.filter(lc=>{const ent=lc.ent?new Date(lc.ent):null;const fin=lc.fin?new Date(lc.fin):null;return(!ent||ent<=nowD2)&&(!fin||fin>=nowD2);}).length;
+    const nowOcc=lcs.filter(isActiveLc).length;
     const pct=Math.round(nowOcc/totalLgs*100);
     const col=pct>=90?'#2d5a3d':pct>=70?'#b5780a':'#c0392b';
     occ2html=`<div style="text-align:center;font-size:2rem;font-weight:800;color:${col}">${pct}%</div><div style="text-align:center;font-size:.75rem;color:var(--t2)">${nowOcc} / ${totalLgs} logements occupés</div>`;
@@ -1697,7 +1687,7 @@ function rLgs(){
   if(v==='list'){
     g.className='card';
     g.innerHTML = lgs.map(l=>{
-      const lc=lcs.find(x=>x.lgId===l.id);
+      const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));
       const cc=pCol[l.type]||'#555';
       return '<div class="lg-list-item" onclick="editLg(\''+l.id+'\')">'+
         '<div class="lg-list-ico" style="background:linear-gradient(135deg,'+cc+','+cc+'88)">'+(pEmo[l.type]||'🏠')+'</div>'+
@@ -1718,7 +1708,7 @@ function rLgs(){
       '<th>Logement</th><th>Locataire</th><th>Surface</th><th>Loyer CC</th><th>Statut</th><th></th>'+
       '</tr></thead><tbody>'+
       lgs.map(l=>{
-        const lc=lcs.find(x=>x.lgId===l.id);
+        const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));
         return '<tr style="cursor:pointer" onclick="editLg(\''+l.id+'\')">'+
           '<td><strong>'+esc(l.nom)+'</strong>'+(l.batId?'<div style="font-size:.62rem;color:var(--ac)">'+esc(gBat(l.batId).nom)+'</div>':'')+'</td>'+
           '<td>'+(lc?esc(lcFull(lc)):'<em style="color:var(--t3)">Vacant</em>')+'</td>'+
@@ -1733,7 +1723,7 @@ function rLgs(){
     // Grid view (default)
     g.className='pg';
     g.innerHTML=lgs.map(l=>{
-      const lc=lcs.find(x=>x.lgId===l.id);const cc=pCol[l.type]||'#555';
+      const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));const cc=pCol[l.type]||'#555';
       const _travauxNow = !lc && isTravauxNow(l);
       const _statusLine = lc ? '👤 '+esc(lcFull(lc)) : (_travauxNow ? '🏗 En travaux' : '<em>Vacant</em>');
       const _statusBadge = lc ? '<span class="badge bg"><span class="dot"></span>occupé</span>'
@@ -1958,8 +1948,12 @@ function toggleOldLc(){
   rLcs();
 }
 
+// Locataire « en cours » : entré (ent <= aujourd'hui) ET bail non terminé
+// (fin vide ou >= aujourd'hui). SOURCE UNIQUE du calcul d'occupation —
+// utilisée par le dashboard ET la page Logements pour qu'ils ne divergent jamais.
 function isActiveLc(l){
   const now = new Date();
+  if(l.ent && new Date(l.ent) > now) return false;
   if(l.fin && new Date(l.fin) < now) return false;
   return true;
 }
