@@ -572,6 +572,31 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
 .pay-grid th:first-child,.pay-grid td:first-child{width:28%!important;}
 .pay-grid th.pg-month-col{width:12%!important;background:rgba(26,24,20,.85)!important;color:rgba(255,255,255,.6)!important;font-size:.65rem;font-weight:500;padding:5px 2px;border-left:1px solid rgba(255,255,255,.1);}
+/* ── Étude de cas — simulateur de rentabilité ── */
+#page-etude .ec-grid{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+#page-etude .ec-inputs{flex:1 1 460px;min-width:280px}
+#page-etude .ec-results{flex:1 1 300px;min-width:260px}
+#page-etude .ec-body{padding:13px 15px}
+#page-etude .ec-note{font-size:.66rem;color:var(--t3);line-height:1.45;margin-top:2px}
+#page-etude .ec-topo{padding:18px 20px}
+#page-etude .ec-topo-lbl{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+#page-etude .cf-amount{font-size:2.3rem;font-weight:800;line-height:1;font-family:monospace}
+#page-etude .cf-amount.pos{color:var(--ac)}
+#page-etude .cf-amount.neg{color:#c0392b}
+#page-etude .ec-cf-sub{font-size:.72rem;color:var(--t2);margin-top:6px}
+#page-etude .ec-verdict{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);font-size:.78rem;line-height:1.5;color:var(--t2)}
+#page-etude .ec-verdict b{color:var(--tx);font-weight:700}
+#page-etude .ec-metric{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd)}
+#page-etude .ec-metric:last-child{border-bottom:none}
+#page-etude .ec-mk{font-size:.74rem;color:var(--t2)}
+#page-etude .ec-mk small{display:block;font-size:.6rem;color:var(--t3);margin-top:1px}
+#page-etude .ec-metric .metric-v{font-size:.85rem;font-weight:700;white-space:nowrap}
+#page-etude .ec-metric .metric-v.accent{color:var(--ac)}
+#page-etude .ec-metric .metric-v.neg{color:#c0392b}
+#page-etude .ec-headline .ec-mk{font-weight:700;color:var(--tx)}
+#page-etude .ec-headline .metric-v{font-size:.95rem}
+#page-etude .ec-disclaimer{font-size:.66rem;color:var(--t3);line-height:1.55;margin-top:12px;padding:11px 13px;background:var(--s2);border-radius:var(--rs)}
+#page-etude .ec-disclaimer b{color:var(--ac)}
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -603,6 +628,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" data-p="rappels" data-tip="Rappels" onclick="navSub('rappels',this)"><span class="sb-icon">🔔</span><span class="sb-lbl">Rappels</span></div>
     <div class="sb-sec">Analyse</div>
     <div class="sb-item" data-p="annuel" data-tip="Tableau annuel"><span class="sb-icon">📈</span><span class="sb-lbl">Tableau annuel</span></div>
+    <div class="sb-item" data-p="etude" data-tip="Étude de cas"><span class="sb-icon">🧮</span><span class="sb-lbl">Étude de cas</span></div>
     <div class="sb-sec">Intelligence</div>
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
@@ -887,6 +913,95 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
           <button class="btn btn-p" onclick="addTodo()">+ Ajouter</button>
         </div>
         <div id="todoList"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-etude">
+      <div class="sh-row"><div><h2>Étude de cas</h2><p>Simulateur de rentabilité locative — régime résidentiel belge (taxation sur le revenu cadastral, pas sur les loyers réels)</p></div></div>
+      <div class="ec-grid">
+        <div class="ec-inputs">
+
+          <div class="card"><div class="ch"><span class="ct">01 · Acquisition</span></div>
+            <div class="ec-body">
+              <div class="fr">
+                <div class="fg"><label>Prix d'achat (€)</label><input type="number" id="prix" value="200000" step="1000"></div>
+                <div class="fg"><label>Frais d'acquisition (%)</label><input type="number" id="frais" value="13" step="0.5"></div>
+              </div>
+              <div class="fr">
+                <div class="fg"><label>Coût des travaux (€)</label><input type="number" id="travaux" value="20000" step="1000"></div>
+                <div class="fg"><label>Apport personnel (€)</label><input type="number" id="apport" value="50000" step="1000"></div>
+              </div>
+              <div class="ec-note">Frais = droits d'enregistrement (12,5 % en Wallonie) + notaire. L'apport est injecté en fonds propres, le reste est emprunté.</div>
+            </div>
+          </div>
+
+          <div class="card"><div class="ch"><span class="ct">02 · Financement</span></div>
+            <div class="ec-body">
+              <div class="fr">
+                <div class="fg"><label>Taux du crédit (%)</label><input type="number" id="taux" value="3.6" step="0.05"></div>
+                <div class="fg"><label>Durée du crédit (ans)</label><input type="number" id="duree" value="20" step="1"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card"><div class="ch"><span class="ct">03 · Exploitation</span></div>
+            <div class="ec-body">
+              <div class="fr">
+                <div class="fg"><label id="loyerLabel">Loyer mensuel hors charges (€)</label><input type="number" id="loyer" value="850" step="25"></div>
+                <div class="fg"><label>Vacance locative (%)</label><input type="number" id="vacance" value="5" step="1"></div>
+              </div>
+              <div class="fg"><label>Charges annuelles non récupérables (€)</label><input type="number" id="chargesNR" value="1400" step="100"></div>
+              <div class="fg"><label>Précompte immobilier annuel (€)</label><input type="number" id="precompte" value="950" step="50"></div>
+              <div class="ec-note">Non récupérables = assurance propriétaire, entretien à charge du bailleur, gestion, copropriété non récupérable. Vacance = mois sans locataire en moyenne annuelle.</div>
+            </div>
+          </div>
+
+          <div class="card"><div class="ch"><span class="ct">04 · Régime de charges</span></div>
+            <div class="ec-body">
+              <div class="fg"><label>Type de loyer</label>
+                <div class="tabs" id="modeCharges" style="margin-bottom:0;width:100%">
+                  <button type="button" class="tab seg-btn active" data-mode="hc" style="flex:1">Hors charges + provisions</button>
+                  <button type="button" class="tab seg-btn" data-mode="cc" style="flex:1">Charges comprises (forfait)</button>
+                </div>
+              </div>
+              <div class="fg"><label>Charges récupérables — coût mensuel réel (€)</label><input type="number" id="chargesRecup" value="100" step="25"></div>
+              <div class="ec-note">En mode <b>hors charges</b>, le locataire les rembourse : aucun impact sur le rendement. En mode <b>charges comprises</b>, vous les absorbez : elles sont déduites du loyer pour obtenir le revenu réel.</div>
+            </div>
+          </div>
+
+          <div class="card"><div class="ch"><span class="ct">05 · Fiscalité <span style="font-weight:400;color:var(--t3);text-transform:none">— régime résidentiel belge</span></span></div>
+            <div class="ec-body">
+              <div class="fr">
+                <div class="fg"><label>Revenu cadastral indexé (€)</label><input type="number" id="rc" value="1100" step="50"></div>
+                <div class="fg"><label>Taux marginal d'imposition (%)</label><input type="number" id="tmi" value="50" step="5"></div>
+              </div>
+              <div class="ec-note">Le RC indexé figure sur l'avertissement-extrait de rôle du précompte. Mettre 0 pour ignorer l'estimation fiscale.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="ec-results">
+          <div class="card ec-topo">
+            <div class="ec-topo-lbl">Le topo</div>
+            <div class="cf-amount" id="cfMonth">—</div>
+            <div class="ec-cf-sub" id="cfSub">cash-flow mensuel, après crédit et impôt</div>
+            <div class="ec-verdict" id="verdict">—</div>
+          </div>
+          <div class="card" id="metrics" style="padding:2px 16px">
+            <div class="ec-metric ec-headline"><span class="ec-mk">Investissement total</span><span class="metric-v" id="invTotal">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Capital emprunté</span><span class="metric-v" id="emprunt">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Mensualité du crédit</span><span class="metric-v" id="mensualite">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Coût total des intérêts</span><span class="metric-v" id="interets">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Loyer hors charges retenu<small>base de calcul du rendement</small></span><span class="metric-v" id="loyerHC">—</span></div>
+            <div class="ec-metric ec-headline"><span class="ec-mk">Rendement brut<small>loyers / investissement total</small></span><span class="metric-v accent" id="rdtBrut">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Rendement net<small>après charges, avant impôt</small></span><span class="metric-v" id="rdtNet">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Impôt annuel estimé<small>RC indexé × 1,40 × taux marginal</small></span><span class="metric-v" id="impot">—</span></div>
+            <div class="ec-metric"><span class="ec-mk">Rendement net-net<small>après impôt</small></span><span class="metric-v" id="rdtNetNet">—</span></div>
+            <div class="ec-metric ec-headline"><span class="ec-mk">Rendement des fonds propres<small>cash-flow annuel / apport</small></span><span class="metric-v" id="coc">—</span></div>
+          </div>
+          <div class="ec-disclaimer"><b>Estimation indicative.</b> Le calcul fiscal applique le régime belge de location résidentielle à un particulier : la base imposable est le revenu cadastral indexé majoré de 40 %, ajouté aux autres revenus — et non les loyers réellement perçus. Location à une société ou à usage professionnel : autre régime, non couvert ici.</div>
+        </div>
       </div>
     </div>
 
@@ -1216,7 +1331,7 @@ function injectRealData(){
 }
 
 // ═══ NAVIGATION ═══
-const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',assistant:'Assistant IA',todo:'To-do list'};
+const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',etude:'Étude de cas — simulateur de rentabilité',assistant:'Assistant IA',todo:'To-do list'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
 // v2.16 : ne déclenche nav() que si l'item porte un data-p. L'accordéon
@@ -1262,6 +1377,7 @@ function rP(p){
   else if(p==='annuel')rAnnuel();
   else if(p==='assistant')initAssistant();
   else if(p==='todo')rTodo();
+  else if(p==='etude'){if(typeof initEtude==='function')initEtude();}
 }
 
 // ═══ MODALS ═══
@@ -3702,6 +3818,104 @@ function rAnnuel(){
   document.getElementById('anOcc').innerHTML=lgs.map(lg=>{const lc=lcs.find(l=>l.lgId===lg.id);let occ=0;if(lc){const yS=new Date(year+'-01-01'),yE=new Date(year+'-12-31');const lS=new Date(lc.ent||year+'-01-01'),lE=lc.fin?new Date(lc.fin):yE;const s=new Date(Math.max(lS,yS)),e=new Date(Math.min(lE,yE));const yD=(yE-yS)/864e5+1,oD=Math.max(0,(e-s)/864e5+1);occ=Math.min(100,Math.round(oD/yD*100));}const cl=occ>=90?'var(--ac)':occ>=50?'var(--go)':'var(--wa)';return'<div style="padding:7px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.77rem;font-weight:600">'+esc(lg.nom)+'</span><span style="font-family:monospace;font-size:.74rem;font-weight:700;color:'+cl+'">'+occ+'%</span></div><div class="occ-bar"><div class="occ-fill" style="width:'+occ+'%;background:'+cl+'"></div></div></div>';}).join('');
 }
 function isFutureMois(m){return new Date(m+'-15')>new Date();}
+
+// ═══════════════════════════════════════════════════════════════
+// ÉTUDE DE CAS — simulateur de rentabilité (module v1, sans persistance)
+// annuite() : formule reprise telle quelle du prototype simulateur-renta.html.
+// compute()  : formules reprises telles quelles ; accès DOM rendu défensif
+//              (cf. VIGILANCE TECHNIQUE — pattern getElementById null-safe).
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  var eurFmt = new Intl.NumberFormat('fr-BE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  var pctFmt = new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  function num(id){ var el=document.getElementById(id); var v=el?parseFloat(el.value):NaN; return isFinite(v)?v:0; }
+  function eur(v){ return eurFmt.format(Math.round(v)); }
+  function pct(v){ return pctFmt.format(v)+' %'; }
+  function setT(id,t){ var el=document.getElementById(id); if(el)el.textContent=t; }
+
+  function annuite(capital, tauxAnnuel, annees){
+    var n = annees*12;
+    if(n<=0 || capital<=0) return 0;
+    var i = tauxAnnuel/100/12;
+    if(i===0) return capital/n;
+    return capital*i/(1-Math.pow(1+i,-n));
+  }
+
+  function compute(){
+    // ── Formules : reprises telles quelles du prototype (vérifiées par simu Node) ──
+    var prix=num('prix'), fraisPct=num('frais'), travaux=num('travaux'), apport=num('apport');
+    var taux=num('taux'), duree=num('duree');
+    var loyer=num('loyer'), vacance=num('vacance'), chargesNR=num('chargesNR'), precompte=num('precompte');
+    var chargesRecup=num('chargesRecup'), rc=num('rc'), tmi=num('tmi');
+
+    var actBtn = document.querySelector('#modeCharges .seg-btn.active');
+    var modeCC = !!(actBtn && actBtn.dataset.mode === 'cc');
+    var loyerHC = modeCC ? Math.max(0, loyer-chargesRecup) : loyer;
+
+    var fraisAcq = prix*fraisPct/100;
+    var invTotal = prix+fraisAcq+travaux;
+    var emprunt  = Math.max(0, invTotal-apport);
+    var mens     = annuite(emprunt, taux, duree);
+    var interets = mens*duree*12 - emprunt;
+
+    var loyerBrut = loyerHC*12;
+    var loyerNet  = loyerBrut*(1-vacance/100);
+    var rdtBrut   = invTotal>0 ? loyerBrut/invTotal*100 : 0;
+
+    var chargesExpl = chargesNR+precompte;
+    var revNetAvImp = loyerNet-chargesExpl;
+    var rdtNet      = invTotal>0 ? revNetAvImp/invTotal*100 : 0;
+
+    var impot       = rc*1.40*tmi/100;
+    var revNetApImp = revNetAvImp-impot;
+    var rdtNetNet   = invTotal>0 ? revNetApImp/invTotal*100 : 0;
+
+    var cfAnnuel = revNetApImp - mens*12;
+    var cfMois   = cfAnnuel/12;
+    var coc      = apport>0 ? cfAnnuel/apport*100 : 0;
+
+    // ── Rendu : accès DOM défensif ──
+    setT('loyerLabel', modeCC ? 'Loyer mensuel charges comprises (€)' : 'Loyer mensuel hors charges (€)');
+    var cfEl=document.getElementById('cfMonth');
+    if(cfEl){ cfEl.textContent=(cfMois>=0?'+':'')+eur(cfMois); cfEl.className='cf-amount '+(cfMois>=0?'pos':'neg'); }
+    setT('cfSub','cash-flow mensuel · '+(cfAnnuel>=0?'+':'')+eur(cfAnnuel)+' / an, après crédit et impôt');
+    setT('invTotal',eur(invTotal));
+    setT('emprunt',eur(emprunt));
+    setT('mensualite',eur(mens));
+    setT('interets',eur(interets));
+    setT('loyerHC',eur(loyerHC)+' / mois');
+    setT('rdtBrut',pct(rdtBrut));
+    setT('rdtNet',pct(rdtNet));
+    setT('impot',eur(impot));
+    setT('rdtNetNet',pct(rdtNetNet));
+    var cocEl=document.getElementById('coc');
+    if(cocEl){ cocEl.textContent=pct(coc); cocEl.className='metric-v '+(coc>=0?'accent':'neg'); }
+
+    var v;
+    if(cfMois>=0){
+      v='Opération <b>autofinancée</b> : elle dégage '+eur(cfMois)+' par mois une fois le crédit et l’impôt payés. Rendement net-net de <b>'+pct(rdtNetNet)+'</b>.';
+    }else{
+      v='Opération <b>à effort d’épargne</b> : il faut financer <b>'+eur(-cfMois)+' par mois</b> de votre poche. Rendement net-net de '+pct(rdtNetNet)+' — l’équilibre repose sur la plus-value à terme et le remboursement du capital.';
+    }
+    var vEl=document.getElementById('verdict'); if(vEl) vEl.innerHTML=v;
+  }
+
+  // Recalcul live : limité aux inputs du module + bascule du mode de charges.
+  document.querySelectorAll('#page-etude input').forEach(function(el){
+    el.addEventListener('input',compute);
+  });
+  document.querySelectorAll('#modeCharges .seg-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('#modeCharges .seg-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      compute();
+    });
+  });
+  // Exposé pour rP('etude') — recalcule à l'affichage de la page.
+  window.initEtude = compute;
+  try{ compute(); }catch(e){}
+})();
 
 // ═══ DATA MANAGEMENT ═══
 function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];}
