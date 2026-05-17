@@ -6206,7 +6206,19 @@ function editProfile(id){
   set('newProfileAvatar',p.avatar||'');
   set('newProfilePin',p.pin||'');
   const rs=document.getElementById('newProfileRole');
-  if(rs&&(p.role==='gestionnaire'||p.role==='lecture'))rs.value=p.role;
+  if(rs){
+    const inj=rs.querySelector('option[data-injected]');if(inj)inj.remove();
+    if(p.role==='admin'||p.role==='masteradmin'){
+      // Rôle non représentable dans le sélecteur et non modifiable : on l'affiche
+      // explicitement et on désactive le champ (le rôle est aussi préservé côté logique).
+      const o=document.createElement('option');
+      o.value=p.role;o.textContent=(ROLE_LABELS[p.role]||p.role)+' — non modifiable';
+      o.setAttribute('data-injected','1');
+      rs.appendChild(o);rs.value=p.role;rs.disabled=true;
+    }else{
+      rs.disabled=false;rs.value=p.role;
+    }
+  }
   const t=document.getElementById('newProfileTitle');if(t)t.textContent='✏ Modifier l\'utilisateur';
   const b=document.getElementById('newProfileBtn');if(b)b.textContent='💾 Enregistrer les modifications';
   const c=document.getElementById('cancelEditProfileBtn');if(c)c.style.display='';
@@ -6215,6 +6227,8 @@ function editProfile(id){
 // Repasse le formulaire en mode création.
 function cancelEditProfile(){
   ['editProfileId','newProfileName','newProfilePin','newProfileAvatar'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const rs=document.getElementById('newProfileRole');
+  if(rs){ const inj=rs.querySelector('option[data-injected]');if(inj)inj.remove(); rs.disabled=false; rs.selectedIndex=0; }
   const t=document.getElementById('newProfileTitle');if(t)t.textContent='＋ Nouvel utilisateur';
   const b=document.getElementById('newProfileBtn');if(b)b.textContent='＋ Créer l\'utilisateur';
   const c=document.getElementById('cancelEditProfileBtn');if(c)c.style.display='none';
