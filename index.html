@@ -3994,7 +3994,13 @@ function docGenEmail(){
     +'Vous trouverez en pièce jointe '+docNom+(adr?' concernant le logement situé '+adr:'')+'.\n\n'
     +'⚠️ Important : pensez à JOINDRE le fichier « '+(_docGen.filename||'document.docx')+' » que vous venez de télécharger — ce message ne l\'attache pas automatiquement.\n\n'
     +'Cordialement,\n'+(blr.nom||'');
-  window.location.href='mailto:'+email+'?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
+  const href='mailto:'+email+'?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
+  // Déclenchement via un <a> cliqué : méthode la plus fiable pour passer la main
+  // au gestionnaire mailto du système (plus robuste que window.location.href).
+  const a=document.createElement('a');
+  a.href=href; a.style.display='none';
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('✉ Brouillon e-mail ouvert. Si rien ne s\'ouvre, vérifiez l\'application e-mail par défaut de votre système.');
 }
 
 // ═══ SIDEBAR ═══
