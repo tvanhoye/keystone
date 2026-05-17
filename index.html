@@ -1077,7 +1077,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 <div class="overlay" id="mDocConfirm"><div class="modal" style="max-width:460px"><div class="mh"><span class="mtitle">📄 Document prêt</span><button class="mclose" onclick="closeM('mDocConfirm')">✕</button></div><div class="mbody">
   <div id="docConfirmInfo" style="font-size:.82rem;line-height:1.6"></div>
   <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">1. <strong>Téléchargez</strong> le document et vérifiez-le. 2. <strong>Rédiger dans Gmail</strong> ouvre un message pré-rempli pour le locataire — joignez-y le fichier téléchargé, puis envoyez depuis Gmail.</div>
-</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" onclick="docGenEmail()">✉ Rédiger dans Gmail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" id="docEmailBtn" onclick="docGenEmail()">✉ Rédiger dans Gmail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
 
 <div id="sb-overlay" onclick="closeMobSb()"></div>
 <nav id="mob-nav"><div class="mn-items">
@@ -3976,6 +3976,9 @@ async function docGenProduce(){
       (_docGen.email
         ? '<br><span style="color:var(--t3)">E-mail : '+esc(_docGen.email)+'</span>'
         : '<br><span style="color:var(--wa)">⚠️ Ce locataire n\'a pas d\'adresse e-mail — l\'envoi ne sera pas disponible.</span>');
+    // Bouton Gmail désactivé si le locataire n'a pas d'e-mail.
+    const _eb=document.getElementById('docEmailBtn');
+    if(_eb){ _eb.disabled=!_docGen.email; _eb.style.opacity=_docGen.email?'':'.5'; _eb.style.cursor=_docGen.email?'':'not-allowed'; }
     openM('mDocConfirm');
   }catch(e){
     showToast('⚠️ Échec de génération : '+e.message);
