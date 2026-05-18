@@ -82,7 +82,8 @@ body{display:flex;overflow:hidden}
 .kpi-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);font-weight:700;margin-bottom:5px}
 .kpi-val{font-size:1.6rem;font-weight:800;line-height:1}
 .kpi-sub{font-size:.67rem;color:var(--t3);margin-top:3px}
-.ka{border-top:3px solid var(--ac)}.kg{border-top:3px solid var(--go)}.kw{border-top:3px solid var(--wa)}.kb{border-top:3px solid var(--bl)}
+.ka{border-top:3px solid var(--ac)}.kg{border-top:3px solid var(--go)}.kw{border-top:3px solid var(--wa)}.kb{border-top:3px solid var(--bl)}.kc{border-top:3px solid var(--go)}
+#kpiG{grid-template-columns:repeat(5,1fr)}
 /* CARD */
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:14px}
 .ch{padding:11px 15px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
@@ -260,6 +261,7 @@ tr[onclick]{cursor:pointer}
 
   /* ── GRIDS ── */
   .kpi-g{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  #kpiG{grid-template-columns:1fr 1fr}
   .g21,.g2,.an-grid{grid-template-columns:1fr !important;gap:10px}
   .fr{grid-template-columns:1fr !important}
   .pg{grid-template-columns:1fr}
@@ -1240,6 +1242,9 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const tmth=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')};
+// tr120 : tronque une chaîne de nom/titre/libellé à 120 caractères avant écriture
+// (cohérent avec maxlength="120" des champs HTML — Faille 5, garde-fou saisie).
+const tr120=v=>String(v==null?'':v).slice(0,120);
 // ─── Robustesse formulaires ───
 // Échap ferme la modale ouverte.
 document.addEventListener('keydown',function(e){
@@ -1521,10 +1526,16 @@ function rDash(){
   // v2.14 finding #4 : occupation = logements DISTINCTS ayant un locataire actif
   // aujourd'hui (pas le total des locataires — sinon les baux successifs gonflent
   // le compte au-delà de 100%, ex 18 locataires / 14 logements = 129%).
-  const occ=new Set(visLcs.filter(isActiveLc).map(l=>l.lgId)).size;
+  const occLgSet=new Set(visLcs.filter(isActiveLc).map(l=>l.lgId));
+  const occ=occLgSet.size;
   const totL=visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
+  // D.7 — total des cautions / dépôts de garantie effectivement détenus
+  // (logements occupés ; le dépôt est porté par le logement, champ `dep`).
+  const cautLgs=visLgs.filter(l=>occLgSet.has(l.id)&&(l.dep||0)>0);
+  const caut=cautLgs.reduce((a,l)=>a+(l.dep||0),0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
-  const ret=tmP.filter(p=>p.stat==='retard').length;
+  // D.8 — un paiement marqué « résolu » ne compte plus comme retard/rappel.
+  const ret=tmP.filter(p=>p.stat==='retard' && !p.resolu).length;
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
   const br=document.getElementById('bRet');if(br){br.textContent=ret;br.style.display=ret?'':'none';}
   // Badge "Loyers" de la nav mobile : même source que le badge desktop (bRet).
@@ -1534,11 +1545,12 @@ function rDash(){
     '<div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
     '<div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(totL)+'</div><div class="kpi-sub">'+fE(enc)+' encaissé</div></div>'+
     '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
-    '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>';
+    '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>'+
+    '<div class="kpi kc"><div class="kpi-lbl">Total des cautions</div><div class="kpi-val">'+fE(caut)+'</div><div class="kpi-sub">'+cautLgs.length+' logement'+(cautLgs.length>1?'s':'')+'</div></div>';
   const al=[];
   // Count ALL unpaid months per locataire filtered by building
 const retardsByLc={};
-pys.filter(p=>p.stat==='retard' && visLcIds.has(p.lcId)).forEach(p=>{
+pys.filter(p=>p.stat==='retard' && !p.resolu && visLcIds.has(p.lcId)).forEach(p=>{
   if(!retardsByLc[p.lcId])retardsByLc[p.lcId]=[];
   retardsByLc[p.lcId].push(p);
 });
@@ -1547,12 +1559,16 @@ Object.entries(retardsByLc).forEach(([lcId,pays])=>{
   if(!l)return;
   const nb=pays.length;
   const total=pays.reduce((a,p)=>a+(p.du||0),0);
-  al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l)+(nb>1?' ('+nb+' mois)':''),s:fE(total)+' dus · '+pays.map(p=>p.mois).join(', '),p:'paiements'});
+  al.push({t:'aw',i:'⚠️',ti:'Loyer impayé — '+lcFull(l)+(nb>1?' ('+nb+' mois)':''),s:fE(total)+' dus · '+pays.map(p=>p.mois).join(', '),p:'paiements',pyIds:pays.map(p=>p.id).join(',')});
 });
   urg.forEach(e=>al.push({t:'ag',i:'🔧',ti:'Urgent — '+e.tit,s:gLg(e.lgId).nom,p:'entretien'}));
   visLcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
-  ac.innerHTML=al.length?al.map(a=>'<div class="alert '+a.t+'" style="cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'""><span>'+a.i+'</span><div><strong>'+esc(a.ti)+'</strong><br><span style="opacity:.8">'+esc(a.s)+'</span></div></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
+  ac.innerHTML=al.length?al.map(a=>{
+    // D.8 — bouton « traité » sur les rappels d'impayé (clôture non destructive).
+    const act=a.pyIds?'<button class="btn btn-xs btn-s" style="margin-left:auto;flex-shrink:0" title="Marquer ce rappel comme traité" onclick="event.stopPropagation();resolveImpaye(\''+a.pyIds+'\')">✓ Traité</button>':'';
+    return '<div class="alert '+a.t+'" style="display:flex;align-items:center;gap:8px;cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'"><span>'+a.i+'</span><div style="flex:1;min-width:0"><strong>'+esc(a.ti)+'</strong><br><span style="opacity:.8">'+esc(a.s)+'</span></div>'+act+'</div>';
+  }).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
   const pr=rps.filter(r=>r.stat!=='fait').sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
   document.getElementById('dRaps').innerHTML=pr.length?pr.map(r=>{const d=dTo(r.date);const cl=d<0?'br':d<=7?'bo':d<=30?'bgo':'bb';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editRap(\''+r.id+'\')"><span class="badge '+cl+'">'+(d<0?'Passé':d===0?'Auj.':d+'j')+'</span><span style="font-size:.77rem;font-weight:600;flex:1">'+esc(r.tit)+'</span></div>'}).join(''):'<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';
   const rec = selBatId ? pys.filter(p=>visLcIds.has(p.lcId)).slice(-8).reverse() : pys.slice(-8).reverse();
@@ -1610,7 +1626,7 @@ function editBat(id){
 }
 
 function saveBat(){
-  const nom=document.getElementById('batNom').value.trim();
+  const nom=tr120(document.getElementById('batNom').value.trim());
   const addr=document.getElementById('batAddr').value.trim();
   if(!nom||!addr){alert('Nom et adresse requis');return;}
   const eid=document.getElementById('batId').value;
@@ -1945,7 +1961,7 @@ function editLg(id){
   document.getElementById('mLog').classList.add('open');setTimeout(()=>injectModalNav('mLog'),50);
 }
 function saveLog(){
-  const nom=document.getElementById('lNom').value.trim();
+  const nom=tr120(document.getElementById('lNom').value.trim());
   const addr=document.getElementById('lAddr').value.trim();
   const loyer=parseFloat(document.getElementById('lLoyer').value);
   const batId2=document.getElementById('lBat')?.value||'';
@@ -2188,7 +2204,7 @@ function editLc(id){
   },10);
 }
 function saveLoc(){
-  const pre=document.getElementById('locPre').value.trim(),nom=document.getElementById('locNom').value.trim();
+  const pre=tr120(document.getElementById('locPre').value.trim()),nom=tr120(document.getElementById('locNom').value.trim());
   const lgId=document.getElementById('locLog').value,ent=document.getElementById('locEnt').value;
   const missing=[];
   if(!pre) missing.push('Prénom');
@@ -2371,14 +2387,21 @@ function renderPayGrid(){
     const rowClass = isSubRow ? ' class="pg-subrow"' : '';
     html += `<tr${rowClass}>`;
 
-    // Logement column — only render on the first sub-row (rowspan covers the rest).
-    if(isFirstSubRow){
-      const rsAttr = lgRowSpan>1 ? `rowspan="${lgRowSpan}"` : '';
-      // Show first-locataire name for the merged cell label (or "Vacant" if none).
-      const _firstLc = lgLcs[0] || null;
-      const _lcName = _firstLc ? (_firstLc.prenom+' '+_firstLc.nom).trim() : 'Vacant';
+    // Colonne « Logement · Locataire » — rendue sur CHAQUE ligne (plus de rowspan)
+    // pour que le locataire concerné apparaisse en regard de SA ligne de paiement
+    // quand un logement a plusieurs locataires successifs (C.4).
+    {
+      const _rowLc = activeLcOverride || null;
+      const _rowLcName = _rowLc ? (_rowLc.prenom+' '+_rowLc.nom).trim() : '';
       const _hasAnyLc = lgLcs.length > 0;
-      html += `<td ${rsAttr} style="min-width:110px;vertical-align:top;padding-top:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${esc(lg.nom)}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_hasAnyLc?(lg.loyer+lg.ch)+'€':''}</div></div><div class="pg-sub">${lg.surf?lg.surf+'m²':''}</div><div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${lgLcs.length>1?lgLcs.length+' locataires':esc(_lcName)}</div></td>`;
+      let _cell = '<td style="min-width:110px;vertical-align:top;padding-top:8px">';
+      if(isFirstSubRow){
+        _cell += `<div style="display:flex;justify-content:space-between;align-items:center"><div class="pg-name" style="font-size:.72rem;font-weight:700">${esc(lg.nom)}</div><div style="font-family:monospace;font-weight:800;font-size:.75rem;color:var(--ac)">${_hasAnyLc?(lg.loyer+lg.ch)+'€':''}</div></div>`;
+        if(lg.surf) _cell += `<div class="pg-sub">${lg.surf}m²</div>`;
+      }
+      _cell += `<div class="pg-sub" style="font-size:.62rem;color:var(--t2)">${isSubRow?'<span style="opacity:.45">↳ </span>':''}${_rowLc?'👤 '+esc(_rowLcName):'<em style="color:var(--t3)">Vacant</em>'}</div>`;
+      _cell += '</td>';
+      html += _cell;
     }
 
     cols.forEach(col=>{
@@ -3340,7 +3363,7 @@ function toggleRelTable(coId){
 
 // ═══ COMPTEURS CRUD ═══
 function saveComp(){
-  const nom=document.getElementById('cNom').value.trim();
+  const nom=tr120(document.getElementById('cNom').value.trim());
   if(!nom){alert('Nom requis');return;}
   cos.push({id:uid(),nom,type:document.getElementById('cType').value,unit:document.getElementById('cUnit').value||'',lgId:document.getElementById('cLog').value,notes:''});
   sv('co',cos);document.getElementById('cNom').value='';document.getElementById('cUnit').value='';
@@ -3421,11 +3444,31 @@ function rBanqueTab(){
   else if(banqueTab==='charges') cont.innerHTML=renderChargesTab();
   else cont.innerHTML=renderDepensesTab();
 }
+// C.6 — capital restant dû calculé dynamiquement (amortissement) au lieu d'un
+// champ figé saisi à la main : le solde diminue donc automatiquement avec le
+// temps. Solde après n mensualités, taux mensuel i :
+//   i>0 : reste = P(1+i)^n − M·((1+i)^n−1)/i      i=0 : reste = P − M·n
+// Si données insuffisantes (pas de date de début, pas de mensualité, capital
+// nul) → repli sur le champ saisi cr.reste.
+function creditReste(cr){
+  if(!cr) return 0;
+  const P=cr.capital||0, M=cr.mens||0;
+  if(P<=0||M<=0||!cr.debut) return Math.max(0,cr.reste||P);
+  const moisEcoules=Math.floor((Date.now()-new Date(cr.debut).getTime())/864e5/30.4375);
+  if(moisEcoules<=0) return P;
+  const n=cr.duree>0?Math.min(moisEcoules,cr.duree):moisEcoules;
+  const i=(cr.taux||0)/100/12;
+  let bal;
+  if(i>0){ const f=Math.pow(1+i,n); bal=P*f-M*(f-1)/i; }
+  else bal=P-M*n;
+  return Math.max(0,Math.round(bal));
+}
 function renderCreditsTab(){
   if(!crs.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucun cr&eacute;dit.</div></div>';
   return '<div class="card">'+crs.map(cr=>{
     const bat=gBat(cr.batId);
-    const pct=cr.capital>0?Math.round((1-cr.reste/cr.capital)*100):0;
+    const reste=creditReste(cr);
+    const pct=cr.capital>0?Math.round((1-reste/cr.capital)*100):0;
     const moisRestants=cr.duree&&cr.debut?Math.max(0,cr.duree-Math.round((new Date()-new Date(cr.debut))/864e5/30.5)):null;
     return `<div style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editCredit('${cr.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -3434,7 +3477,7 @@ function renderCreditsTab(){
       </div>
       <div style="display:flex;gap:16px;margin-top:6px;font-size:.7rem;color:var(--t2)">
         <span>Capital: <strong>${fE(cr.capital)}</strong></span>
-        <span>Restant: <strong>${fE(cr.reste)}</strong></span>
+        <span>Restant: <strong>${fE(reste)}</strong></span>
       </div>
       ${cr.capital>0?`<div style="margin-top:6px;background:var(--s2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--ac);height:100%;width:${pct}%;border-radius:4px"></div></div><div style="font-size:.6rem;color:var(--t3);margin-top:1px">${pct}% remboursé</div>`:''}
     </div>`; }).join('')+'</div>';
@@ -3498,11 +3541,12 @@ function rBanque(){
     html += '<div class="card">';
     html += crs.map(cr=>{
       const bat=gBat(cr.batId);
-      const pct=cr.capital>0?Math.round((1-cr.reste/cr.capital)*100):0;
+      const reste=creditReste(cr);
+      const pct=cr.capital>0?Math.round((1-reste/cr.capital)*100):0;
       return `<div style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="editCredit('${cr.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div><div style="font-weight:700">${esc(cr.nom)}</div><div style="font-size:.7rem;color:var(--t2)">${esc(bat.nom||'Général')}${cr.taux?' · '+cr.taux+'%':''}</div></div>
-          <div style="text-align:right"><div style="font-weight:800;font-family:monospace;color:#c0392b">${fE(cr.mens)}/mois</div><div style="font-size:.68rem;color:var(--t3)">Restant: ${fE(cr.reste||0)}</div></div>
+          <div style="text-align:right"><div style="font-weight:800;font-family:monospace;color:#c0392b">${fE(cr.mens)}/mois</div><div style="font-size:.68rem;color:var(--t3)">Restant: ${fE(reste)}</div></div>
         </div>
         ${cr.capital>0?`<div style="margin-top:8px;background:var(--s2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--ac);height:100%;width:${pct}%;border-radius:4px"></div></div><div style="font-size:.62rem;color:var(--t3);margin-top:2px">${pct}% remboursé</div>`:''}
       </div>`;
@@ -3557,7 +3601,7 @@ function calcCredit(){
 }
 
 function saveCredit(){
-  const nom=document.getElementById('crNom').value.trim();
+  const nom=tr120(document.getElementById('crNom').value.trim());
   const mens=parseFloat(document.getElementById('crMens').value);
   if(!nom||isNaN(mens)){alert('Nom et mensualité requis');return;}
   if(mens<0){alert('La mensualité ne peut pas être négative.');return;}
@@ -3592,7 +3636,7 @@ function editCredit(id){
 }
 
 function saveCharge(){
-  const nom=document.getElementById('chNom').value.trim();
+  const nom=tr120(document.getElementById('chNom').value.trim());
   const montant=parseFloat(document.getElementById('chMontant').value);
   if(!nom||isNaN(montant)){alert('Libellé et montant requis');return;}
   if(montant<0){alert('Le montant ne peut pas être négatif.');return;}
@@ -3624,7 +3668,7 @@ function editCharge(id){
 function delCharge(id){if(!confirm('Supprimer?'))return;chs=chs.filter(x=>x.id!==id);sv('ch',chs);rBanqueTab();}
 
 function saveDepense(){
-  const nom=document.getElementById('dpNom').value.trim();
+  const nom=tr120(document.getElementById('dpNom').value.trim());
   const montant=parseFloat(document.getElementById('dpMontant').value);
   const date=document.getElementById('dpDate').value;
   if(!nom||isNaN(montant)||!date){alert('Libellé, montant et date requis');return;}
@@ -3671,7 +3715,7 @@ function editEnt(id){
   setTimeout(()=>{document.getElementById('entTit').value=e.tit;document.getElementById('entPrio').value=e.prio;document.getElementById('entLog').value=e.lgId||'';document.getElementById('entDate').value=e.date||'';document.getElementById('entPrest').value=e.prest||'';document.getElementById('entCout').value=e.cout||'';document.getElementById('entDesc').value=e.desc||'';document.getElementById('mEnt').classList.add('open');setTimeout(()=>injectModalNav('mEnt'),50);},10);
 }
 function saveEnt(){
-  const tit=document.getElementById('entTit').value.trim();if(!tit){alert('Titre requis');return;}
+  const tit=tr120(document.getElementById('entTit').value.trim());if(!tit){alert('Titre requis');return;}
   const eid=document.getElementById('entId').value;
   const obj={tit,prio:document.getElementById('entPrio').value,lgId:document.getElementById('entLog').value,date:document.getElementById('entDate').value,prest:document.getElementById('entPrest').value,cout:parseFloat(document.getElementById('entCout').value)||0,desc:document.getElementById('entDesc').value};
   if(eid){const i=ens.findIndex(x=>x.id===eid);ens[i]={...ens[i],...obj};}else{ens.push({id:uid(),...obj});}
@@ -3696,7 +3740,7 @@ function editDoc(id){
   fillSels();setTimeout(()=>{document.getElementById('docNom').value=d.nom;document.getElementById('docType').value=d.type;document.getElementById('docLoc').value=d.lcId||'';document.getElementById('docDate').value=d.date||'';document.getElementById('docNotes').value=d.notes||'';document.getElementById('mDoc').classList.add('open');setTimeout(()=>injectModalNav('mDoc'),50);},10);
 }
 function saveDoc(){
-  const nom=document.getElementById('docNom').value.trim();if(!nom){alert('Nom requis');return;}
+  const nom=tr120(document.getElementById('docNom').value.trim());if(!nom){alert('Nom requis');return;}
   const eid=document.getElementById('docId').value;
   const obj={nom,type:document.getElementById('docType').value,lcId:document.getElementById('docLoc').value,date:document.getElementById('docDate').value,notes:document.getElementById('docNotes').value};
   if(eid){const i=dcs.findIndex(x=>x.id===eid);dcs[i]={...dcs[i],...obj};}else{dcs.push({id:uid(),...obj});}
@@ -3722,7 +3766,7 @@ function editRap(id){
   fillSels();setTimeout(()=>{document.getElementById('rapTit').value=r.tit;document.getElementById('rapCat').value=r.cat;document.getElementById('rapDate').value=r.date||'';document.getElementById('rapLog').value=r.lgId||'';document.getElementById('rapNotes').value=r.notes||'';document.getElementById('mRap').classList.add('open');setTimeout(()=>injectModalNav('mRap'),50);},10);
 }
 function saveRap(){
-  const tit=document.getElementById('rapTit').value.trim(),date=document.getElementById('rapDate').value;
+  const tit=tr120(document.getElementById('rapTit').value.trim()),date=document.getElementById('rapDate').value;
   if(!tit||!date){alert('Titre et date requis');return;}
   const eid=document.getElementById('rapId').value;
   const obj={tit,cat:document.getElementById('rapCat').value,date,lgId:document.getElementById('rapLog').value,notes:document.getElementById('rapNotes').value,stat:'actif'};
@@ -3748,7 +3792,7 @@ function rTodo(){
 }
 function addTodo(){
   const i=document.getElementById('todoInput');if(!i)return;
-  const txt=i.value.trim();if(!txt)return;
+  const txt=tr120(i.value.trim());if(!txt)return;
   tds.push({id:uid(),text:txt,done:false,created:Date.now()});
   sv('td',tds);
   i.value='';
@@ -3756,7 +3800,7 @@ function addTodo(){
 }
 // addTodoText : entrée programmatique (utilisée plus tard par l'Assistant IA).
 function addTodoText(txt){
-  txt=(txt||'').trim();if(!txt)return null;
+  txt=tr120((txt||'').trim());if(!txt)return null;
   const t={id:uid(),text:txt,done:false,created:Date.now()};
   tds.push(t);sv('td',tds);
   if(curP==='todo')rTodo();
@@ -3849,7 +3893,26 @@ function rAnnuel(){
   const maxL=Math.max(...rentData.map(r=>r.lAn),1);
   const rc=['#f5c842','#c0c0c0','#cd7f32'];
   document.getElementById('anRent').innerHTML=rentData.map((r,i)=>{const pct=Math.round(r.lAn/maxL*100);const pm=r.surf&&r.lg.loyer?Math.round(r.lg.loyer/r.surf):'—';return'<div class="rent-row"><div class="rent-rank" style="background:'+(i<3?rc[i]:'var(--s2)')+';color:'+(i<3?'#000':'var(--t2)')+'">'+(i+1)+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%">'+esc(r.lg.nom)+'</span><span style="font-family:monospace;font-size:.77rem;font-weight:700;color:var(--ac)">'+fE(r.lAn)+'/an</span></div><div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:'+pct+'%;background:var(--ac);border-radius:3px"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:.64rem;color:var(--t3)">'+(pm!=='—'?pm+'€/m²/mois':'')+'</span><span style="font-size:.64rem;color:var(--t2)">'+(r.lc?'👤 '+esc(lcFull(r.lc)):'Vacant')+'</span>'+(r.entLg?'<span style="font-size:.64rem;color:var(--wa)">🔧 -'+fE(r.entLg)+'</span>':'')+'</div></div></div>';}).join('');
-  document.getElementById('anOcc').innerHTML=lgs.map(lg=>{const lc=lcs.find(l=>l.lgId===lg.id);let occ=0;if(lc){const yS=new Date(year+'-01-01'),yE=new Date(year+'-12-31');const lS=new Date(lc.ent||year+'-01-01'),lE=lc.fin?new Date(lc.fin):yE;const s=new Date(Math.max(lS,yS)),e=new Date(Math.min(lE,yE));const yD=(yE-yS)/864e5+1,oD=Math.max(0,(e-s)/864e5+1);occ=Math.min(100,Math.round(oD/yD*100));}const cl=occ>=90?'var(--ac)':occ>=50?'var(--go)':'var(--wa)';return'<div style="padding:7px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.77rem;font-weight:600">'+esc(lg.nom)+'</span><span style="font-family:monospace;font-size:.74rem;font-weight:700;color:'+cl+'">'+occ+'%</span></div><div class="occ-bar"><div class="occ-fill" style="width:'+occ+'%;background:'+cl+'"></div></div></div>';}).join('');
+  document.getElementById('anOcc').innerHTML=lgs.map(lg=>{
+    // C.5 — occupation annuelle = union des périodes de TOUS les locataires du
+    // logement chevauchant l'année (avant : seul le 1er locataire trouvé était
+    // compté, donc une succession de baux comptait à tort comme vide locatif).
+    const yS=new Date(year+'-01-01'),yE=new Date(year+'-12-31');
+    const yD=(yE-yS)/864e5+1;
+    const ivs=lcs.filter(l=>l.lgId===lg.id).map(lc=>{
+      const lS=new Date(lc.ent||year+'-01-01'),lE=lc.fin?new Date(lc.fin):yE;
+      const s=Math.max(lS.getTime(),yS.getTime()),e=Math.min(lE.getTime(),yE.getTime());
+      return e>=s?[s,e]:null;
+    }).filter(Boolean).sort((a,b)=>a[0]-b[0]);
+    const merged=[];
+    ivs.forEach(iv=>{
+      const last=merged[merged.length-1];
+      if(last&&iv[0]<=last[1]+864e5){last[1]=Math.max(last[1],iv[1]);}
+      else merged.push([iv[0],iv[1]]);
+    });
+    let oD=0;merged.forEach(iv=>{oD+=(iv[1]-iv[0])/864e5+1;});
+    const occ=Math.min(100,Math.round(oD/yD*100));
+    const cl=occ>=90?'var(--ac)':occ>=50?'var(--go)':'var(--wa)';return'<div style="padding:7px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:.77rem;font-weight:600">'+esc(lg.nom)+'</span><span style="font-family:monospace;font-size:.74rem;font-weight:700;color:'+cl+'">'+occ+'%</span></div><div class="occ-bar"><div class="occ-fill" style="width:'+occ+'%;background:'+cl+'"></div></div></div>';}).join('');
 }
 function isFutureMois(m){return new Date(m+'-15')>new Date();}
 
@@ -4007,6 +4070,7 @@ function isFutureMois(m){return new Date(m+'-15')>new Date();}
       if(!el) return;
       if(d.type==='bool') out[d.id]=!!el.checked;
       else if(d.type==='number'){ var n=parseFloat(el.value); out[d.id]=isFinite(n)?n:''; }
+      else if(d.type==='text') out[d.id]=String(el.value==null?'':el.value).slice(0,120);
       else out[d.id]=el.value;
     });
     return out;
@@ -7642,6 +7706,22 @@ function delPay(id){
   sv('py',pys);
   if(curP==='paiements')setPayView(payView);
   else if(curP==='dashboard')rDash();
+}
+// D.8 — clôture NON destructive d'un rappel d'impayé : on pose un marqueur
+// `resolu` sur les paiements concernés. Ils restent dans l'historique (page
+// Paiements) mais ne réapparaissent plus comme alerte/rappel sur le dashboard.
+function resolveImpaye(idsCsv){
+  const ids=(idsCsv||'').split(',').filter(Boolean);
+  if(!ids.length)return;
+  if(!confirm('Marquer ce rappel comme traité ?\n\nLe(s) paiement(s) restent dans l\'historique mais n\'apparaîtront plus comme impayé.'))return;
+  let n=0;
+  ids.forEach(id=>{const p=pys.find(x=>x.id===id);if(p&&!p.resolu){p.resolu=true;n++;}});
+  if(n){
+    sv('py',pys);
+    if(typeof showToast==='function')showToast('✅ Rappel traité — '+n+' paiement'+(n>1?'s':'')+' classé'+(n>1?'s':''));
+  }
+  if(curP==='dashboard')rDash();
+  else if(curP==='paiements')setPayView(payView);
 }
 function rPays(f){
   payF=f||'tous';
