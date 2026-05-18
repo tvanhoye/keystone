@@ -1059,7 +1059,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
 </div></div></div>
 
-<div class="overlay" id="mBat"><div class="modal" style="max-width:480px"><div class="mh"><span class="mtitle" id="mBatT">Ajouter un bâtiment</span><button class="mclose" onclick="closeM('mBat')">✕</button></div><div class="mbody"><input type="hidden" id="batId"><div class="fg"><label>Nom *</label><input id="batNom" placeholder="Ex: Résidence Les Acacias"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label><input id="batAddr" placeholder="Rue, numéro, ville"></div><div class="fr"><div class="fg"><label>Nb logements prévus</label><input id="batNbLg" type="number" placeholder="12"></div><div class="fg"><label>Année construction</label><input id="batAnnee" type="number" placeholder="1985"></div></div><div class="fg"><label>Notes</label><textarea id="batNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mBat')">Annuler</button><button class="btn btn-p" onclick="saveBat()">Enregistrer</button></div></div></div>
+<div class="overlay" id="mBat"><div class="modal" style="max-width:480px"><div class="mh"><span class="mtitle" id="mBatT">Ajouter un bâtiment</span><button class="mclose" onclick="closeM('mBat')">✕</button></div><div class="mbody"><input type="hidden" id="batId"><div class="fg"><label>Nom *</label><input id="batNom" placeholder="Ex: Résidence Les Acacias"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label><input id="batAddr" placeholder="Rue, numéro, ville"></div><div class="fr"><div class="fg"><label>Nb logements prévus</label><input id="batNbLg" type="number" placeholder="12"></div><div class="fg"><label>Année construction</label><input id="batAnnee" type="number" placeholder="1985"></div></div><div class="fg"><label>Notes</label><textarea id="batNotes"></textarea></div><div id="cfbox-batiment"></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mBat')">Annuler</button><button class="btn btn-p" onclick="saveBat()">Enregistrer</button></div></div></div>
 
 <div class="overlay" id="mLog"><div class="modal"><div class="mh"><span class="mtitle" id="mLogT">Ajouter un logement</span><button class="mclose" onclick="closeM('mLog')">✕</button></div><div class="mbody"><input type="hidden" id="lId"><div class="fr"><div class="fg"><label>Nom *</label><input id="lNom"></div><div class="fg"><label>Type</label><select id="lType"><option>Appartement</option><option>Studio</option><option>Maison</option><option>Commerce</option><option>Garage</option></select></div></div><div class="fg"><label>Bâtiment</label><select id="lBat"><option value="">Aucun / Maison individuelle</option></select></div><div class="fr"></div><div class="fg"><label>Adresse <span style="font-weight:400;color:var(--t3);font-size:.65rem">(facultatif si bâtiment sélectionné)</span></label>
 <input id="lAddr" list="addrList" autocomplete="off" placeholder="Laisser vide si bâtiment sélectionné">
@@ -1069,6 +1069,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 <div class="fg"><label>Clés / accès remis <span style="font-weight:400;color:var(--t3);font-size:.65rem">(pour l'état des lieux)</span></label><input id="lCles" placeholder="Ex : 2 clés porte d'entrée, 1 clé boîte aux lettres"></div>
 <div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
 <div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
+<div id="cfbox-logement"></div>
 </div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLog')">Annuler</button><button class="btn btn-p" onclick="saveLog()">Enregistrer</button></div></div><div class="overlay" id="mIdx"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">📈 Nouvelle indexation</span><button class="mclose" onclick="closeM('mIdx')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>À partir du *</label><input id="idxFrom" type="date"></div></div><div class="fr"><div class="fg"><label>Loyer HC (€) *</label><input id="idxLoyer" type="number"></div><div class="fg"><label>Charges (€)</label><input id="idxCh" type="number"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mIdx')">Annuler</button><button class="btn btn-p" onclick="addIndex()">Ajouter</button></div></div></div><div class="overlay" id="mTravaux"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">🏗 Période de travaux</span><button class="mclose" onclick="closeM('mTravaux')">×</button></div><div class="mbody"><div class="fr"><div class="fg"><label>Début *</label><input id="trvDebut" type="date"></div><div class="fg"><label>Fin <span style="font-weight:400;color:var(--t3);font-size:.65rem">(vide = en cours)</span></label><input id="trvFin" type="date"></div></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mTravaux')">Annuler</button><button class="btn btn-p" onclick="addTravaux()">Ajouter</button></div></div></div></div>
 <div class="overlay" id="mLoc"><div class="modal"><div class="mh"><span class="mtitle" id="mLocT">Ajouter un locataire</span><button class="mclose" onclick="closeM('mLoc')">✕</button></div><div class="mbody"><input type="hidden" id="locId"><div class="fr"><div class="fg"><label>Prénom *</label><input id="locPre"></div><div class="fg"><label>Nom *</label><input id="locNom"></div></div><div class="fr"><div class="fg"><label>Email</label><input id="locEmail" type="email"></div><div class="fg"><label>Téléphone</label><input id="locTel"></div></div><div class="fr"><div class="fg"><label>Logement *</label><select id="locLog"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Jour paiement</label><input id="locJour" type="number" min="1" max="28" value="1"></div></div><div class="fr"><div class="fg"><label>Date entrée *</label><input id="locEnt" type="date"></div><div class="fg"><label>Fin de bail</label>
 <div style="display:flex;gap:6px;align-items:center">
@@ -1076,7 +1077,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <button type="button" class="btn btn-s btn-xs" onclick="document.getElementById('locFin').value=''" title="Bail indéterminé">∞ Indét.</button>
 </div>
 <div style="font-size:.65rem;color:var(--t3);margin-top:2px">Laisser vide = bail à durée indéterminée</div>
-</div></div><div class="fr"><div class="fg"><label>Civilité</label><select id="locCiv"><option value=""></option><option>M.</option><option>Mme</option><option>Mlle</option></select></div><div class="fg"><label>Adresse (domicile)</label><input id="locAddr" placeholder="Adresse personnelle du locataire"></div></div><div class="fr"><div class="fg"><label>Date de naissance</label><input id="locNaiss" type="date"></div><div class="fg"><label>Lieu de naissance</label><input id="locLieuNaiss" placeholder="Ville"></div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
+</div></div><div class="fr"><div class="fg"><label>Civilité</label><select id="locCiv"><option value=""></option><option>M.</option><option>Mme</option><option>Mlle</option></select></div><div class="fg"><label>Adresse (domicile)</label><input id="locAddr" placeholder="Adresse personnelle du locataire"></div></div><div class="fr"><div class="fg"><label>Date de naissance</label><input id="locNaiss" type="date"></div><div class="fg"><label>Lieu de naissance</label><input id="locLieuNaiss" placeholder="Ville"></div></div><div class="fg"><label>Contact urgence</label><input id="locUrg"></div><div class="fg"><label>Notes</label><textarea id="locNotes"></textarea></div><div id="cfbox-locataire"></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mLoc')">Annuler</button><button class="btn btn-p" onclick="saveLoc()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mPay"><div class="modal"><div class="mh"><span class="mtitle" id="mPayT">Enregistrer un paiement</span><button class="mclose" onclick="closeM('mPay')">✕</button></div><div class="mbody"><input type="hidden" id="payId"><div class="fr"><div class="fg"><label>Locataire *</label><select id="payLoc"><option value="">Sélectionner…</option></select></div><div class="fg"><label>Mois *</label><input id="payMois" type="month"></div></div><div class="fr"><div class="fg"><label>Montant dû (€)</label><input id="payDu" type="number"></div><div class="fg"><label>Montant reçu (€) *</label><input id="payRec" type="number"></div></div><div class="fr"><div class="fg"><label>Date paiement</label><input id="payDate" type="date"></div><div class="fg"><label>Mode</label><select id="payMode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>Prélèvement</option></select></div></div><div class="fg"><label>Notes</label><textarea id="payNotes"></textarea></div></div><div class="fg"><label>Forcer statut</label><select id="payStatutOverride" style="padding:8px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.82rem;background:var(--sf);width:100%"><option value="">Auto (calculé)</option><option value="travaux">🏗 Travaux</option></select></div>
       <div class="mfoot"><button class="btn btn-s" onclick="closeM('mPay')">Annuler</button><button class="btn btn-p" onclick="savePay()">Enregistrer</button></div></div></div>
 <div class="overlay" id="mComp"><div class="modal"><div class="mh"><span class="mtitle">Gérer les compteurs</span><button class="mclose" onclick="closeM('mComp')">✕</button></div><div class="mbody"><div id="compList" style="margin-bottom:14px"></div><div style="background:var(--s2);border-radius:var(--rs);padding:14px"><p style="font-size:.74rem;font-weight:700;margin-bottom:10px">＋ Nouveau compteur</p><div class="fr"><div class="fg"><label>Nom</label><input id="cNom"></div><div class="fg"><label>Type</label><select id="cType"><option value="eau">💧 Eau</option><option value="gaz">🔥 Gaz</option><option value="elec_mono">⚡ Électricité mono</option><option value="elec_bi">⚡ Élec. bihoraire HP/HC</option><option value="autre">📊 Autre</option></select></div></div><div class="fr"><div class="fg"><label>Unité</label><input id="cUnit" placeholder="kWh ou m³"></div><div class="fg"><label>Logement</label><select id="cLog"><option value="">Tous / Immeuble</option></select></div></div><button class="btn btn-p btn-sm" onclick="saveComp()">Ajouter</button></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mComp')">Fermer</button></div></div></div>
@@ -1164,6 +1165,10 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <div class="fg"><input id="dataAiProxy" placeholder="https://votre-worker.workers.dev"></div>
   <button class="btn btn-p btn-sm" style="width:100%" onclick="saveAiProxyData()">💾 Enregistrer l'URL du proxy IA</button>
 </div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+  <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase">⚙️ Champs personnalisés <span style="font-weight:400;text-transform:none;color:var(--t3)">(bâtiments, logements, locataires)</span></div>
+  <button class="btn btn-s btn-sm" style="width:100%" onclick="cfOpenManager()">Gérer les champs personnalisés</button>
+</div>
 <div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
       <hr style="margin:16px 0;border:none;border-top:1px solid var(--bd)">
       <div style="font-size:.78rem;font-weight:700;color:var(--ac);margin-bottom:10px">🔗 Partager un projet</div>
@@ -1197,6 +1202,23 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <div id="docConfirmInfo" style="font-size:.82rem;line-height:1.6"></div>
   <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">1. <strong>Téléchargez</strong> le document et vérifiez-le. 2. <strong>Rédiger dans Gmail</strong> ouvre un message pré-rempli pour le locataire — joignez-y le fichier téléchargé, puis envoyez depuis Gmail.</div>
 </div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" id="docEmailBtn" onclick="docGenEmail()">✉ Rédiger dans Gmail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
+
+<div class="overlay" id="mCF"><div class="modal" style="max-width:520px"><div class="mh"><span class="mtitle">⚙️ Champs personnalisés</span><button class="mclose" onclick="closeM('mCF')">✕</button></div><div class="mbody">
+  <div style="font-size:.72rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Champs supplémentaires affichés sur les fiches <b>bâtiment</b>, <b>logement</b> et <b>locataire</b> (dans la modale d'édition, après les champs standard). Le type est figé à la création.</div>
+  <div id="cfMgrList"></div>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+    <div id="cfFormTitle" style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase">＋ Nouveau champ</div>
+    <div class="fr">
+      <div class="fg"><label>Fiche</label><select id="cfEntity"><option value="logement">Logement</option><option value="locataire">Locataire</option><option value="batiment">Bâtiment</option></select></div>
+      <div class="fg"><label>Type</label><select id="cfType" onchange="cfTypeChanged()"><option value="text">Texte court</option><option value="number">Nombre</option><option value="date">Date</option><option value="bool">Case à cocher</option><option value="select">Choix (liste)</option></select></div>
+    </div>
+    <div class="fg"><label>Libellé</label><input id="cfLabel" placeholder="Ex : Référence interne" maxlength="60"></div>
+    <div class="fg" id="cfOptWrap" style="display:none"><label>Options du choix (une par ligne)</label><textarea id="cfOptions" placeholder="Neuf&#10;Bon état&#10;À rénover"></textarea></div>
+    <div class="fg"><label>Ordre d'affichage</label><input id="cfOrder" type="number" value="0" step="1"></div>
+    <button id="cfSaveBtn" class="btn btn-p btn-sm" style="width:100%" onclick="cfSaveDef()">＋ Créer le champ</button>
+    <button id="cfCancelBtn" class="btn btn-s" style="width:100%;margin-top:6px;display:none" onclick="cfCancelEdit()">Annuler la modification</button>
+  </div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mCF')">Fermer</button></div></div></div>
 
 <div id="sb-overlay" onclick="closeMobSb()"></div>
 <nav id="mob-nav"><div class="mn-items">
@@ -1404,6 +1426,8 @@ function openM(id){
       }
     }, 10);
   }
+  // Accroche Champs personnalisés — rend les champs perso après les champs standard.
+  if(typeof cfOnModalOpen==='function')cfOnModalOpen(id);
 }
 function closeM(id){if(id==='mDepense')window._depCatFilter='';document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
@@ -1593,6 +1617,7 @@ function saveBat(){
   const obj={nom,addr,nbLg:parseInt(document.getElementById('batNbLg').value)||0,annee:parseInt(document.getElementById('batAnnee').value)||0,notes:document.getElementById('batNotes').value};
   if(obj.nbLg<0){alert('Le nombre de logements ne peut pas être négatif.');return;}
   if(obj.annee&&(obj.annee<1800||obj.annee>new Date().getFullYear()+5)){alert('Année de construction invalide (1800 – '+(new Date().getFullYear()+5)+').');return;}
+  if(typeof cfCollectFor==='function')obj.cf=cfCollectFor('batiment',eid?bats.find(x=>x.id===eid):null);
   if(eid){const i=bats.findIndex(x=>x.id===eid);bats[i]={...bats[i],...obj};}
   else{bats.push({id:uid(),...obj});}
   sv('bt',bats);
@@ -1916,6 +1941,7 @@ function editLg(id){
   }, 10);
   document.getElementById('lHistWrap').style.display='block';renderLoyerHist(l);
   document.getElementById('lTravauxWrap').style.display='block';renderTravauxList(l);
+  if(typeof cfOnModalOpen==='function')cfOnModalOpen('mLog');
   document.getElementById('mLog').classList.add('open');setTimeout(()=>injectModalNav('mLog'),50);
 }
 function saveLog(){
@@ -1935,6 +1961,7 @@ function saveLog(){
   const travaux=Array.isArray(window._pendingTravaux)?window._pendingTravaux:existingTravaux;
   const obj={nom,type:document.getElementById('lType').value,addr,surf:parseFloat(document.getElementById('lSurf').value)||0,loyer,ch:parseFloat(document.getElementById('lCh').value)||0,dep:parseFloat(document.getElementById('lDep').value)||0,notes:document.getElementById('lNotes').value,contenu:document.getElementById('lContenu').value,cles:document.getElementById('lCles').value,compteurs:getSelectedCompteurs(),batId:document.getElementById('lBat')?.value||'',loyerHist,travaux};
   if(loyer<0||obj.ch<0||obj.dep<0||obj.surf<0){alert('Le loyer, les charges, la garantie et la surface ne peuvent pas être négatifs.');return;}
+  if(typeof cfCollectFor==='function')obj.cf=cfCollectFor('logement',eid?lgs.find(x=>x.id===eid):null);
   if(eid){const i=lgs.findIndex(x=>x.id===eid);lgs[i]={...lgs[i],...obj};}else{lgs.push({id:uid(),...obj});}
   sv('lg',lgs);document.getElementById('lId').value='';document.getElementById('mLogT').textContent='Ajouter un logement';
   ['lNom','lAddr','lSurf','lLoyer','lCh','lDep','lNotes','lContenu','lCles'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
@@ -2156,6 +2183,7 @@ function editLc(id){
     document.getElementById('locUrg').value=l.urg||'';document.getElementById('locNotes').value=l.notes||'';
     document.getElementById('locCiv').value=l.civilite||'';document.getElementById('locAddr').value=l.adresse||'';
     document.getElementById('locNaiss').value=l.dateNaissance||'';document.getElementById('locLieuNaiss').value=l.lieuNaissance||'';
+    if(typeof cfOnModalOpen==='function')cfOnModalOpen('mLoc');
     document.getElementById('mLoc').classList.add('open');setTimeout(()=>injectModalNav('mLoc'),50);
   },10);
 }
@@ -2172,6 +2200,7 @@ function saveLoc(){
   if(finV&&ent&&new Date(finV)<new Date(ent)){alert('La date de fin de bail est antérieure à la date d\'entrée.');return;}
   const eid=document.getElementById('locId').value;
   const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,civilite:(document.getElementById('locCiv')||{value:''}).value,adresse:(document.getElementById('locAddr')||{value:''}).value,dateNaissance:(document.getElementById('locNaiss')||{value:''}).value,lieuNaissance:(document.getElementById('locLieuNaiss')||{value:''}).value,notes:(document.getElementById('locNotes')||{value:''}).value};
+  if(typeof cfCollectFor==='function')obj.cf=cfCollectFor('locataire',eid?lcs.find(x=>x.id===eid):null);
   if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
   sv('lc',lcs);document.getElementById('locId').value='';document.getElementById('mLocT').textContent='Ajouter un locataire';
   closeM('mLoc');rLcs();
@@ -3922,11 +3951,184 @@ function isFutureMois(m){return new Date(m+'-15')>new Date();}
   try{ compute(); }catch(e){}
 })();
 
+// ═══════════════════════════════════════════════════════════════
+// CHAMPS PERSONNALISÉS — moteur (module v1)
+// Définitions : clé localStorage ks_customfields (config globale,
+//   valable en mode normal ET isolé — pas de magasin isolé séparé).
+// Valeurs : inline sur entity.cf = { idChamp: valeur } — voyagent
+//   avec l'entité dans save/load/export/sync, sans jointure.
+// Types fermés : text · number · date · bool · select.
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  var CF_KEY='ks_customfields';
+  var CF_ENTITIES={batiment:'Bâtiment',logement:'Logement',locataire:'Locataire'};
+  var CF_TYPES={text:'Texte court',number:'Nombre',date:'Date',bool:'Case à cocher',select:'Choix (liste)'};
+  var cfDefs=[];
+  try{ var raw=JSON.parse(localStorage.getItem(CF_KEY)||'[]'); if(Array.isArray(raw))cfDefs=raw; }catch(e){ cfDefs=[]; }
+
+  function cfPersist(){ try{ localStorage.setItem(CF_KEY,JSON.stringify(cfDefs)); }catch(e){} }
+  function cfUid(){ return 'cf_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function cfEsc(s){ return (typeof esc==='function') ? esc(s==null?'':s) : String(s==null?'':s); }
+  // Définitions d'une entité, triées par order.
+  function cfFor(entity){ return cfDefs.filter(function(d){return d.entity===entity;})
+                                       .sort(function(a,b){return (a.order||0)-(b.order||0);}); }
+
+  // Rendu des champs perso APRÈS les champs standard, dans #cfbox-<entity>.
+  // obj : entité courante (édition) ou null (ajout). Lecture défensive de obj.cf.
+  function cfRenderInto(entity,obj){
+    var box=document.getElementById('cfbox-'+entity);
+    if(!box) return;
+    var defs=cfFor(entity);
+    if(!defs.length){ box.innerHTML=''; return; }
+    var vals=(obj&&obj.cf)||{};
+    box.innerHTML='<div style="margin-top:4px;padding-top:10px;border-top:1px solid var(--bd)">'
+      +'<div style="font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:8px">Champs personnalisés</div>'
+      +defs.map(function(d){
+        var iid='cfin-'+d.id, v=vals[d.id], inp;
+        if(d.type==='bool'){
+          inp='<input type="checkbox" id="'+iid+'" '+(v?'checked':'')+' style="width:16px;height:16px;accent-color:var(--ac)">';
+        }else if(d.type==='select'){
+          inp='<select id="'+iid+'"><option value=""></option>'
+            +(d.options||[]).map(function(o){return '<option value="'+cfEsc(o)+'"'+(String(v)===String(o)?' selected':'')+'>'+cfEsc(o)+'</option>';}).join('')
+            +'</select>';
+        }else{
+          var it=d.type==='number'?'number':(d.type==='date'?'date':'text');
+          inp='<input type="'+it+'" id="'+iid+'" value="'+cfEsc(v==null?'':v)+'">';
+        }
+        return '<div class="fg"><label>'+cfEsc(d.label)+'</label>'+inp+'</div>';
+      }).join('')+'</div>';
+  }
+  // Collecte les valeurs saisies. Fusionne avec le cf existant : une valeur
+  // orpheline (définition supprimée) n'est pas perdue lors d'un save d'entité.
+  function cfCollect(entity,existingObj){
+    var out=Object.assign({},(existingObj&&existingObj.cf)||{});
+    cfFor(entity).forEach(function(d){
+      var el=document.getElementById('cfin-'+d.id);
+      if(!el) return;
+      if(d.type==='bool') out[d.id]=!!el.checked;
+      else if(d.type==='number'){ var n=parseFloat(el.value); out[d.id]=isFinite(n)?n:''; }
+      else out[d.id]=el.value;
+    });
+    return out;
+  }
+  // Mappe une modale → entité ; l'id de l'entité est lu du champ caché.
+  var CF_MODAL={
+    mBat:{entity:'batiment', idField:'batId', coll:function(){return typeof bats!=='undefined'?bats:[];}},
+    mLog:{entity:'logement', idField:'lId',   coll:function(){return typeof lgs!=='undefined'?lgs:[];}},
+    mLoc:{entity:'locataire',idField:'locId', coll:function(){return typeof lcs!=='undefined'?lcs:[];}}
+  };
+  // ── Accroche FORM : appelée à l'ouverture des modales mBat/mLog/mLoc ──
+  window.cfOnModalOpen=function(modalId){
+    var m=CF_MODAL[modalId]; if(!m) return;
+    var idEl=document.getElementById(m.idField), id=idEl?idEl.value:'';
+    var obj=id?m.coll().find(function(x){return x.id===id;}):null;
+    cfRenderInto(m.entity,obj||null);
+  };
+  // ── Accroche SAVE : appelée par saveBat/saveLog/saveLoc ──
+  window.cfCollectFor=function(entity,existingObj){ return cfCollect(entity,existingObj); };
+
+  // ── API données (pure, sans DOM) — utilisée par la mini-simu ──
+  window.cfAPI={
+    defs:function(){ return cfDefs.slice(); },
+    list:cfFor,
+    addDef:function(o){
+      var d={id:cfUid(),entity:o.entity,label:o.label,type:o.type,order:o.order||0,createdAt:new Date().toISOString()};
+      if(o.type==='select') d.options=(o.options||[]).slice();
+      cfDefs.push(d); cfPersist(); return d;
+    },
+    deleteDef:function(id){ cfDefs=cfDefs.filter(function(x){return x.id!==id;}); cfPersist(); },
+    val:function(obj,id){ return (obj&&obj.cf)?obj.cf[id]:undefined; },  // lecture défensive
+    render:cfRenderInto
+  };
+
+  // ── Écran de gestion (modale mCF) ──
+  var cfEditId=null;
+  function cfClearForm(){
+    ['cfLabel','cfOptions'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+    var o=document.getElementById('cfOrder'); if(o)o.value='0';
+  }
+  function cfRenderManager(){
+    var list=document.getElementById('cfMgrList');
+    if(list){
+      var has=cfDefs.length>0;
+      list.innerHTML=has?Object.keys(CF_ENTITIES).map(function(e){
+        var ds=cfFor(e); if(!ds.length) return '';
+        return '<div style="font-size:.64rem;font-weight:700;text-transform:uppercase;color:var(--t2);margin:8px 0 2px">'+CF_ENTITIES[e]+'</div>'
+          +ds.map(function(d){
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)">'
+              +'<div style="flex:1"><div style="font-weight:600;font-size:.8rem">'+cfEsc(d.label)+'</div>'
+              +'<div style="font-size:.63rem;color:var(--t3)">'+(CF_TYPES[d.type]||d.type)
+              +(d.type==='select'?' · '+((d.options||[]).length)+' option(s)':'')+' · ordre '+(d.order||0)+'</div></div>'
+              +'<button class="btn btn-s btn-xs" onclick="cfEditDef(\''+d.id+'\')" title="Modifier">✏</button>'
+              +'<button class="btn btn-d btn-xs" onclick="cfDeleteDef(\''+d.id+'\')" title="Supprimer">✕</button></div>';
+          }).join('');
+      }).join('') : '<div style="font-size:.76rem;color:var(--t3);padding:6px 0">Aucun champ personnalisé pour l\'instant.</div>';
+    }
+    var typeSel=document.getElementById('cfType'), entSel=document.getElementById('cfEntity');
+    if(typeSel) typeSel.disabled=!!cfEditId;       // type immuable après création
+    if(entSel)  entSel.disabled=!!cfEditId;        // fiche immuable après création
+    var ow=document.getElementById('cfOptWrap');
+    if(ow) ow.style.display=(typeSel&&typeSel.value==='select')?'':'none';
+    var t=document.getElementById('cfFormTitle'); if(t)t.textContent=cfEditId?'✏ Modifier le champ':'＋ Nouveau champ';
+    var b=document.getElementById('cfSaveBtn');   if(b)b.textContent=cfEditId?'💾 Enregistrer les modifications':'＋ Créer le champ';
+    var c=document.getElementById('cfCancelBtn'); if(c)c.style.display=cfEditId?'':'none';
+  }
+  window.cfTypeChanged=function(){ cfRenderManager(); };
+  window.cfOpenManager=function(){ cfEditId=null; cfClearForm(); cfRenderManager(); if(typeof openM==='function')openM('mCF'); };
+  window.cfEditDef=function(id){
+    var d=cfDefs.find(function(x){return x.id===id;}); if(!d) return;
+    cfEditId=id;
+    var set=function(eid,v){var e=document.getElementById(eid);if(e)e.value=v;};
+    set('cfEntity',d.entity); set('cfType',d.type); set('cfLabel',d.label);
+    set('cfOptions',(d.options||[]).join('\n')); set('cfOrder',d.order||0);
+    cfRenderManager();
+  };
+  window.cfCancelEdit=function(){ cfEditId=null; cfClearForm(); cfRenderManager(); };
+  window.cfSaveDef=function(){
+    var g=function(id){return ((document.getElementById(id)||{value:''}).value||'');};
+    var label=g('cfLabel').replace(/[<>]/g,'').trim();
+    if(!label){ if(typeof showToast==='function')showToast('Libellé requis'); return; }
+    var order=parseInt(g('cfOrder'))||0;
+    if(cfEditId){
+      var d=cfDefs.find(function(x){return x.id===cfEditId;});
+      if(d){
+        d.label=label; d.order=order;
+        if(d.type==='select'){
+          var o1=g('cfOptions').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+          if(!o1.length){ if(typeof showToast==='function')showToast('Le type « choix » exige au moins une option'); return; }
+          d.options=o1;
+        }
+      }
+    }else{
+      var entity=g('cfEntity'), type=g('cfType');
+      if(!CF_ENTITIES[entity]||!CF_TYPES[type]){ if(typeof showToast==='function')showToast('Fiche ou type invalide'); return; }
+      var opts;
+      if(type==='select'){
+        opts=g('cfOptions').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if(!opts.length){ if(typeof showToast==='function')showToast('Le type « choix » exige au moins une option'); return; }
+      }
+      window.cfAPI.addDef({entity:entity,label:label,type:type,order:order,options:opts});
+    }
+    cfPersist();
+    cfEditId=null; cfClearForm(); cfRenderManager();
+    if(typeof showToast==='function')showToast('✅ Champ personnalisé enregistré');
+  };
+  window.cfDeleteDef=function(id){
+    if(typeof confirm==='function'&&!confirm('Supprimer ce champ personnalisé ?\nLes valeurs déjà saisies sur les fiches ne sont pas effacées, mais ne seront plus affichées.')) return;
+    cfDefs=cfDefs.filter(function(x){return x.id!==id;});
+    cfPersist();
+    if(cfEditId===id){ cfEditId=null; cfClearForm(); }
+    cfRenderManager();
+    if(typeof showToast==='function')showToast('Champ supprimé');
+  };
+})();
+
 // ═══ DATA MANAGEMENT ═══
 function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
 function exportData(){
-  const data={version:'3.2',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds};
+  const data={version:'3.2',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds,
+    customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keystone-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
@@ -3951,6 +4153,7 @@ function importData(input){
       if(data.rappels){rps=data.rappels;sv('rp',rps);}
       if(data.compteurs){cos=data.compteurs;sv('co',cos);}
       if(data.releves){rls=data.releves;sv('rl',rls);}
+      if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
       closeM('mData');rDash();alert('✅ Données importées !');
     }catch(err){alert('❌ Fichier invalide: '+err.message);}
   };reader.readAsText(file);
@@ -5538,6 +5741,7 @@ async function driveLoad(){
     if(data.rappels){rps=data.rappels;sv('rp',rps);}
     if(data.compteurs){cos=data.compteurs;sv('co',cos);}
     if(data.releves){rls=data.releves;sv('rl',rls);}
+    if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
     const ts=data.savedAt?new Date(data.savedAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
     syncBarShow('Synchronisé'+(ts?' — '+ts:''));
     // Re-inject real data (fixed IDs) in case Drive had empty arrays
@@ -5564,7 +5768,8 @@ async function driveSave(silent){
       batiments:bats, logements:lgs, locataires:lcs, paiements:pys,
       credits:crs, charges:chs, depenses:dps,
       entretiens:ens, documents:dcs, rappels:rps,
-      compteurs:cos, releves:rls, todos:tds
+      compteurs:cos, releves:rls, todos:tds,
+      customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})()
     });
     const fid=await driveGetFileId();
     let url, method;
