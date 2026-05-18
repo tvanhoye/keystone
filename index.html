@@ -543,14 +543,18 @@ tr[onclick]{cursor:pointer}
 #photoZone.has-photo{border-style:solid;border-color:var(--ac)}
 
 @media(max-width:600px){
-  .pay-grid td:nth-child(1){display:none}
-  .pay-grid th:nth-child(1){display:none}
-  .pay-grid .pg-info{flex-direction:column;gap:1px;font-size:.65rem}
-  .pay-grid .pg-info .pg-lg{font-weight:700;font-size:.68rem}
-  .pay-grid .pg-info .pg-lc{opacity:.8;font-size:.62rem}
-  .pay-grid{font-size:.65rem}
+  /* C.4 mobile — la colonne « Logement · Locataire » était entièrement
+     masquée (display:none) : sur mobile aucune ligne n'avait de libellé,
+     le correctif C.4 ne se voyait donc pas. On la conserve, compacte et
+     sticky, et le nom du logement peut passer à la ligne. Sélecteurs
+     préfixés .pay-grid-wrap pour battre les largeurs % définies plus bas. */
+  .pay-grid-wrap .pay-grid th:first-child,
+  .pay-grid-wrap .pay-grid td:first-child{width:34%!important;white-space:normal}
+  .pay-grid-wrap .pay-grid th.pg-month-col{width:11%!important}
+  .pay-grid .pg-name{font-size:.66rem;line-height:1.15}
+  .pay-grid .pg-sub{font-size:.58rem;line-height:1.15}
+  .pay-grid{font-size:.64rem}
   .pay-grid td,.pay-grid th{padding:4px 3px!important}
-  .pg-col2{max-width:90px;overflow:hidden}
 }
 
 /* SyncBar: contenu jamais derrière la barre */
@@ -1534,8 +1538,9 @@ function rDash(){
   const cautLgs=visLgs.filter(l=>occLgSet.has(l.id)&&(l.dep||0)>0);
   const caut=cautLgs.reduce((a,l)=>a+(l.dep||0),0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
-  // D.8 — un paiement marqué « résolu » ne compte plus comme retard/rappel.
-  const ret=tmP.filter(p=>p.stat==='retard' && !p.resolu).length;
+  // D.8 — un impayé « classé sans suite » (abandonne) ne compte plus comme
+  // retard/rappel. Il reste un montant non perçu (rec inchangé) ailleurs.
+  const ret=tmP.filter(p=>p.stat==='retard' && !p.abandonne).length;
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
   const br=document.getElementById('bRet');if(br){br.textContent=ret;br.style.display=ret?'':'none';}
   // Badge "Loyers" de la nav mobile : même source que le badge desktop (bRet).
@@ -1550,7 +1555,7 @@ function rDash(){
   const al=[];
   // Count ALL unpaid months per locataire filtered by building
 const retardsByLc={};
-pys.filter(p=>p.stat==='retard' && !p.resolu && visLcIds.has(p.lcId)).forEach(p=>{
+pys.filter(p=>p.stat==='retard' && !p.abandonne && visLcIds.has(p.lcId)).forEach(p=>{
   if(!retardsByLc[p.lcId])retardsByLc[p.lcId]=[];
   retardsByLc[p.lcId].push(p);
 });
@@ -1565,8 +1570,9 @@ Object.entries(retardsByLc).forEach(([lcId,pays])=>{
   visLcs.forEach(l=>{const d=dTo(l.fin);if(d!==null&&d>=0&&d<=60)al.push({t:'ab',i:'📅',ti:'Bail expire — '+lcFull(l),s:'Dans '+d+' j.',p:'locataires'})});
   const ac=document.getElementById('dAlerts');
   ac.innerHTML=al.length?al.map(a=>{
-    // D.8 — bouton « traité » sur les rappels d'impayé (clôture non destructive).
-    const act=a.pyIds?'<button class="btn btn-xs btn-s" style="margin-left:auto;flex-shrink:0" title="Marquer ce rappel comme traité" onclick="event.stopPropagation();resolveImpaye(\''+a.pyIds+'\')">✓ Traité</button>':'';
+    // D.8 — « Classer sans suite » sur les rappels d'impayé : on cesse de
+    // réclamer (≠ payé). Clôture non destructive, réversible.
+    const act=a.pyIds?'<button class="btn btn-xs btn-s" style="margin-left:auto;flex-shrink:0;white-space:nowrap" title="Cesser de réclamer cet impayé (arrangement trouvé, abandon…). L\'argent reste non perçu." onclick="event.stopPropagation();classerImpaye(\''+a.pyIds+'\')">Classer sans suite</button>':'';
     return '<div class="alert '+a.t+'" style="display:flex;align-items:center;gap:8px;cursor:'+(a.p?'pointer':'default')+'" onclick="'+(a.p?'nav(\''+a.p+'\')':'')+'"><span>'+a.i+'</span><div style="flex:1;min-width:0"><strong>'+esc(a.ti)+'</strong><br><span style="opacity:.8">'+esc(a.s)+'</span></div>'+act+'</div>';
   }).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div>';
   const pr=rps.filter(r=>r.stat!=='fait').sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
@@ -2474,7 +2480,7 @@ function renderPayGrid(){
       } else if(pay.stat==='payé'){
         cls='pg-paid'; lbl='✓'; title=fE(pay.rec)+(isPartialMonth?' (proraté)':'')+' · '+fD(pay.date);
       } else if(pay.stat==='retard'){
-        cls='pg-late'; lbl='✗'; title='Impayé · Dû: '+fE(proratedLoyer)+proTxt;
+        cls='pg-late'; lbl='✗'; title='Impayé · Dû: '+fE(proratedLoyer)+proTxt+(pay.abandonne?' · classé sans suite':'');
       } else {
         cls='pg-partial'; lbl='~'; title='Partiel: '+fE(pay.rec)+' / '+fE(proratedLoyer)+proTxt;
       }
@@ -7707,18 +7713,37 @@ function delPay(id){
   if(curP==='paiements')setPayView(payView);
   else if(curP==='dashboard')rDash();
 }
-// D.8 — clôture NON destructive d'un rappel d'impayé : on pose un marqueur
-// `resolu` sur les paiements concernés. Ils restent dans l'historique (page
-// Paiements) mais ne réapparaissent plus comme alerte/rappel sur le dashboard.
-function resolveImpaye(idsCsv){
+// D.8 — « Classer sans suite » un impayé : marqueur NON destructif `abandonne`
+// sur le paiement. Sémantique = on cesse de suivre/réclamer cet impayé (un
+// arrangement a été trouvé, ou on abandonne la réclamation) — l'argent N'A
+// PAS été reçu. Le marqueur ne touche ni `rec` ni `stat` : le paiement reste
+// un montant non perçu dans la page Paiements ET le Tableau annuel. Il sort
+// UNIQUEMENT des rappels d'impayé et du compteur de retards du dashboard.
+// Réversible via reprendreImpaye().
+function classerImpaye(idsCsv){
   const ids=(idsCsv||'').split(',').filter(Boolean);
   if(!ids.length)return;
-  if(!confirm('Marquer ce rappel comme traité ?\n\nLe(s) paiement(s) restent dans l\'historique mais n\'apparaîtront plus comme impayé.'))return;
+  if(!confirm('Classer cet impayé sans suite ?\n\nVous cessez de le réclamer — ce n\'est PAS un encaissement. L\'argent reste compté comme non perçu (page Paiements, Tableau annuel) ; seul le rappel du tableau de bord disparaît. Réversible.'))return;
   let n=0;
-  ids.forEach(id=>{const p=pys.find(x=>x.id===id);if(p&&!p.resolu){p.resolu=true;n++;}});
+  ids.forEach(id=>{const p=pys.find(x=>x.id===id);if(p&&!p.abandonne){p.abandonne=true;n++;}});
   if(n){
     sv('py',pys);
-    if(typeof showToast==='function')showToast('✅ Rappel traité — '+n+' paiement'+(n>1?'s':'')+' classé'+(n>1?'s':''));
+    if(typeof showToast==='function')showToast('Impayé classé sans suite — '+n+' mois retiré'+(n>1?'s':'')+' des rappels');
+  }
+  if(curP==='dashboard')rDash();
+  else if(curP==='paiements')setPayView(payView);
+}
+// D.8 — action inverse : reprendre le suivi d'un impayé classé sans suite.
+// Il réapparaît dans les rappels et le compteur de retards du dashboard.
+function reprendreImpaye(idsCsv){
+  const ids=(idsCsv||'').split(',').filter(Boolean);
+  if(!ids.length)return;
+  if(!confirm('Reprendre le suivi de cet impayé ?\n\nIl réapparaîtra dans les rappels d\'impayé du tableau de bord.'))return;
+  let n=0;
+  ids.forEach(id=>{const p=pys.find(x=>x.id===id);if(p&&p.abandonne){p.abandonne=false;n++;}});
+  if(n){
+    sv('py',pys);
+    if(typeof showToast==='function')showToast('Suivi repris — '+n+' impayé'+(n>1?'s':'')+' réintégré'+(n>1?'s':'')+' aux rappels');
   }
   if(curP==='dashboard')rDash();
   else if(curP==='paiements')setPayView(payView);
@@ -7741,8 +7766,9 @@ function rPays(f){
       '<td class="mono">'+fE(p.rec)+'</td>'+
       '<td>'+fD(p.date)+'</td>'+
       '<td style="font-size:.73rem">'+p.mode+'</td>'+
-      '<td>'+sBadge(p.stat)+'</td>'+
+      '<td>'+sBadge(p.stat)+(p.abandonne?'<div style="font-size:.58rem;color:var(--t3);margin-top:2px;font-style:italic">classé sans suite</div>':'')+'</td>'+
       '<td><div style="display:flex;gap:3px">'+
+        (p.abandonne?'<button class="btn btn-xs btn-s" onclick="event.stopPropagation();reprendreImpaye(\''+p.id+'\')" title="Reprendre le suivi de cet impayé">↩</button>':'')+
         '<button class="btn btn-xs btn-s" onclick="event.stopPropagation();generateQuittance(\''+p.id+'\')" title="Quittance PDF">🧾</button>'+
         '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delPay(\''+p.id+'\')">✕</button>'+
       '</div></td>'+
