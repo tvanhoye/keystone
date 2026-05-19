@@ -625,7 +625,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-sec">Vue générale</div>
     <div class="sb-item active" data-p="dashboard" data-tip="Tableau de bord"><span class="sb-icon">🏠</span><span class="sb-lbl">Tableau de bord</span></div>
     <div class="sb-sec">Gestion</div>
-    <div class="sb-item" data-p="batiments" data-tip="Bâtiments"><span class="sb-icon">🏗</span><span class="sb-lbl">Bâtiments</span></div>
+    <div class="sb-item" data-p="batiments" data-tip="Bâtiments"><span class="sb-icon">🏢</span><span class="sb-lbl">Bâtiments</span></div>
     <div class="sb-item" data-p="logements" data-tip="Logements"><span class="sb-icon">🏢</span><span class="sb-lbl">Logements</span></div>
     <div class="sb-item" data-p="locataires" data-tip="Locataires"><span class="sb-icon">👥</span><span class="sb-lbl">Locataires</span></div>
     <div class="sb-item" data-p="paiements" data-tip="Loyers"><span class="sb-icon">💶</span><span class="sb-lbl">Loyers</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
@@ -1526,7 +1526,7 @@ function rDash(){
   if(dashBatKpiEl){
     if(selBatId){
       const bat = bats.find(b=>b.id===selBatId);
-      dashBatKpiEl.textContent = bat ? '🏗 '+bat.nom : '';
+      dashBatKpiEl.textContent = bat ? '🏢 '+bat.nom : '';
       dashBatKpiEl.style.display = 'block';
     } else {
       dashBatKpiEl.style.display = 'none';
@@ -1598,7 +1598,7 @@ function rBats(){
   document.getElementById('batCnt').textContent=bats.length+' bâtiment'+(bats.length>1?'s':'');
   const g=document.getElementById('batGrid');
   if(!bats.length){
-    g.innerHTML='<div class="empty"><div class="empty-icon">🏗</div><div class="empty-text">Aucun bâtiment.<br><br><button class="btn btn-p" onclick="openM(\'mBat\')">Ajouter</button></div></div>';
+    g.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Aucun bâtiment.<br><br><button class="btn btn-p" onclick="openM(\'mBat\')">Ajouter</button></div></div>';
     return;
   }
   let visBats=bats;
@@ -1611,7 +1611,7 @@ function rBats(){
     return`<div class="card" style="padding:14px;cursor:pointer;margin-bottom:10px" onclick="editBat('${b.id}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
         <div style="flex:1">
-          <div style="font-weight:800;font-size:.92rem;margin-bottom:3px">🏗 ${esc(b.nom)}</div>
+          <div style="font-weight:800;font-size:.92rem;margin-bottom:3px">🏢 ${esc(b.nom)}</div>
           <div style="font-size:.74rem;color:var(--t2)">📍 ${esc(b.addr)}</div>
           ${b.annee?`<div style="font-size:.68rem;color:var(--t3);margin-top:2px">Construction ${b.annee}</div>`:''}
         </div>
@@ -1890,7 +1890,7 @@ function rLgs(){
         '<div class="lg-list-ico" style="background:linear-gradient(135deg,'+cc+','+cc+'88)">'+(pEmo[l.type]||'🏠')+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-weight:700;font-size:.84rem">'+esc(l.nom)+'</div>'+
-          '<div style="font-size:.69rem;color:var(--t2)">'+(lc?'👤 '+esc(lcFull(lc)):'<em>Vacant</em>')+(l.surf?' · 📐'+l.surf+'m²':'')+(l.batId?' · 🏗'+esc(gBat(l.batId).nom):'')+'</div>'+
+          '<div style="font-size:.69rem;color:var(--t2)">'+(lc?'👤 '+esc(lcFull(lc)):'<em>Vacant</em>')+(l.surf?' · 📐'+l.surf+'m²':'')+(l.batId?' · 🏢'+esc(gBat(l.batId).nom):'')+'</div>'+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0">'+
           '<div style="font-family:monospace;font-weight:800;font-size:.84rem;color:var(--ac)">'+(l.loyer+l.ch)+'€</div>'+
@@ -1933,7 +1933,7 @@ function rLgs(){
           '<div class="pa">📍 '+esc(l.addr||gBat(l.batId).addr||'—')+'</div>'+
           (l.surf?'<div style="font-size:.67rem;color:var(--t3)">📐 '+l.surf+' m²</div>':'')+
           '<div style="font-size:.71rem;color:var(--t2);margin-top:4px">'+_statusLine+'</div>'+
-          (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏗 '+esc(gBat(l.batId).nom)+'</div>':'')+
+          (l.batId?'<div style="font-size:.65rem;color:var(--ac);margin-top:1px">🏢 '+esc(gBat(l.batId).nom)+'</div>':'')+
           '<div class="pf">'+
             '<span class="pr">'+(l.loyer+l.ch)+'€<span style="font-size:.6rem;color:var(--t3)">/mois</span></span>'+
             _statusBadge+
@@ -6297,7 +6297,7 @@ document.addEventListener('keydown', e=>{
 // ══════════════════════════════════════════════
 // PROFILES & AUTH
 // ══════════════════════════════════════════════
-const ROLE_ICONS = {masteradmin:'👑', admin:'🏗', gestionnaire:'🔧', lecture:'👁'};
+const ROLE_ICONS = {masteradmin:'👑', admin:'👔', gestionnaire:'🔧', lecture:'👁'};
 const ROLE_LABELS = {masteradmin:'Master Admin', admin:'Admin Projet', gestionnaire:'Gestionnaire', lecture:'Lecture seule'};
 const ROLE_COLORS = {masteradmin:'role-masteradmin', admin:'role-admin', gestionnaire:'role-gestionnaire', lecture:'role-lecture'};
 
@@ -6604,7 +6604,7 @@ function loginNewCode(){
     if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
     if(cfg.lgs){lgs=cfg.lgs;sv('lg',lgs);}
     if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
-    const p={id:'proj_'+Date.now(),name:cfg.nom||'Projet',role:cfg.role||'gestionnaire',avatar:'🏗',pin:''};
+    const p={id:'proj_'+Date.now(),name:cfg.nom||'Projet',role:cfg.role||'gestionnaire',avatar:'👤',pin:''};
     doLogin(p);
     setTimeout(()=>{rDash();nav('dashboard');},50);
     showToast('✅ Projet '+p.name+' chargé (🔒 isolé)');
