@@ -4238,7 +4238,23 @@ function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;c
     try{ var r=JSON.parse(localStorage.getItem(CP_KEY)||'[]'); return Array.isArray(r)?r:[]; }
     catch(e){ return []; }
   }
-  function cpSave(arr){ try{ localStorage.setItem(CP_KEY,JSON.stringify(arr)); }catch(e){} }
+  // Partie A (sync) — la persistance emprunte le mécanisme de notification de
+  // sv() : après l'écriture, on marque une modification locale
+  // (ks_last_local_change) ET on planifie le driveSave débouncé via
+  // driveTriggerSave(). Sans ça, masquer une carte n'atteignait jamais le
+  // Drive (changement invisible à la couche sync). ks_cardprefs reste une clé
+  // GLOBALE non isolée (décision v2.22) : l'écriture de la clé reste donc
+  // directe — on n'emprunte à sv() que sa notification, et uniquement hors
+  // session isolée / démo, exactement comme sv() lui-même.
+  function cpSave(arr){
+    try{
+      localStorage.setItem(CP_KEY,JSON.stringify(arr));
+      if(window._ksIsolated) return;
+      if(typeof isDemoMode!=='undefined' && isDemoMode) return;
+      localStorage.setItem('ks_last_local_change',String(Date.now()));
+      if(typeof driveTriggerSave==='function') driveTriggerSave();
+    }catch(e){}
+  }
   // Applique l'état masqué/visible à chaque bloc présent dans le DOM.
   // Défensif : un bloc absent (getElementById null) est simplement ignoré.
   function cpApply(){
