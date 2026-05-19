@@ -555,6 +555,15 @@ tr[onclick]{cursor:pointer}
   .pay-grid .pg-sub{font-size:.58rem;line-height:1.15}
   .pay-grid{font-size:.64rem}
   .pay-grid td,.pay-grid th{padding:4px 3px!important}
+  /* En-têtes de totaux par mois : à ~11 % de large, les nombres monospace
+     (.78rem) débordaient de la cellule et se chevauchaient avec la colonne
+     voisine (table-layout:fixed ne clippe pas le dépassement). On réduit la
+     police et on masque le montant dû — redondant, déjà dans le récap de
+     période en tête de grille — pour ne garder que le total encaissé et le
+     pourcentage, tous deux lisibles. */
+  .pay-grid .pg-sum-recu{font-size:.56rem!important;line-height:1.2}
+  .pay-grid .pg-sum-sub{font-size:.54rem!important;line-height:1.2}
+  .pay-grid .pg-sum-du{display:none}
 }
 
 /* SyncBar: contenu jamais derrière la barre */
@@ -768,7 +777,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
       </div>
       <!-- List view -->
       <div id="payListView" style="display:none">
-        <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('travaux',this)">🏗 Travaux</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
+        <div class="tabs" id="payTabs"><button class="tab active" onclick="tabPay('tous',this)">Tous</button><button class="tab" onclick="tabPay('payé',this)">Payés</button><button class="tab" onclick="tabPay('retard',this)">En retard</button><button class="tab" onclick="tabPay('travaux',this)">🚧 Travaux</button><button class="tab" onclick="tabPay('partiel',this)">Partiels</button></div>
         <div class="card"><div class="tblw"><table><thead><tr><th>Locataire</th><th>Logement</th><th>Mois</th><th>Dû</th><th>Reçu</th><th>Date</th><th>Mode</th><th>Statut</th><th></th></tr></thead><tbody id="payTbl"></tbody></table></div></div>
       </div>
     </div>
@@ -2369,10 +2378,10 @@ function renderPayGrid(){
     const pct=m.du?Math.round(m.recu/m.du*100):0;
     const ok=m.recu>=m.du;
     const colBg=col.isFuture?'rgba(255,255,255,.05)':ok&&m.du>0?'rgba(76,175,80,.25)':m.recu>0?'rgba(255,152,0,.25)':'rgba(244,67,54,.15)';
-    html += `<td style="padding:6px 4px;text-align:center;background:${colBg};border-right:1px solid rgba(255,255,255,.08)">`;
+    html += `<td class="pg-sumcell" style="padding:6px 4px;text-align:center;background:${colBg};border-right:1px solid rgba(255,255,255,.08)">`;
     if(m.du>0){
-      html += `<div style="font-family:monospace;font-weight:800;font-size:.78rem;color:${ok?'#a8e6af':'#f9a825'}">${fE(m.recu)}</div>`;
-      html += `<div style="font-size:.58rem;color:rgba(255,255,255,.4)">${fE(m.du)} · ${pct}%</div>`;
+      html += `<div class="pg-sum-recu" style="font-family:monospace;font-weight:800;font-size:.78rem;color:${ok?'#a8e6af':'#f9a825'}">${fE(m.recu)}</div>`;
+      html += `<div class="pg-sum-sub" style="font-size:.58rem;color:rgba(255,255,255,.4)"><span class="pg-sum-du">${fE(m.du)} · </span>${pct}%</div>`;
     } else {
       html += `<div style="color:rgba(255,255,255,.2);font-size:.7rem">—</div>`;
     }
