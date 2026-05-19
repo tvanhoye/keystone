@@ -1254,7 +1254,11 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 // ═══ STORAGE ═══
 const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp',td:'ig3_td'};
 const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('_ksi_'+K[k]))||[]}catch{return[]}}try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
-const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));localStorage.setItem('ks_last_local_change',String(Date.now()));if(typeof driveTriggerSave==='function')driveTriggerSave();};
+// Partie B (Étape 3) — pendant l'application d'un pull Drive, window._ksLoadingDrive
+// est vrai : on écrit bien la donnée en localStorage, mais on NE marque PAS de
+// modification locale et on NE planifie PAS de driveSave — sinon un simple
+// chargement provoquerait une sauvegarde (et figerait des valeurs périmées).
+const sv=(k,d)=>{if(window._ksIsolated){localStorage.setItem('_ksi_'+K[k],JSON.stringify(d));return;}if(typeof isDemoMode!=='undefined'&&isDemoMode)return;localStorage.setItem(K[k],JSON.stringify(d));if(window._ksLoadingDrive)return;localStorage.setItem('ks_last_local_change',String(Date.now()));if(typeof driveTriggerSave==='function')driveTriggerSave();};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const tod=()=>new Date().toISOString().slice(0,10);
 const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -5720,7 +5724,7 @@ function driveSignIn(){
           const db=document.getElementById('driveBtn');const dc=document.getElementById('driveBtnConnect');
           if(db) db.style.display='';if(dc) dc.style.display='none';
           const lbl=document.getElementById('menuDriveLbl');if(lbl)lbl.textContent='↕ Synchroniser Drive';
-          await driveLoad();
+          await driveLoad(true);  // connexion explicite → pull (pas d'arbitrage)
           showToast('✅ Google Drive connecté — '+driveEmail);
         }
       });
@@ -5788,8 +5792,9 @@ async function driveHandleRedirect(){
     showToast('Connecté à '+driveEmail+' — sync différée');
     return;
   }
-  // 'pull' (ou cas nominal sans risque) → comportement standard
-  await driveLoad();
+  // 'pull' (ou cas nominal sans risque) → comportement standard. Le résolveur
+  // de conflit a déjà tranché → forcePull, pas de second arbitrage dans driveLoad.
+  await driveLoad(true);
   showToast('✅ Google Drive connecté — '+driveEmail);
 }
 
@@ -5870,7 +5875,11 @@ async function driveGetFileId(){
 }
 
 // ── Load data from Drive ──
-async function driveLoad(){
+// Partie B — forcePull court-circuite l'arbitrage : l'appelant a déjà tranché
+// (ex. résolveur OAuth ayant choisi « pull », ou flux de connexion Drive).
+// Au boot (driveInit) et au Sync manuel (syncNow), forcePull est absent →
+// l'arbitrage protège les modifications locales non encore synchronisées.
+async function driveLoad(forcePull){
   if(window._ksIsolated) return;
   if(!driveToken)return;
   // FIX I3/I4: si une sauvegarde locale est en attente (debounce 3s), la flusher AVANT de
@@ -5898,6 +5907,41 @@ async function driveLoad(){
       {headers:{'Authorization':'Bearer '+driveToken}});
     if(!resp.ok)throw new Error('Erreur lecture: '+resp.status);
     const data=await resp.json();
+    // ── Partie B — ARBITRAGE DE SYNCHRONISATION ──────────────────────────
+    // Avant d'écraser le local par le pull Drive, on compare 3 horodatages :
+    //   · ks_last_local_change : dernière modification locale
+    //   · ks_last_sync         : dernier instant local↔Drive connus synchros
+    //   · data.savedAt         : horodatage embarqué dans le fichier Drive
+    // Décision GLOBALE (pas par clé). Sauf si forcePull (appelant a tranché).
+    if(!forcePull){
+      const driveTs    = data.savedAt ? new Date(data.savedAt).getTime() : 0;
+      const lastSync   = parseInt(localStorage.getItem('ks_last_sync')||'0',10);
+      const lastChange = parseInt(localStorage.getItem('ks_last_local_change')||'0',10);
+      const localModifie = lastChange > lastSync;   // modif locale non synchronisée
+      const driveModifie = driveTs    > lastSync;   // Drive écrit depuis le dernier sync
+      if(localModifie && driveModifie){
+        // Cas (d) — conflit réel : local ET Drive ont divergé depuis le dernier
+        // sync. On CONSERVE le local (rien n'est effacé sur l'appareil), on NE
+        // pousse PAS en silence par-dessus Drive, et on avertit. Une UI de choix
+        // local/Drive est hors périmètre (backlog).
+        syncBarError('⚠ Conflit Drive — modifications locales conservées');
+        showToast('⚠️ Conflit de synchronisation : des changements existent à la fois en local et sur Google Drive. Vos données locales sont conservées (rien n\'est effacé). Vérifiez Drive.');
+        return;
+      }
+      if(localModifie){
+        // Cas (c) — local en avance, Drive inchangé : on conserve le local et
+        // on le POUSSE vers Drive au lieu de l'écraser par un pull périmé.
+        syncBarShow('Modifications locales — envoi vers Drive...','syncing');
+        await driveSave(true);
+        return;
+      }
+      // Cas (a)/(b) — localModifie faux : pull Drive normal (ci-dessous). Couvre
+      // l'état identique ET la mise à jour légitime venue d'un autre appareil.
+    }
+    // Étape 3 — un chargement ne doit JAMAIS provoquer de sauvegarde : le flag
+    // window._ksLoadingDrive neutralise, dans sv(), le bump de ks_last_local_change
+    // et le déclenchement de driveSave pendant l'application des données.
+    window._ksLoadingDrive=true;
     // Merge: Drive data wins (it's the source of truth)
     if(data.batiments){bats=data.batiments;sv('bt',bats);}
     if(data.logements){lgs=data.logements;sv('lg',lgs);}
@@ -5914,14 +5958,20 @@ async function driveLoad(){
     if(data.releves){rls=data.releves;sv('rl',rls);}
     if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
     if(data.cardPrefs)localStorage.setItem('ks_cardprefs',JSON.stringify(data.cardPrefs));
+    // Pull appliqué : local == Drive → on est synchronisés à cet instant.
+    // Indispensable pour que l'arbitrage des boots suivants ne signale pas un
+    // faux conflit après une mise à jour légitime venue d'un autre appareil.
+    localStorage.setItem('ks_last_sync', String(Date.now()));
     const ts=data.savedAt?new Date(data.savedAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
     syncBarShow('Synchronisé'+(ts?' — '+ts:''));
     // Re-inject real data (fixed IDs) in case Drive had empty arrays
     injectRealData();
+    window._ksLoadingDrive=false;
     // Refresh current page
     rP(curP);
     showToast('✅ Données chargées depuis Google Drive');
   }catch(e){
+    window._ksLoadingDrive=false;  // garde-fou : ne jamais laisser le flag bloqué
     syncBarError('Erreur: '+e.message);
     console.error('driveLoad:',e);
   }
