@@ -5966,14 +5966,19 @@ async function driveLoad(forcePull){
     syncBarShow('Synchronisé'+(ts?' — '+ts:''));
     // Re-inject real data (fixed IDs) in case Drive had empty arrays
     injectRealData();
-    window._ksLoadingDrive=false;
     // Refresh current page
     rP(curP);
     showToast('✅ Données chargées depuis Google Drive');
   }catch(e){
-    window._ksLoadingDrive=false;  // garde-fou : ne jamais laisser le flag bloqué
     syncBarError('Erreur: '+e.message);
     console.error('driveLoad:',e);
+  }finally{
+    // Remise à false GARANTIE quel que soit le chemin de sortie (return
+    // anticipé — présent ou futur — ou exception). Un flag resté bloqué à
+    // true couperait silencieusement toute sauvegarde ultérieure : c'est la
+    // fonction la plus sensible du projet, on ne laisse pas ce mode de
+    // défaillance invisible dépendre de remises manuelles par branche.
+    window._ksLoadingDrive=false;
   }
 }
 
