@@ -706,12 +706,12 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
       <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
       <div class="g21">
         <div>
-          <div class="card"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"><tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr></tbody></table></div></div>
+          <div class="card" id="dashcard-alertes"><div class="ch"><span class="ct">⚠️ Alertes</span></div><div class="cb" id="dAlerts"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune alerte</div></div></div></div>
+          <div class="card" id="dashcard-paiements"><div class="ch"><span class="ct">💶 Paiements récents</span></div><div class="tblw"><table><thead><tr><th>Locataire</th><th>Mois</th><th>Reçu</th><th>Statut</th></tr></thead><tbody id="dPays"><tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr></tbody></table></div></div>
         </div>
         <div>
-          <div class="card"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div></div></div>
-          <div class="card"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div></div></div>
+          <div class="card" id="dashcard-rappels"><div class="ch"><span class="ct">📅 Rappels</span></div><div class="cb" id="dRaps"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div></div></div>
+          <div class="card" id="dashcard-urgences"><div class="ch"><span class="ct">🔧 Urgences</span></div><div class="cb" id="dUrg"><div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div></div></div>
         </div>
       </div>
     </div>
@@ -1184,6 +1184,10 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
   <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase">⚙️ Champs personnalisés <span style="font-weight:400;text-transform:none;color:var(--t3)">(bâtiments, logements, locataires)</span></div>
   <button class="btn btn-s btn-sm" style="width:100%" onclick="cfOpenManager()">Gérer les champs personnalisés</button>
 </div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">
+  <div style="font-size:.7rem;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase">📊 Affichage du tableau de bord <span style="font-weight:400;text-transform:none;color:var(--t3)">(cocher = visible)</span></div>
+  <div id="cardPrefsBox"></div>
+</div>
 <div style="margin-top:12px;padding:10px;background:var(--s2);border-radius:var(--rs);font-size:.71rem;color:var(--t3)">Logements: <strong id="sLg">0</strong> · Locataires: <strong id="sLc">0</strong> · Paiements: <strong id="sPy">0</strong> · Relevés: <strong id="sRl">0</strong></div></div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mData')">Fermer</button>
       <hr style="margin:16px 0;border:none;border-top:1px solid var(--bd)">
       <div style="font-size:.78rem;font-weight:700;color:var(--ac);margin-bottom:10px">🔗 Partager un projet</div>
@@ -1556,11 +1560,11 @@ function rDash(){
   const mbr=document.getElementById('mobBR');if(mbr){mbr.textContent=ret;mbr.style.display=ret?'':'none';}
   const bu=document.getElementById('bUrg');if(bu){bu.textContent=urg.length;bu.style.display=urg.length?'':'none';}
   document.getElementById('kpiG').innerHTML=
-    '<div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
-    '<div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(totL)+'</div><div class="kpi-sub">'+fE(enc)+' encaissé</div></div>'+
-    '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
-    '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>'+
-    '<div class="kpi kc"><div class="kpi-lbl">Total des cautions</div><div class="kpi-val">'+fE(caut)+'</div><div class="kpi-sub">'+cautLgs.length+' logement'+(cautLgs.length>1?'s':'')+'</div></div>';
+    '<div class="kpi ka" id="dashkpi-logements"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
+    '<div class="kpi kg" id="dashkpi-loyers"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(totL)+'</div><div class="kpi-sub">'+fE(enc)+' encaissé</div></div>'+
+    '<div class="kpi kw" id="dashkpi-retards"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
+    '<div class="kpi kb" id="dashkpi-occupation"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>'+
+    '<div class="kpi kc" id="dashkpi-cautions"><div class="kpi-lbl">Total des cautions</div><div class="kpi-val">'+fE(caut)+'</div><div class="kpi-sub">'+cautLgs.length+' logement'+(cautLgs.length>1?'s':'')+'</div></div>';
   const al=[];
   // Count ALL unpaid months per locataire filtered by building
 const retardsByLc={};
@@ -1589,6 +1593,8 @@ Object.entries(retardsByLc).forEach(([lcId,pays])=>{
   const rec = selBatId ? pys.filter(p=>visLcIds.has(p.lcId)).slice(-8).reverse() : pys.slice(-8).reverse();
   document.getElementById('dPays').innerHTML=rec.length?rec.map(p=>{const l=gLc(p.lcId);return'<tr style="cursor:pointer" onclick="editPay(\''+p.id+'\')"><td>'+esc(lcFull(l))+'</td><td class="mono">'+ p.mois+'</td><td class="mono">'+fE(p.rec)+'</td><td>'+sBadge(p.stat)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:14px">Aucun paiement</td></tr>';
   document.getElementById('dUrg').innerHTML=urg.length?urg.map(e=>'<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')"><div class="mico" style="background:var(--wal)">🔴</div><div class="mb"><div class="mt">'+esc(e.tit)+'</div><div class="mm">'+esc(gLg(e.lgId).nom)+'</div></div><button class="btn btn-xs btn-s" onclick="event.stopPropagation();doneEnt(\''+e.id+'\')">✓</button></div>').join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Aucune urgence</div></div>';
+  // Affichage des cartes — applique les préférences de visibilité (opt-out).
+  if(window.cardPrefs)cardPrefs.apply();
 }
 
 // ═══ BÂTIMENTS ═══
@@ -4205,9 +4211,77 @@ function isFutureMois(m){return new Date(m+'-15')>new Date();}
 // ═══ DATA MANAGEMENT ═══
 function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
+// ═══════════════════════════════════════════════════════════════
+// AFFICHAGE DES CARTES — toggles de visibilité des blocs du dashboard
+// Modèle opt-out : ks_cardprefs stocke la liste des ids MASQUÉS ; un bloc
+// absent de la liste est visible → un nouveau bloc apparaît tout seul,
+// aucune migration. Visibilité globale (pas par profil). Clé NON isolée,
+// au même titre que ks_customfields. Module auto-contenu (IIFE).
+// Extensible : pour couvrir un autre écran, ajouter des entrées à
+// CP_BLOCKS (id stable) — le moteur ne change pas.
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  var CP_KEY='ks_cardprefs';
+  // Inventaire des blocs togglables du tableau de bord (id stable + libellé).
+  var CP_BLOCKS=[
+    {id:'dashkpi-logements',  label:'Indicateur — Logements'},
+    {id:'dashkpi-loyers',     label:'Indicateur — Loyers/mois'},
+    {id:'dashkpi-retards',    label:'Indicateur — Retards'},
+    {id:'dashkpi-occupation', label:'Indicateur — Occupation'},
+    {id:'dashkpi-cautions',   label:'Indicateur — Total des cautions'},
+    {id:'dashcard-alertes',   label:'Panneau — Alertes'},
+    {id:'dashcard-paiements', label:'Panneau — Paiements récents'},
+    {id:'dashcard-rappels',   label:'Panneau — Rappels'},
+    {id:'dashcard-urgences',  label:'Panneau — Urgences'}
+  ];
+  function cpLoad(){
+    try{ var r=JSON.parse(localStorage.getItem(CP_KEY)||'[]'); return Array.isArray(r)?r:[]; }
+    catch(e){ return []; }
+  }
+  function cpSave(arr){ try{ localStorage.setItem(CP_KEY,JSON.stringify(arr)); }catch(e){} }
+  // Applique l'état masqué/visible à chaque bloc présent dans le DOM.
+  // Défensif : un bloc absent (getElementById null) est simplement ignoré.
+  function cpApply(){
+    var hidden=cpLoad();
+    CP_BLOCKS.forEach(function(b){
+      var el=document.getElementById(b.id);
+      if(el) el.style.display=(hidden.indexOf(b.id)!==-1)?'none':'';
+    });
+  }
+  // Rend les cases à cocher dans la modale Réglages (#cardPrefsBox).
+  function cpRenderUI(){
+    var box=document.getElementById('cardPrefsBox');
+    if(!box) return;
+    var hidden=cpLoad();
+    box.innerHTML=CP_BLOCKS.map(function(b){
+      var on=hidden.indexOf(b.id)===-1;
+      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.77rem;cursor:pointer">'
+        +'<input type="checkbox" data-cpid="'+b.id+'" '+(on?'checked':'')
+        +' onchange="cardPrefs.toggle(this.getAttribute(\'data-cpid\'),this.checked)"'
+        +' style="width:15px;height:15px;cursor:pointer;accent-color:var(--ac);flex-shrink:0">'
+        +'<span>'+b.label+'</span></label>';
+    }).join('');
+  }
+  window.cardPrefs={
+    blocks:function(){ return CP_BLOCKS.slice(); },
+    hidden:cpLoad,
+    isVisible:function(id){ return cpLoad().indexOf(id)===-1; },  // opt-out : id inconnu = visible
+    apply:cpApply,
+    renderUI:cpRenderUI,
+    toggle:function(id,visible){
+      var h=cpLoad(), i=h.indexOf(id);
+      if(visible && i!==-1) h.splice(i,1);
+      else if(!visible && i===-1) h.push(id);
+      cpSave(h);
+      cpApply();
+    }
+  };
+})();
+
 function exportData(){
   const data={version:'3.2',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds,
-    customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})()};
+    customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
+    cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keystone-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
@@ -4233,6 +4307,7 @@ function importData(input){
       if(data.compteurs){cos=data.compteurs;sv('co',cos);}
       if(data.releves){rls=data.releves;sv('rl',rls);}
       if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
+      if(data.cardPrefs)localStorage.setItem('ks_cardprefs',JSON.stringify(data.cardPrefs));
       closeM('mData');rDash();alert('✅ Données importées !');
     }catch(err){alert('❌ Fichier invalide: '+err.message);}
   };reader.readAsText(file);
@@ -4242,6 +4317,7 @@ function openDataMgr(){
   document.getElementById('sPy').textContent=pys.length;document.getElementById('sRl').textContent=rls.length;
   fillBailleur();
   const _ap=document.getElementById('dataAiProxy');if(_ap)_ap.value=AI_PROXY_URL||'';
+  if(window.cardPrefs)cardPrefs.renderUI();
   openM('mData');
 }
 
@@ -5821,6 +5897,7 @@ async function driveLoad(){
     if(data.compteurs){cos=data.compteurs;sv('co',cos);}
     if(data.releves){rls=data.releves;sv('rl',rls);}
     if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
+    if(data.cardPrefs)localStorage.setItem('ks_cardprefs',JSON.stringify(data.cardPrefs));
     const ts=data.savedAt?new Date(data.savedAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
     syncBarShow('Synchronisé'+(ts?' — '+ts:''));
     // Re-inject real data (fixed IDs) in case Drive had empty arrays
@@ -5848,7 +5925,8 @@ async function driveSave(silent){
       credits:crs, charges:chs, depenses:dps,
       entretiens:ens, documents:dcs, rappels:rps,
       compteurs:cos, releves:rls, todos:tds,
-      customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})()
+      customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
+      cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})()
     });
     const fid=await driveGetFileId();
     let url, method;
