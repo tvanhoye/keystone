@@ -3773,11 +3773,29 @@ function editEnt(id){
   fillSels();
   setTimeout(()=>{document.getElementById('entTit').value=e.tit;document.getElementById('entPrio').value=e.prio;document.getElementById('entLog').value=e.lgId||'';document.getElementById('entDate').value=e.date||'';document.getElementById('entPrest').value=e.prest||'';document.getElementById('entCout').value=e.cout||'';document.getElementById('entDesc').value=e.desc||'';document.getElementById('mEnt').classList.add('open');setTimeout(()=>injectModalNav('mEnt'),50);},10);
 }
+// Chantier bâtiment — Phase 1 (modèle de données).
+// L'entité entretien peut désormais porter un champ OPTIONNEL `batId` (id de
+// bâtiment). Modèle polymorphe : cible = logement (lgId) OU bâtiment (batId).
+// Phase 1 ne pose que le schéma : aucun sélecteur dans la modale ; le champ
+// arrive via le hook window._pendingEntBatId que la Phase 2/3 (création
+// contextuelle depuis la fiche d'un bâtiment) posera juste avant openM('mEnt').
+// Sur édition d'une entrée existante portant déjà un batId, le spread
+// {...ens[i],...obj} le préserve automatiquement (obj ne contient pas batId
+// sauf si la Phase 2/3 l'injecte via le hook ci-dessous).
+// Les autres entités transactionnelles porteuses du même rôle (charges,
+// dépenses) ont déjà un champ `batId` historique alimenté par leurs select
+// chBat/dpBat — aucun changement n'y est nécessaire en Phase 1, la Phase 2/3
+// se contentera de pré-remplir ces select depuis le contexte.
 function saveEnt(){
   const tit=tr120(document.getElementById('entTit').value.trim());if(!tit){alert('Titre requis');return;}
   const eid=document.getElementById('entId').value;
   const obj={tit,prio:document.getElementById('entPrio').value,lgId:document.getElementById('entLog').value,date:document.getElementById('entDate').value,prest:document.getElementById('entPrest').value,cout:parseFloat(document.getElementById('entCout').value)||0,desc:document.getElementById('entDesc').value};
+  // Phase 1 — si un contexte d'ouverture a posé window._pendingEntBatId, on
+  // l'attache à l'entrée et on consomme la valeur. Dormant tant que la
+  // Phase 2/3 ne nourrit pas le hook.
+  if(window._pendingEntBatId){ obj.batId=window._pendingEntBatId; }
   if(eid){const i=ens.findIndex(x=>x.id===eid);ens[i]={...ens[i],...obj};}else{ens.push({id:uid(),...obj});}
+  window._pendingEntBatId=null;
   sv('en',ens);document.getElementById('entId').value='';document.getElementById('mEntT').textContent='Intervention';
   closeM('mEnt');rEnts(entF);
 }
