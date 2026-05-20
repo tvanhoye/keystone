@@ -570,6 +570,17 @@ tr[onclick]{cursor:pointer}
 body:has(#syncBar.show) .page { padding-bottom:52px!important; }
 body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
+/* Mobile — la syncBar (#syncBar, bottom:0, z-index:200) et la nav basse
+   (#mob-nav, bottom:0, z-index:100 en mobile) sont tous deux fixes en bas :
+   sans cette règle, la syncBar recouvre Accueil/Biens/Loyers/Compteurs/Plus.
+   On laisse la syncBar à bottom:0 et on remonte la nav basse au-dessus
+   d'elle (52px = hauteur réservée à la syncBar, cf. padding-bottom ci-dessus).
+   Le FAB suit pour rester au-dessus de la nav (66 px par défaut + 52). */
+@media(max-width:700px){
+  body:has(#syncBar.show) #mob-nav{ bottom:52px }
+  body:has(#syncBar.show) #mob-fab{ bottom:118px }
+}
+
 .sb-accordion{overflow:hidden;max-height:0;transition:max-height .25s ease}
 .sb-accordion.open{max-height:300px}
 .sb-item.sb-parent{display:flex;justify-content:space-between;align-items:center}
