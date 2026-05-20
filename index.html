@@ -6852,6 +6852,18 @@ function doLogin(profile){
 }
 
 function applyRoleRestrictions(){
+  // IDEMPOTENCE — réinitialiser tout élément masqué par un appel PRÉCÉDENT
+  // (sentinelle data-role-hidden). Sans cette remise à zéro, un masquage posé
+  // pour un rôle non admin (session Démo « lecture », ancien profil…) survit
+  // à un changement de profil : la branche masteradmin/admin sortait sans
+  // rien défaire — c'est ainsi que le bouton « ＋ Ajouter » restait caché en
+  // desktop sous profil admin après une session Démo dans le même onglet.
+  // Tous les masquages posés plus bas marquent l'élément avec data-role-hidden
+  // pour permettre cette remise à zéro propre.
+  document.querySelectorAll('[data-role-hidden]').forEach(el=>{
+    el.style.display='';
+    el.removeAttribute('data-role-hidden');
+  });
   if(!currentProfile) return;
   const role = currentProfile.role;
   if(role==='masteradmin'||role==='admin'){
@@ -6866,7 +6878,7 @@ function applyRoleRestrictions(){
     if(lb) lb.style.display='';
     // Project admin: hide masteradmin-only items
     if(role==='admin'){
-      document.querySelectorAll('[data-masteronly]').forEach(el=>el.style.display='none');
+      document.querySelectorAll('[data-masteronly]').forEach(el=>{el.style.display='none';el.setAttribute('data-role-hidden','1');});
     }
     return;
   }
@@ -6883,13 +6895,14 @@ function applyRoleRestrictions(){
   document.querySelectorAll('.sb-item[data-p]').forEach(item=>{
     const p = item.dataset.p;
     const permKey = pagePerms[p];
-    if(permKey && perms[permKey]===false) item.style.display='none';
+    if(permKey && perms[permKey]===false){ item.style.display='none'; item.setAttribute('data-role-hidden','1'); }
   });
 
-  // Hide add/edit/delete buttons
-  if(!perms.canDelete) document.querySelectorAll('.btn-d').forEach(b=>b.style.display='none');
-  if(!perms.canAdd) document.querySelectorAll('[onclick*="openM("]').forEach(b=>{ if(b.textContent.includes('＋')||b.textContent.includes('Ajouter')) b.style.display='none'; });
-  if(!perms.canEdit) document.querySelectorAll('.btn-s.btn-xs').forEach(b=>{ if(b.textContent.includes('✏')) b.style.display='none'; });
+  // Hide add/edit/delete buttons — chaque masquage marque data-role-hidden
+  // pour permettre la remise à zéro idempotente au prochain appel.
+  if(!perms.canDelete) document.querySelectorAll('.btn-d').forEach(b=>{b.style.display='none';b.setAttribute('data-role-hidden','1');});
+  if(!perms.canAdd) document.querySelectorAll('[onclick*="openM("]').forEach(b=>{ if(b.textContent.includes('＋')||b.textContent.includes('Ajouter')){ b.style.display='none'; b.setAttribute('data-role-hidden','1'); } });
+  if(!perms.canEdit) document.querySelectorAll('.btn-s.btn-xs').forEach(b=>{ if(b.textContent.includes('✏')){ b.style.display='none'; b.setAttribute('data-role-hidden','1'); } });
 
   // Show profile badge in topbar
   const tdate = document.getElementById('tdate');
