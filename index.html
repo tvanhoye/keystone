@@ -1513,6 +1513,27 @@ function sBadge(s){
   if(s==='travaux') return '<span class="badge bt">🚧 Travaux</span>';const m={payé:'bg',retard:'br',partiel:'bo'};return'<span class="badge '+(m[s]||'bx')+'"><span class="dot"></span>'+s+'</span>'}
 
 // ═══ DASHBOARD ═══
+// Compteur unifié des retards sur 3 mois glissants (mois courant + 2 précédents).
+// SOURCE UNIQUE alimentant à la fois le KPI « Retards » du dashboard et les
+// badges nav (bRet desktop, mobBR mobile) — pas de comptages divergents. On
+// compte les PAIEMENTS, pas les locataires (un locataire avec 3 mois d'arriéré
+// dans la fenêtre compte pour 3). Exclut les paiements classés « sans suite »
+// (abandonne). Le paramètre visLcIds (Set d'ids de locataires visibles) reflète
+// le filtre bâtiment du dashboard ; absent → compte tous les locataires.
+function retards3mCount(visLcIds){
+  const now=new Date();
+  const months=[];
+  for(let i=0;i<3;i++){
+    const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  return pys.filter(p =>
+    p.stat==='retard' &&
+    !p.abandonne &&
+    months.indexOf(p.mois)!==-1 &&
+    (!visLcIds || visLcIds.has(p.lcId))
+  ).length;
+}
 function rDash(){
   // ── Populate building filter ──
   const dashBatSel = document.getElementById('dashBatFilter');
@@ -1555,18 +1576,20 @@ function rDash(){
   const cautLgs=visLgs.filter(l=>occLgSet.has(l.id)&&(l.dep||0)>0);
   const caut=cautLgs.reduce((a,l)=>a+(l.dep||0),0);
   const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
-  // D.8 — un impayé « classé sans suite » (abandonne) ne compte plus comme
-  // retard/rappel. Il reste un montant non perçu (rec inchangé) ailleurs.
-  const ret=tmP.filter(p=>p.stat==='retard' && !p.abandonne).length;
+  // Compteur de retards sur 3 mois glissants — source unique (retards3mCount)
+  // pour le KPI et les badges. D.8 : un paiement classé « sans suite »
+  // (abandonne) est exclu. Cf. retards3mCount() pour le détail.
+  const ret=retards3mCount(visLcIds);
+  const retTitle=ret+' '+(ret>1?'loyers impayés':'loyer impayé')+' sur 3 mois glissants (mois courant + 2 précédents)';
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
-  const br=document.getElementById('bRet');if(br){br.textContent=ret;br.style.display=ret?'':'none';}
+  const br=document.getElementById('bRet');if(br){br.textContent=ret;br.title=retTitle;br.style.display=ret?'':'none';}
   // Badge "Loyers" de la nav mobile : même source que le badge desktop (bRet).
-  const mbr=document.getElementById('mobBR');if(mbr){mbr.textContent=ret;mbr.style.display=ret?'':'none';}
+  const mbr=document.getElementById('mobBR');if(mbr){mbr.textContent=ret;mbr.title=retTitle;mbr.style.display=ret?'':'none';}
   const bu=document.getElementById('bUrg');if(bu){bu.textContent=urg.length;bu.style.display=urg.length?'':'none';}
   document.getElementById('kpiG').innerHTML=
     '<div class="kpi ka" id="dashkpi-logements"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+tot+'</div><div class="kpi-sub">'+occ+' occupé'+(occ>1?'s':'')+'</div></div>'+
     '<div class="kpi kg" id="dashkpi-loyers"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(totL)+'</div><div class="kpi-sub">'+fE(enc)+' encaissé</div></div>'+
-    '<div class="kpi kw" id="dashkpi-retards"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">impayé'+(ret>1?'s':'')+'</div></div>'+
+    '<div class="kpi kw" id="dashkpi-retards" title="'+esc(retTitle)+'"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+ret+'</div><div class="kpi-sub">'+(ret>1?'impayés':'impayé')+' · 3 mois glissants</div></div>'+
     '<div class="kpi kb" id="dashkpi-occupation"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(tot?Math.round(occ/tot*100):0)+'%</div><div class="kpi-sub">'+(tot-occ)+' vacant'+(tot-occ>1?'s':'')+'</div></div>'+
     '<div class="kpi kc" id="dashkpi-cautions"><div class="kpi-lbl">Total des cautions</div><div class="kpi-val">'+fE(caut)+'</div><div class="kpi-sub">'+cautLgs.length+' logement'+(cautLgs.length>1?'s':'')+'</div></div>';
   const al=[];
