@@ -659,7 +659,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.27</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 19/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.28</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 20/05/2026</div></div>
 </aside>
 
 <div id="main">
@@ -731,6 +731,27 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="page" id="page-batiments">
       <div class="sh-row"><div><h2>Bâtiments</h2><p id="batCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mBat')">＋ Ajouter</button></div></div>
       <div id="batGrid"></div>
+    </div>
+
+    <!-- BÂTIMENT — fiche détail (Phase 2 chantier bâtiment) -->
+    <div class="page" id="page-batiment">
+      <div class="sh-row">
+        <div><h2 id="batDetailTitle">Fiche bâtiment</h2><p id="batDetailSub"></p></div>
+        <div class="sh-right">
+          <button class="btn" onclick="nav('batiments')">← Bâtiments</button>
+          <button class="btn btn-p" id="batDetailEditBtn">✏ Modifier</button>
+        </div>
+      </div>
+      <div id="batDetailKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px"></div>
+      <div id="batDetailHeader"></div>
+      <h3 style="font-size:.82rem;font-weight:700;margin:16px 0 8px">🏠 Logements</h3>
+      <div id="batDetailLgs"></div>
+      <h3 style="font-size:.82rem;font-weight:700;margin:16px 0 8px">📒 Charges récurrentes</h3>
+      <div id="batDetailChs"></div>
+      <h3 style="font-size:.82rem;font-weight:700;margin:16px 0 8px">💸 Dépenses ponctuelles</h3>
+      <div id="batDetailDps"></div>
+      <h3 style="font-size:.82rem;font-weight:700;margin:16px 0 8px">🚧 Entretien</h3>
+      <div id="batDetailEns"></div>
     </div>
 
     <!-- LOGEMENTS -->
@@ -1394,7 +1415,7 @@ function injectRealData(){
 }
 
 // ═══ NAVIGATION ═══
-const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',etude:'Étude de cas — simulateur de rentabilité',assistant:'Assistant IA',todo:'To-do list'};
+const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',batiment:'Fiche bâtiment',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',etude:'Étude de cas — simulateur de rentabilité',assistant:'Assistant IA',todo:'To-do list'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
 // v2.16 : ne déclenche nav() que si l'item porte un data-p. L'accordéon
@@ -1420,6 +1441,7 @@ function nav(p){
 function rP(p){
   if(p==='dashboard')rDash();
   else if(p==='batiments')rBats();
+  else if(p==='batiment')rBatDetail();
   else if(p==='logements')rLgs();
   else if(p==='locataires')rLcs();
   else if(p==='paiements'){
@@ -1545,6 +1567,34 @@ function retards3mCount(visLcIds){
     (!visLcIds || visLcIds.has(p.lcId))
   ).length;
 }
+// Chantier bâtiment — Phase 2 : extraction des KPI dans une fonction pure
+// réutilisable par rDash() (filtré par select) et rBatDetail() (fiche bâtiment).
+// batId falsy ('' / null / undefined) = portée globale (tous bâtiments).
+function computeKpisForBat(batId){
+  const visLgs = batId ? lgs.filter(l=>l.batId===batId) : lgs;
+  const visLgIds = new Set(visLgs.map(l=>l.id));
+  const visLcs = lcs.filter(l=>visLgIds.has(l.lgId));
+  const visLcIds = new Set(visLcs.map(l=>l.id));
+  const tm = tmth();
+  const tmP = pys.filter(p=>p.mois===tm && visLcIds.has(p.lcId));
+  const tot = visLgs.length;
+  // v2.14 finding #4 : occupation = logements DISTINCTS ayant un locataire actif
+  // aujourd'hui (pas le total des locataires — sinon les baux successifs gonflent
+  // le compte au-delà de 100%, ex 18 locataires / 14 logements = 129%).
+  const occLgSet = new Set(visLcs.filter(isActiveLc).map(l=>l.lgId));
+  const occ = occLgSet.size;
+  const totL = visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
+  // D.7 — total des cautions / dépôts de garantie effectivement détenus
+  // (logements occupés ; le dépôt est porté par le logement, champ `dep`).
+  const cautLgs = visLgs.filter(l=>occLgSet.has(l.id)&&(l.dep||0)>0);
+  const caut = cautLgs.reduce((a,l)=>a+(l.dep||0),0);
+  const enc = tmP.reduce((a,p)=>a+(p.rec||0),0);
+  // Compteur de retards sur 3 mois glissants — source unique (retards3mCount)
+  // pour le KPI et les badges. D.8 : un paiement classé « sans suite »
+  // (abandonne) est exclu. Cf. retards3mCount() pour le détail.
+  const ret = retards3mCount(visLcIds);
+  return {visLgs, visLgIds, visLcs, visLcIds, occLgSet, tot, occ, totL, cautLgs, caut, enc, ret};
+}
 function rDash(){
   // ── Populate building filter ──
   const dashBatSel = document.getElementById('dashBatFilter');
@@ -1557,11 +1607,12 @@ function rDash(){
   const selBatId = dashBatSel ? dashBatSel.value : '';
   const dashBatKpiEl = document.getElementById('dashBatKpi');
 
-  // ── Filter data by selected building ──
-  let visLgs = selBatId ? lgs.filter(l=>l.batId===selBatId) : lgs;
-  const visLgIds = new Set(visLgs.map(l=>l.id));
-  let visLcs = lcs.filter(l=>visLgIds.has(l.lgId));
-  const visLcIds = new Set(visLcs.map(l=>l.id));
+  // ── Filter data by selected building (via computeKpisForBat — source unique) ──
+  const k = computeKpisForBat(selBatId);
+  const visLgs = k.visLgs;
+  const visLgIds = k.visLgIds;
+  const visLcs = k.visLcs;
+  const visLcIds = k.visLcIds;
 
   if(dashBatKpiEl){
     if(selBatId){
@@ -1573,24 +1624,14 @@ function rDash(){
     }
   }
 
-  const tm=tmth();
-  const tmP=pys.filter(p=>p.mois===tm && visLcIds.has(p.lcId));
-  const tot=visLgs.length;
-  // v2.14 finding #4 : occupation = logements DISTINCTS ayant un locataire actif
-  // aujourd'hui (pas le total des locataires — sinon les baux successifs gonflent
-  // le compte au-delà de 100%, ex 18 locataires / 14 logements = 129%).
-  const occLgSet=new Set(visLcs.filter(isActiveLc).map(l=>l.lgId));
-  const occ=occLgSet.size;
-  const totL=visLgs.reduce((a,l)=>a+l.loyer+l.ch,0);
-  // D.7 — total des cautions / dépôts de garantie effectivement détenus
-  // (logements occupés ; le dépôt est porté par le logement, champ `dep`).
-  const cautLgs=visLgs.filter(l=>occLgSet.has(l.id)&&(l.dep||0)>0);
-  const caut=cautLgs.reduce((a,l)=>a+(l.dep||0),0);
-  const enc=tmP.reduce((a,p)=>a+(p.rec||0),0);
-  // Compteur de retards sur 3 mois glissants — source unique (retards3mCount)
-  // pour le KPI et les badges. D.8 : un paiement classé « sans suite »
-  // (abandonne) est exclu. Cf. retards3mCount() pour le détail.
-  const ret=retards3mCount(visLcIds);
+  const tot=k.tot;
+  const occLgSet=k.occLgSet;
+  const occ=k.occ;
+  const totL=k.totL;
+  const cautLgs=k.cautLgs;
+  const caut=k.caut;
+  const enc=k.enc;
+  const ret=k.ret;
   const retTitle=ret+' '+(ret>1?'loyers impayés':'loyer impayé')+' sur 3 mois glissants (mois courant + 2 précédents)';
   const urg=ens.filter(e=>e.prio==='urgent' && (!selBatId || visLgIds.has(e.lgId)||!e.lgId));
   const br=document.getElementById('bRet');if(br){br.textContent=ret;br.title=retTitle;br.style.display=ret?'':'none';}
@@ -1665,11 +1706,103 @@ function rBats(){
         </div>
       </div>
       ${b.notes?`<div style="font-size:.72rem;color:var(--t2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">${esc(b.notes)}</div>`:''}
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px">
+        <button class="btn btn-s btn-xs" onclick="event.stopPropagation();openBatDetail('${b.id}')" title="Ouvrir la fiche du bâtiment">📂 Fiche</button>
         <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delBat('${b.id}')">✕ Supprimer</button>
       </div>
     </div>`;
   }).join('');
+}
+
+// Chantier bâtiment — Phase 2 : fiche détaillée en lecture seule.
+// _batDetailId est posé par openBatDetail() avant nav('batiment') ;
+// rBatDetail() est appelé depuis rP('batiment').
+let _batDetailId = null;
+function openBatDetail(batId){ _batDetailId = batId; nav('batiment'); }
+function rBatDetail(){
+  // Garde-fou : sans contexte, retour à la liste.
+  if(!_batDetailId || !bats.find(x=>x.id===_batDetailId)){ nav('batiments'); return; }
+  const b = gBat(_batDetailId);
+  const k = computeKpisForBat(_batDetailId);
+
+  document.getElementById('batDetailTitle').textContent = '🏢 '+(b.nom||'—');
+  document.getElementById('batDetailSub').textContent = (b.addr||'')+(b.annee?' · Construction '+b.annee:'');
+  const eb = document.getElementById('batDetailEditBtn');
+  if(eb) eb.onclick = ()=>editBat(_batDetailId);
+
+  document.getElementById('batDetailKpis').innerHTML =
+    '<div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">'+k.tot+'</div><div class="kpi-sub">'+k.occ+' occupé'+(k.occ>1?'s':'')+'</div></div>'+
+    '<div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">'+(k.tot?Math.round(k.occ/k.tot*100):0)+'%</div><div class="kpi-sub">'+(k.tot-k.occ)+' vacant'+(k.tot-k.occ>1?'s':'')+'</div></div>'+
+    '<div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">'+fE(k.totL)+'</div><div class="kpi-sub">'+fE(k.enc)+' encaissé</div></div>'+
+    '<div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">'+k.ret+'</div><div class="kpi-sub">3 mois glissants</div></div>'+
+    '<div class="kpi kc"><div class="kpi-lbl">Cautions</div><div class="kpi-val">'+fE(k.caut)+'</div><div class="kpi-sub">'+k.cautLgs.length+' logement'+(k.cautLgs.length>1?'s':'')+'</div></div>';
+
+  document.getElementById('batDetailHeader').innerHTML = b.notes
+    ? '<div class="card" style="padding:10px 12px;margin-bottom:14px;font-size:.78rem;color:var(--t2)">'+esc(b.notes)+'</div>'
+    : '';
+
+  // Logements du bâtiment
+  const lgsBat = k.visLgs;
+  document.getElementById('batDetailLgs').innerHTML = lgsBat.length
+    ? '<div class="card">'+lgsBat.map(l=>{
+        const lcAct = lcs.find(lc=>lc.lgId===l.id && isActiveLc(lc));
+        const statTxt = lcAct ? '✅ '+esc(lcFull(lcAct)) : '⚪ Vacant';
+        return '<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editLg(\''+l.id+'\')">'+
+          '<div style="flex:1"><div style="font-weight:600;font-size:.8rem">🏠 '+esc(l.nom||l.id)+'</div><div style="font-size:.67rem;color:var(--t2)">'+statTxt+'</div></div>'+
+          '<div style="text-align:right;font-family:monospace;font-weight:700">'+fE((l.loyer||0)+(l.ch||0))+'<div style="font-size:.62rem;color:var(--t3);font-weight:400">/mois</div></div>'+
+        '</div>';
+      }).join('')+'</div>'
+    : '<div class="empty" style="padding:20px"><div style="font-size:.78rem;color:var(--t2)">Aucun logement.</div></div>';
+
+  // Charges récurrentes du bâtiment
+  const chsBat = chs.filter(c=>c.batId===_batDetailId);
+  document.getElementById('batDetailChs').innerHTML = chsBat.length
+    ? '<div class="card">'+chsBat.map(c=>{
+        const mensEq = c.freq==='mensuel'?c.montant:c.freq==='trimestriel'?c.montant/3:c.montant/12;
+        return '<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editCharge(\''+c.id+'\')">'+
+          '<div style="flex:1"><div style="font-weight:600;font-size:.8rem">'+esc(c.nom)+'</div><div style="font-size:.67rem;color:var(--t2)">'+esc(c.cat||'')+(c.freq?' · '+esc(c.freq):'')+'</div></div>'+
+          '<div style="text-align:right"><div style="font-weight:700;font-family:monospace">'+fE(c.montant)+'</div><div style="font-size:.62rem;color:var(--t3)">≈'+fE(Math.round(mensEq))+'/mois</div></div>'+
+          '<span class="badge '+(c.paye==='oui'?'bg':'bx')+'">'+(c.paye==='oui'?'✓':'En att.')+'</span>'+
+        '</div>';
+      }).join('')+'</div>'
+    : '<div class="empty" style="padding:20px"><div style="font-size:.78rem;color:var(--t2)">Aucune charge attribuée à ce bâtiment.</div></div>';
+
+  // Dépenses ponctuelles du bâtiment (tri date desc)
+  const dpsBat = dps.filter(d=>d.batId===_batDetailId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const totalDp = dpsBat.reduce((a,d)=>a+(d.montant||0),0);
+  document.getElementById('batDetailDps').innerHTML = dpsBat.length
+    ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px"><span style="font-size:.72rem;color:var(--t2)">'+dpsBat.length+' dépense'+(dpsBat.length>1?'s':'')+'</span><span style="font-weight:700;font-family:monospace;color:#c0392b">Total: '+fE(totalDp)+'</span></div>'+
+      '<div class="card">'+dpsBat.map(d=>{
+        return '<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editDepense(\''+d.id+'\')">'+
+          '<div style="flex:1"><div style="font-weight:600;font-size:.8rem">'+esc(d.nom)+'</div><div style="font-size:.67rem;color:var(--t2)">'+esc(d.cat||'')+(d.date?' · '+fD(d.date):'')+'</div></div>'+
+          '<div style="font-weight:700;font-family:monospace;color:#c0392b">'+fE(d.montant)+'</div>'+
+          '<span class="badge '+(d.paye==='oui'?'bg':'bx')+'">'+(d.paye==='oui'?'✓':'En att.')+'</span>'+
+        '</div>';
+      }).join('')+'</div>'
+    : '<div class="empty" style="padding:20px"><div style="font-size:.78rem;color:var(--t2)">Aucune dépense attribuée à ce bâtiment.</div></div>';
+
+  // Entretiens — polymorphisme : batId direct OU lgId d'un logement du bâtiment.
+  // Set dédup au cas où un entretien aurait à la fois batId et lgId pointant
+  // sur le même bâtiment (ne devrait pas arriver, défense en profondeur).
+  const lgIdsDuBat = k.visLgIds;
+  const ensBatMap = new Map();
+  ens.forEach(e=>{
+    if(e.batId===_batDetailId || (e.lgId && lgIdsDuBat.has(e.lgId))) ensBatMap.set(e.id, e);
+  });
+  const ensBat = Array.from(ensBatMap.values()).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  document.getElementById('batDetailEns').innerHTML = ensBat.length
+    ? ensBat.map(e=>{
+        const bg = ePBg[e.prio]||'var(--s2)';
+        const ico = ePIco[e.prio]||'🔧';
+        const cible = (e.batId===_batDetailId && !e.lgId)
+          ? '🏢 '+esc(b.nom||'')
+          : (e.lgId ? esc((gLg(e.lgId)||{nom:'—'}).nom) : '—');
+        return '<div class="mi" style="cursor:pointer" onclick="editEnt(\''+e.id+'\')">'+
+          '<div class="mico" style="background:'+bg+'">'+ico+'</div>'+
+          '<div class="mb"><div class="mt">'+esc(e.tit)+'</div><div class="mm">'+cible+(e.prest?' · '+esc(e.prest):'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+(e.date?fD(e.date):'')+(e.desc?' — '+esc(e.desc):'')+'</div></div>'+
+        '</div>';
+      }).join('')
+    : '<div class="empty" style="padding:20px"><div style="font-size:.78rem;color:var(--t2)">Aucun entretien lié à ce bâtiment.</div></div>';
 }
 
 function editBat(id){
