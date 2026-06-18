@@ -1,0 +1,10 @@
+# Secrets — JAMAIS commités
+.env.local
+.env*.local
+
+# Outillage local Claude Code
+.claude/
+
+# Fichiers de travail / sauvegardes temporaires
+*.bak
+diffB.txt

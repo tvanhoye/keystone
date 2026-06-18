@@ -659,7 +659,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.28</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 20/05/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.29</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 18/06/2026</div></div>
 </aside>
 
 <div id="main">
@@ -707,13 +707,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <span style="font-size:.72rem;color:var(--t2);font-weight:600">📊 Vue :</span>
-        <select id="dashBatFilter" onchange="rDash()" style="padding:5px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.78rem;background:var(--sf);cursor:pointer;outline:none">
-          <option value="">Tous les bâtiments</option>
-        </select>
-        <div id="dashBatKpi" style="display:none;font-size:.72rem;color:var(--ac);font-weight:700;padding:4px 10px;background:var(--acl);border-radius:20px"></div>
-      </div>
+      <div id="batViewBar_dash"></div>
       <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
       <div class="g21">
         <div>
@@ -756,6 +750,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- LOGEMENTS -->
     <div class="page" id="page-logements">
+      <div id="batViewBar_lgs"></div>
       <div class="sh-row">
   <div><h2>Logements</h2><p id="lgCnt"></p></div>
   <div class="sh-right">
@@ -772,6 +767,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- LOCATAIRES -->
     <div class="page" id="page-locataires">
+      <div id="batViewBar_lcs"></div>
       <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button id="btnOldLc" class="btn btn-s" onclick="toggleOldLc()">👥 Anciens locataires</button><button class="btn btn-p" onclick="openNewLoc()">＋ Ajouter</button></div></div>
       <div class="card"><div class="tblw"><table><thead><tr>
   <th style="cursor:pointer" onclick="sortLcs('nom')">Nom ↕</th>
@@ -786,6 +782,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- PAIEMENTS -->
     <div class="page" id="page-paiements">
+      <div id="batViewBar_pay"></div>
       <div class="sh-row">
         <div><h2>Loyers</h2></div>
         <div class="sh-right">
@@ -816,6 +813,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- CHARGES & COMPTEURS -->
     <div class="page" id="page-charges">
+      <div id="batViewBar_charges"></div>
       <div class="sh-row">
         <div><h2>Charges &amp; Compteurs</h2><p>Évolution des consommations</p></div>
         <div class="sh-right">
@@ -828,6 +826,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- BANQUE -->
     <div class="page" id="page-banque">
+      <div id="batViewBar_banque"></div>
       <div class="sh-row"><div><h2>Finances &amp; Dépenses</h2><p id="banqueCnt"></p></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mCredit')">＋ Emprunt</button><button class="btn btn-s" onclick="openM('mDepense')">＋ Dépense</button></div></div>
       <div class="tabs" id="banqueTabs"><button class="tab active" onclick="tabBanque('credits',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🚧 Emprunts</button><button class="tab" onclick="tabBanque('charges',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='none';})()">🔄 Charges récurrentes</button><button class="tab" onclick="tabBanque('depenses',this);(function(){const d=document.getElementById('depCatFilter');if(d)d.style.display='flex';})()">🧸 Dépenses</button></div>
     <div id="depCatFilter" style="display:none;flex-wrap:wrap;gap:6px;margin:8px 0">
@@ -845,6 +844,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- ENTRETIEN -->
     <div class="page" id="page-entretien">
+      <div id="batViewBar_ent"></div>
       <div class="sh-row"><div><h2>Entretien &amp; Maintenance</h2></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mEnt')">＋ Ajouter</button></div></div>
       <div class="tabs" id="entTabs"><button class="tab active" onclick="tabEnt('tous',this)">Tous</button><button class="tab" onclick="tabEnt('urgent',this)">Urgent</button><button class="tab" onclick="tabEnt('planifié',this)">Planifiés</button><button class="tab" onclick="tabEnt('terminé',this)">Terminés</button></div>
       <div id="entL"></div>
@@ -852,6 +852,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- DOCUMENTS -->
     <div class="page" id="page-documents">
+      <div id="batViewBar_doc"></div>
       <div class="sh-row"><div><h2>Documents</h2></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mDoc')">＋ Ajouter</button></div></div>
       <div class="tabs" id="docTabs"><button class="tab active" onclick="tabDoc('tous',this)">Tous</button><button class="tab" onclick="tabDoc('bail',this)">Baux</button><button class="tab" onclick="tabDoc('quittance',this)">Quittances</button><button class="tab" onclick="tabDoc('etat',this)">États des lieux</button><button class="tab" onclick="tabDoc('autre',this)">Autres</button></div>
       <div id="docL"></div>
@@ -859,6 +860,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 
     <!-- RAPPELS -->
     <div class="page" id="page-rappels">
+      <div id="batViewBar_rap"></div>
       <div class="sh-row"><div><h2>Rappels &amp; Échéances</h2></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mRap')">＋ Ajouter</button></div></div>
       <div id="rapL"></div>
     </div>
@@ -1595,17 +1597,103 @@ function computeKpisForBat(batId){
   const ret = retards3mCount(visLcIds);
   return {visLgs, visLgIds, visLcs, visLcIds, occLgSet, tot, occ, totL, cautLgs, caut, enc, ret};
 }
-function rDash(){
-  // ── Populate building filter ──
-  const dashBatSel = document.getElementById('dashBatFilter');
-  if(dashBatSel){
-    const cv = dashBatSel.value;
-    dashBatSel.innerHTML = '<option value="">Tous les bâtiments</option>' +
-      bats.map(b=>'<option value="'+b.id+'">'+(b.nom.length>28?b.nom.slice(0,28)+'…':b.nom)+'</option>').join('');
-    if(cv) dashBatSel.value = cv;
+
+// ═══ Chantier bâtiment — Phase 2 (UI) : sélecteur global « Vue par bâtiment » ═══
+// Un seul état partagé entre le dashboard et toutes les pages flat. Persisté
+// dans localStorage sous `ks_bat_view` (ou `_ksi_ks_bat_view` en session
+// isolée, pattern bailleur) et transporté par les 4 routines de sync. Valeur
+// par défaut '' = « Tous les bâtiments ». setBatView() re-rend la page
+// courante via rP(curP) pour que tous les sélecteurs et listes restent
+// synchrones, peu importe la page depuis laquelle le changement a été initié.
+function _batViewKey(){ return window._ksIsolated ? '_ksi_ks_bat_view' : 'ks_bat_view'; }
+function getBatView(){ return localStorage.getItem(_batViewKey()) || ''; }
+function setBatView(v){
+  if(v && bats.some(b=>b.id===v)) localStorage.setItem(_batViewKey(), v);
+  else localStorage.removeItem(_batViewKey());
+  // Bumper ks_last_local_change pour que la préférence voyage vers Drive,
+  // de la même façon que sv() le fait pour les collections de données.
+  if(!window._ksIsolated && !window._ksLoadingDrive){
+    localStorage.setItem('ks_last_local_change', String(Date.now()));
+    if(typeof driveTriggerSave === 'function') driveTriggerSave();
   }
-  const selBatId = dashBatSel ? dashBatSel.value : '';
-  const dashBatKpiEl = document.getElementById('dashBatKpi');
+  if(typeof rP === 'function' && typeof curP !== 'undefined') rP(curP);
+}
+// Génère le HTML de la barre. Pas de bâtiment → no-op (HTML vide).
+function batViewBarHTML(){
+  if(!bats.length) return '';
+  const cur = getBatView();
+  const opts = '<option value="">Tous les bâtiments</option>' +
+    bats.map(b => '<option value="'+b.id+'"'+(b.id===cur?' selected':'')+'>'+esc(b.nom.length>28?b.nom.slice(0,28)+'…':b.nom)+'</option>').join('');
+  const badge = cur ? (function(){
+    const b = bats.find(x=>x.id===cur);
+    return b ? '<div style="font-size:.72rem;color:var(--ac);font-weight:700;padding:4px 10px;background:var(--acl);border-radius:20px">🏢 '+esc(b.nom)+'</div>' : '';
+  })() : '';
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+    + '<span style="font-size:.72rem;color:var(--t2);font-weight:600">📊 Vue :</span>'
+    + '<select onchange="setBatView(this.value)" style="padding:5px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.78rem;background:var(--sf);cursor:pointer;outline:none">'
+    + opts
+    + '</select>'
+    + badge
+    + '</div>';
+}
+// Injecte la barre dans un container — no-op défensif si le markup est absent.
+function injectBatViewBar(containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = batViewBarHTML();
+}
+// ─── Helpers de filtrage par batId (cohérents avec computeKpisForBat) ───
+// batId falsy ('' / null / undefined) = pas de filtre (vue « Tous »).
+// Entité à champ batId direct + batId absent (legacy) → exclue d'une vue
+// spécifique, présente en « Tous ». Conforme à la règle Phase 1.
+function filterLgsByBat(batId){ return batId ? lgs.filter(l=>l.batId===batId) : lgs.slice(); }
+function filterLcsByBat(batId){
+  if(!batId) return lcs.slice();
+  const ids = new Set(lgs.filter(l=>l.batId===batId).map(l=>l.id));
+  return lcs.filter(c=>ids.has(c.lgId));
+}
+function filterPysByBat(batId){
+  if(!batId) return pys.slice();
+  const lcIds = new Set(filterLcsByBat(batId).map(c=>c.id));
+  return pys.filter(p=>lcIds.has(p.lcId));
+}
+function filterChsByBat(batId){ return batId ? chs.filter(c=>c.batId===batId) : chs.slice(); }
+function filterCrsByBat(batId){ return batId ? crs.filter(c=>c.batId===batId) : crs.slice(); }
+function filterDpsByBat(batId){ return batId ? dps.filter(d=>d.batId===batId) : dps.slice(); }
+// Entretien : polymorphe. e.batId direct OU e.lgId d'un logement du bâtiment.
+function filterEnsByBat(batId){
+  if(!batId) return ens.slice();
+  const lgIds = new Set(lgs.filter(l=>l.batId===batId).map(l=>l.id));
+  return ens.filter(e=>e.batId===batId || (e.lgId && lgIds.has(e.lgId)));
+}
+function filterDcsByBat(batId){
+  if(!batId) return dcs.slice();
+  const lcIds = new Set(filterLcsByBat(batId).map(c=>c.id));
+  return dcs.filter(d=>lcIds.has(d.lcId));
+}
+function filterRpsByBat(batId){
+  if(!batId) return rps.slice();
+  const lgIds = new Set(lgs.filter(l=>l.batId===batId).map(l=>l.id));
+  return rps.filter(r=>lgIds.has(r.lgId));
+}
+// Compteur : transitif via co.lgId → lg.batId (interprétation stricte du brief).
+function filterCosByBat(batId){
+  if(!batId) return cos.slice();
+  const lgIds = new Set(lgs.filter(l=>l.batId===batId).map(l=>l.id));
+  return cos.filter(c=>c.lgId && lgIds.has(c.lgId));
+}
+function filterRlsByBat(batId){
+  if(!batId) return rls.slice();
+  const coIds = new Set(filterCosByBat(batId).map(c=>c.id));
+  return rls.filter(r=>coIds.has(r.coId));
+}
+
+function rDash(){
+  // ── Sélecteur global « Vue par bâtiment » (Phase 2) ──
+  // Source unique : ks_bat_view (cf. helpers getBatView/setBatView). Le badge
+  // « 🏢 Bâtiment » est rendu dans la barre (plus de #dashBatKpi séparé).
+  injectBatViewBar('batViewBar_dash');
+  const selBatId = getBatView();
 
   // ── Filter data by selected building (via computeKpisForBat — source unique) ──
   const k = computeKpisForBat(selBatId);
@@ -1613,16 +1701,6 @@ function rDash(){
   const visLgIds = k.visLgIds;
   const visLcs = k.visLcs;
   const visLcIds = k.visLcIds;
-
-  if(dashBatKpiEl){
-    if(selBatId){
-      const bat = bats.find(b=>b.id===selBatId);
-      dashBatKpiEl.textContent = bat ? '🏢 '+bat.nom : '';
-      dashBatKpiEl.style.display = 'block';
-    } else {
-      dashBatKpiEl.style.display = 'none';
-    }
-  }
 
   const tot=k.tot;
   const occLgSet=k.occLgSet;
@@ -2044,6 +2122,8 @@ function setLgView(v){
 }
 
 function rLgs(){
+  injectBatViewBar('batViewBar_lgs');
+  const _batV = getBatView();
   document.getElementById('lgCnt').textContent=lgs.length+' logement'+(lgs.length>1?'s':'');
   const g=document.getElementById('lgGrid');
   if(!lgs.length){
@@ -2056,11 +2136,20 @@ function rLgs(){
     const access=getUserBatAccess(currentProfile.id);
     if(access&&access.length) lgs=lgs.filter(l=>!l.batId||access.includes(l.batId));
   }
+  // Phase 2 : filtre additif par bâtiment (legacy batId absent → exclu d'une
+  // vue spécifique, présent en « Tous »). Non destructif : pas de mutation de
+  // la collection globale `lgs`, contrairement au filtre d'accès ci-dessus.
+  const visLgs = _batV ? lgs.filter(l=>l.batId===_batV) : lgs;
+  if(!visLgs.length){
+    g.className='';
+    g.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Aucun logement pour ce bâtiment.</div></div>';
+    return;
+  }
   const v = lgView || 'grid';
 
   if(v==='list'){
     g.className='card';
-    g.innerHTML = lgs.map(l=>{
+    g.innerHTML = visLgs.map(l=>{
       const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));
       const cc=pCol[l.type]||'#555';
       return '<div class="lg-list-item" onclick="editLg(\''+l.id+'\')">'+
@@ -2081,7 +2170,7 @@ function rLgs(){
     g.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+
       '<th>Logement</th><th>Locataire</th><th>Surface</th><th>Loyer CC</th><th>Statut</th><th></th>'+
       '</tr></thead><tbody>'+
-      lgs.map(l=>{
+      visLgs.map(l=>{
         const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));
         return '<tr style="cursor:pointer" onclick="editLg(\''+l.id+'\')">'+
           '<td><strong>'+esc(l.nom)+'</strong>'+(l.batId?'<div style="font-size:.62rem;color:var(--ac)">'+esc(gBat(l.batId).nom)+'</div>':'')+'</td>'+
@@ -2096,7 +2185,7 @@ function rLgs(){
   } else {
     // Grid view (default)
     g.className='pg';
-    g.innerHTML=lgs.map(l=>{
+    g.innerHTML=visLgs.map(l=>{
       const lc=lcs.find(x=>x.lgId===l.id&&isActiveLc(x));const cc=pCol[l.type]||'#555';
       const _travauxNow = !lc && isTravauxNow(l);
       const _statusLine = lc ? '👤 '+esc(lcFull(lc)) : (_travauxNow ? '🚧 En travaux' : '<em>Vacant</em>');
@@ -2337,6 +2426,8 @@ function isActiveLc(l){
 
 function rLcs(f){
   if(f!==undefined)lcFilter=f;
+  injectBatViewBar('batViewBar_lcs');
+  const _batV = getBatView();
   // Filter by building access
   let lcsFiltered = lcs;
   if(currentProfile&&currentProfile.role!=='admin'){
@@ -2345,6 +2436,12 @@ function rLcs(f){
       const accessLgIds=lgs.filter(l=>access.includes(l.batId)).map(l=>l.id);
       lcsFiltered=lcs.filter(l=>accessLgIds.includes(l.lgId));
     }
+  }
+  // Phase 2 : filtre additif par bâtiment (transitif via lg.batId). Un
+  // locataire dont le logement n'a pas de batId est exclu d'une vue spécifique.
+  if(_batV){
+    const visLgIds = new Set(lgs.filter(l=>l.batId===_batV).map(l=>l.id));
+    lcsFiltered = lcsFiltered.filter(l=>visLgIds.has(l.lgId));
   }
   let list = showOldLc ? lcsFiltered : lcsFiltered.filter(l=>isActiveLc(l));
   if(lcFilter) list = list.filter(l=>(lcFull(l)+gLg(l.lgId).nom).toLowerCase().includes(lcFilter.toLowerCase()));
@@ -2458,6 +2555,11 @@ function shiftPayGrid(dir){const _kn=new Date();const _kf=new Date(_kn.getFullYe
 }
 
 function renderPayGrid(){
+  injectBatViewBar('batViewBar_pay');
+  const _batV = getBatView();
+  // Phase 2 : grille des logements restreinte au bâtiment sélectionné. Un
+  // logement sans batId est exclu d'une vue spécifique.
+  const visLgsGrid = _batV ? lgs.filter(l=>l.batId===_batV) : lgs;
   const MONTHS = 6;
   const now = new Date();
   const cols = [];
@@ -2470,7 +2572,7 @@ function renderPayGrid(){
   }
   document.getElementById('payGridLabel').textContent = cols[0].lbl+' → '+cols[cols.length-1].lbl;
 
-  // Build rows per logement — toujours afficher TOUS les logements.
+  // Build rows per logement — toujours afficher TOUS les logements visibles.
   // Pour chaque logement, ne prendre que les locataires qui chevauchent la période visible.
   // Si N (>1) locataires successifs → N sous-lignes en hauteur réduite (class pg-subrow).
   // Si 0 → 1 ligne avec cellules vides (vacant / travaux).
@@ -2478,7 +2580,7 @@ function renderPayGrid(){
   const periodEndKey = cols[cols.length-1].key;
   const periodEnd = new Date(periodEndKey.split('-')[0], parseInt(periodEndKey.split('-')[1]), 0);
   const rows = [];
-  lgs.slice().sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(lg=>{
+  visLgsGrid.slice().sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(lg=>{
     const lgLcsPeriod = lcs
       .filter(l => l.lgId === lg.id)
       .filter(l => {
@@ -2503,11 +2605,11 @@ function renderPayGrid(){
     }
   });
 
-  // Pre-compute monthly totals
+  // Pre-compute monthly totals — restreint au sous-ensemble visible.
   const mTotals = {}; // key -> {du, recu, nb}
   cols.forEach(col=>{
     let du=0, recu=0, nb=0;
-    lgs.forEach(lg=>{
+    visLgsGrid.forEach(lg=>{
       const lgLcs2 = lcs.filter(l=>l.lgId===lg.id);
       const activeLc2 = lgLcs2.find(l=>{
         const ent=l.ent?new Date(l.ent):null;
@@ -3132,6 +3234,8 @@ function buildSVGChart(grouped, comp, chartType, colMain, colLight, coId){
 }
 
 function rCharges(){
+  injectBatViewBar('batViewBar_charges');
+  const _batV = getBatView();
   // Refresh compteur list in modal
   const cl=document.getElementById('compList');
   if(cl)cl.innerHTML=cos.length?cos.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:.8rem"><span>${cIco[c.type]||'📊'}</span><span style="flex:1;font-weight:600">${esc(c.nom)}</span><span style="font-size:.69rem;color:var(--t3)">${esc(c.unit)}</span><button class="btn btn-d btn-xs" onclick="delComp('${c.id}')">✕</button></div>`).join(''):'<p style="font-size:.77rem;color:var(--t3)">Aucun compteur</p>';
@@ -3148,6 +3252,13 @@ function rCharges(){
       renderCos=cos.filter(comp=>!comp.lgId||accLgIds.includes(comp.lgId));
     }
   }
+  // Phase 2 : filtre additif par bâtiment (transitif via co.lgId → lg.batId).
+  // Un compteur sans lgId (collectif non scopé) est exclu d'une vue spécifique.
+  if(_batV){
+    const visLgIds = new Set(lgs.filter(l=>l.batId===_batV).map(l=>l.id));
+    renderCos = renderCos.filter(c=>c.lgId && visLgIds.has(c.lgId));
+  }
+  if(!renderCos.length){cont.innerHTML='<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">Aucun compteur pour ce bâtiment.</div></div>';return;}
   cont.innerHTML=renderCos.map(comp=>{
     const uUnit=esc(comp.unit), uNom=esc(comp.nom), uNotes=esc(comp.notes||'');
     const cRels=rls.filter(r=>r.coId===comp.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -3656,8 +3767,9 @@ function creditReste(cr){
   return Math.max(0,Math.round(bal));
 }
 function renderCreditsTab(){
-  if(!crs.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucun cr&eacute;dit.</div></div>';
-  return '<div class="card">'+crs.map(cr=>{
+  const visCrs = filterCrsByBat(getBatView());
+  if(!visCrs.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucun cr&eacute;dit.</div></div>';
+  return '<div class="card">'+visCrs.map(cr=>{
     const bat=gBat(cr.batId);
     const reste=creditReste(cr);
     const pct=cr.capital>0?Math.round((1-reste/cr.capital)*100):0;
@@ -3675,8 +3787,9 @@ function renderCreditsTab(){
     </div>`; }).join('')+'</div>';
 }
 function renderChargesTab(){
-  if(!chs.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucune charge.</div></div>';
-  return '<div class="card">'+chs.map(ch=>{
+  const visChs = filterChsByBat(getBatView());
+  if(!visChs.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucune charge.</div></div>';
+  return '<div class="card">'+visChs.map(ch=>{
     const bat=gBat(ch.batId);
     const mensEq=ch.freq==='mensuel'?ch.montant:ch.freq==='trimestriel'?ch.montant/3:ch.montant/12;
     return `<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editCharge('${ch.id}')">
@@ -3687,10 +3800,11 @@ function renderChargesTab(){
     </div>`; }).join('')+'</div>';
 }
 function renderDepensesTab(){
-  if(!dps.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucune d&eacute;pense.</div></div>';
-  const sorted=[...dps].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const total=dps.reduce((a,d)=>a+d.montant,0);
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px"><span style="font-size:.72rem;color:var(--t2)">${dps.length} dépense${dps.length>1?'s':''}</span><span style="font-weight:700;font-family:monospace;color:#c0392b">Total: ${fE(total)}</span></div>`
+  const visDps = filterDpsByBat(getBatView());
+  if(!visDps.length) return '<div class="empty" style="padding:40px"><div style="font-size:.82rem;color:var(--t2)">Aucune d&eacute;pense.</div></div>';
+  const sorted=[...visDps].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=visDps.reduce((a,d)=>a+d.montant,0);
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px"><span style="font-size:.72rem;color:var(--t2)">${visDps.length} dépense${visDps.length>1?'s':''}</span><span style="font-weight:700;font-family:monospace;color:#c0392b">Total: ${fE(total)}</span></div>`
     +'<div class="card">'+sorted.map(dp=>{
     const bat=gBat(dp.batId);
     return `<div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="editDepense('${dp.id}')">
@@ -3702,18 +3816,27 @@ function renderDepensesTab(){
 }
 
 function rBanque(){
+  injectBatViewBar('batViewBar_banque');
+  // Phase 2 : filtres additifs par bâtiment pour les KPIs cashflow.
+  // batId direct sur crs/chs/dps → legacy (batId vide) exclu d'une vue spécifique.
+  // Les listes (rBanqueTab) appliquent leur propre filtre via les helpers.
+  const _batV = getBatView();
+  const visCrs = filterCrsByBat(_batV);
+  const visChs = filterChsByBat(_batV);
+  const visLgs = filterLgsByBat(_batV);
+
   // Populate bat selectors
   ['crBat','chBat','dpBat'].forEach(sid=>{
     const sel=document.getElementById(sid);
     if(sel){ sel.innerHTML='<option value="">Général / Tous bâtiments</option>'+bats.map(b=>`<option value="${b.id}">${esc(b.nom)}</option>`).join(''); }
   });
 
-  const totalMens = crs.reduce((a,cr)=>a+cr.mens,0);
-  const totalChargesMens = chs.reduce((a,ch)=>a+(ch.freq==='mensuel'?ch.montant:ch.freq==='trimestriel'?ch.montant/3:ch.montant/12),0);
-  const totalLoyers = lgs.reduce((a,l)=>a+(l.loyer+l.ch),0);
+  const totalMens = visCrs.reduce((a,cr)=>a+cr.mens,0);
+  const totalChargesMens = visChs.reduce((a,ch)=>a+(ch.freq==='mensuel'?ch.montant:ch.freq==='trimestriel'?ch.montant/3:ch.montant/12),0);
+  const totalLoyers = visLgs.reduce((a,l)=>a+(l.loyer+l.ch),0);
   const cashflow = totalLoyers - totalMens - totalChargesMens;
 
-  document.getElementById('banqueCnt').textContent = `${crs.length} crédit${crs.length>1?'s':''} · ${chs.length} charge${chs.length>1?'s':''}`;
+  document.getElementById('banqueCnt').textContent = `${visCrs.length} crédit${visCrs.length>1?'s':''} · ${visChs.length} charge${visChs.length>1?'s':''}`;
 
   // Summary cards
   document.getElementById('banqueCharts').innerHTML = `
@@ -3894,7 +4017,13 @@ const ePBg={urgent:'var(--wal)',planifié:'var(--gol)',terminé:'var(--acl)'};
 const ePIco={urgent:'🔴',planifié:'🟡',terminé:'🟢'};
 function rEnts(f){
   entF=f;
-  let list=f==='tous'?ens:ens.filter(e=>e.prio===f);
+  injectBatViewBar('batViewBar_ent');
+  const _batV = getBatView();
+  // Phase 2 : filtre additif polymorphe. Une entrée matche si e.batId pointe
+  // sur le bâtiment OU si e.lgId pointe sur un logement de ce bâtiment.
+  // Une entrée sans batId NI lgId qualifiant est exclue d'une vue spécifique.
+  const ensV = filterEnsByBat(_batV);
+  let list=f==='tous'?ensV:ensV.filter(e=>e.prio===f);
   const cont=document.getElementById('entL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Aucune intervention</div></div>';return;}
   cont.innerHTML=list.map(e=>'<div class="mi" onclick="editEnt(\''+e.id+'\')" style="cursor:pointer"><div class="mico" style="background:'+(ePBg[e.prio]||'var(--s2)')+'">'+(ePIco[e.prio]||'🔧')+'</div><div class="mb"><div class="mt">'+esc(e.tit)+'</div><div class="mm">'+esc(gLg(e.lgId).nom)+(e.prest?' · '+esc(e.prest):'')+(e.cout?' · '+fE(e.cout):'')+'</div><div class="mf">'+fD(e.date)+(e.desc?' — '+esc(e.desc):'')+'</div></div><div class="mac">'+(e.prio!=='terminé'?'<button class="btn btn-xs btn-s" onclick="doneEnt(\''+e.id+'\')">✓</button>':'')+'<button class="btn btn-xs btn-s" onclick="editEnt(\''+e.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delEnt(\''+e.id+'\')">✕</button></div></div>').join('');
@@ -3938,7 +4067,13 @@ function delEnt(id){if(!confirm('Supprimer ?'))return;ens=ens.filter(e=>e.id!==i
 // ═══ DOCUMENTS ═══
 const dIco={bail:'📋',quittance:'🧾',etat:'📷',autre:'📎'};
 function rDocs(f){
-  docF=f;let list=f==='tous'?dcs:dcs.filter(d=>d.type===f);
+  docF=f;
+  injectBatViewBar('batViewBar_doc');
+  // Phase 2 : filtre additif via dc.lcId → lc.lgId → lg.batId. Document sans
+  // lcId (ou rattaché à un locataire dont le logement n'a pas de batId) exclu
+  // d'une vue spécifique.
+  const dcsV = filterDcsByBat(getBatView());
+  let list=f==='tous'?dcsV:dcsV.filter(d=>d.type===f);
   const cont=document.getElementById('docL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">Aucun document</div></div>';return;}
   cont.innerHTML=list.map(d=>{const l=gLc(d.lcId);return'<div class="di" onclick="editDoc(\''+d.id+'\')"><span style="font-size:1.35rem">'+(dIco[d.type]||'📎')+'</span><div style="flex:1"><div style="font-weight:600;font-size:.79rem">'+esc(d.nom)+'</div><div style="font-size:.67rem;color:var(--t2)">'+d.type+(l?' · '+esc(lcFull(l)):'')+(d.date?' · '+fD(d.date):'')+'</div></div><button class="btn btn-xs btn-s" onclick="editDoc(\''+d.id+'\')">✏</button><button class="btn btn-xs btn-d" onclick="delDoc(\''+d.id+'\');event.stopPropagation()">✕</button></div>';}).join('');
@@ -3960,7 +4095,10 @@ function delDoc(id){if(!confirm('Supprimer ?'))return;dcs=dcs.filter(d=>d.id!==i
 
 // ═══ RAPPELS ═══
 function rRaps(){
-  const list=rps.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  injectBatViewBar('batViewBar_rap');
+  // Phase 2 : filtre additif via rp.lgId → lg.batId. Rappel sans lgId exclu
+  // d'une vue spécifique.
+  const list=filterRpsByBat(getBatView()).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const cont=document.getElementById('rapL');
   if(!list.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">Aucun rappel</div></div>';return;}
   cont.innerHTML=list.map(r=>{
@@ -4486,7 +4624,10 @@ function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;c
 function exportData(){
   const data={version:'3.2',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds,
     customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
-    cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})()};
+    cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})(),
+    // Phase 2 chantier bâtiment : la préférence « Vue par bâtiment » voyage
+    // avec les données pour suivre l'utilisateur entre ses appareils.
+    ks_bat_view: localStorage.getItem(_batViewKey())||''};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keystone-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
@@ -4513,6 +4654,11 @@ function importData(input){
       if(data.releves){rls=data.releves;sv('rl',rls);}
       if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
       if(data.cardPrefs)localStorage.setItem('ks_cardprefs',JSON.stringify(data.cardPrefs));
+      // Phase 2 : restaurer la préférence « Vue par bâtiment ».
+      if(data.ks_bat_view!==undefined){
+        if(data.ks_bat_view) localStorage.setItem(_batViewKey(),data.ks_bat_view);
+        else localStorage.removeItem(_batViewKey());
+      }
       closeM('mData');rDash();alert('✅ Données importées !');
     }catch(err){alert('❌ Fichier invalide: '+err.message);}
   };reader.readAsText(file);
@@ -6143,6 +6289,13 @@ async function driveLoad(forcePull){
     if(data.releves){rls=data.releves;sv('rl',rls);}
     if(data.customFields)localStorage.setItem('ks_customfields',JSON.stringify(data.customFields));
     if(data.cardPrefs)localStorage.setItem('ks_cardprefs',JSON.stringify(data.cardPrefs));
+    // Phase 2 : restaurer la préférence « Vue par bâtiment » envoyée par Drive.
+    // driveLoad est court-circuité en mode isolé (return en tête), donc on
+    // écrit la vraie clé `ks_bat_view` sans risque de contamination iso.
+    if(data.ks_bat_view!==undefined){
+      if(data.ks_bat_view) localStorage.setItem('ks_bat_view',data.ks_bat_view);
+      else localStorage.removeItem('ks_bat_view');
+    }
     // Pull appliqué : local == Drive → on est synchronisés à cet instant.
     // Indispensable pour que l'arbitrage des boots suivants ne signale pas un
     // faux conflit après une mise à jour légitime venue d'un autre appareil.
@@ -6182,7 +6335,11 @@ async function driveSave(silent){
       entretiens:ens, documents:dcs, rappels:rps,
       compteurs:cos, releves:rls, todos:tds,
       customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
-      cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})()
+      cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})(),
+      // Phase 2 chantier bâtiment : préférence « Vue par bâtiment ».
+      // driveSave est court-circuité en mode isolé → on lit directement la
+      // vraie clé `ks_bat_view`, pas le proxy iso.
+      ks_bat_view: localStorage.getItem('ks_bat_view')||''
     });
     const fid=await driveGetFileId();
     let url, method;
@@ -8106,7 +8263,11 @@ function reprendreImpaye(idsCsv){
 }
 function rPays(f){
   payF=f||'tous';
-  const activeLcIds=new Set(lcs.map(l=>l.id));
+  injectBatViewBar('batViewBar_pay');
+  const _batV=getBatView();
+  // Phase 2 : filtre additif via py.lcId → lc.lgId → lg.batId. Paiement d'un
+  // locataire sans lgId qualifiant exclu d'une vue spécifique.
+  const activeLcIds=new Set((_batV?filterLcsByBat(_batV):lcs).map(l=>l.id));
   let list=(payF==='tous'?pys.filter(p=>activeLcIds.has(p.lcId)):pys.filter(p=>p.stat===payF&&activeLcIds.has(p.lcId)));
   const tb=document.getElementById('payTbl');
   if(!tb) return;
