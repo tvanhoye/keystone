@@ -4,6 +4,12 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
+## v2.30 — 2026-06-21 — `d6e661e`
+- **Étude de cas** : défaut « charges annuelles non récupérables » abaissé
+  **1400 → 600 €/an** (1400 supposait copropriété + agence, ~14 % du loyer ;
+  600 € est réaliste pour un bien auto-géré). Aligne le défaut retenu côté
+  **foundation** (`keystone.batiq.eu`). Calcul inchangé, simple ajustement de valeur.
+
 ## v2.29 — 2026-06-18 — `e15a28f`
 - Chantier « bâtiment » Phase 2 (UI) : **sélecteur global « Vue par bâtiment »**.
 

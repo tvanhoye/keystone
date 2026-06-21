@@ -5,15 +5,19 @@
 > des coordonnées (repo, branche, domaine), voir `CLAUDE_SYNC.md`. Pour les
 > demandes entrantes de Claude, voir `CLAUDE_NOTES.md`.
 
-*Dernière réécriture : 2026-06-20.*
+*Dernière réécriture : 2026-06-21.*
 
 ## VERSION ACTUELLE EN PROD
-- **Footer : `Keystone v2.29`**
-- **SHA déployé : `e15a28f`** (branche `main`, servie par GitHub Pages)
-- **Date du commit déployé : 2026-06-18**
+- **Footer : `Keystone v2.30`**
+- **SHA déployé : `d6e661e`** (branche `main`, servie par GitHub Pages ; le commit de
+  doc qui suit ne modifie pas l'app)
+- **Date du commit déployé : 2026-06-21**
 - URL : https://tvanhoye.github.io/keystone/
 
 ## DERNIER TRAVAIL POUSSÉ
+- **v2.30** — Maintenance corrective : étude de cas, défaut « charges non
+  récupérables » **1400 → 600 €/an** (aligne le défaut foundation ; calcul inchangé).
+
 Chantier « bâtiment » (regroupement des logements par immeuble) :
 - **v2.29** — Phase 2 (UI) : **sélecteur global « Vue par bâtiment »**.
 - v2.28 — Phase 2 : fiche bâtiment en **lecture seule**.
