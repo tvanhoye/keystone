@@ -18,9 +18,11 @@
   actions « Bail », « Loyer » et « Fiche » libellées.
 - **Fil conducteur** : après l'enregistrement d'un locataire, le bail est
   proposé ; après le téléchargement du bail, l'état des lieux d'entrée.
-- **Traçabilité** : le document généré est référencé dans **Documents** — la
-  page restait vide même après génération — et le locataire porte un badge
-  « Bail généré ».
+- **Traçabilité** : le document généré est référencé dans **Documents**. La
+  génération n'y laissait aucune trace : un bail sorti de Keystone devait être
+  ré-encodé à la main via « ＋ Ajouter » pour apparaître au dossier. Le
+  locataire porte désormais un badge « Bail généré », qui reconnaît aussi les
+  baux déjà référencés manuellement (rattachement par `lcId`).
 - **Correctif** : `openPayFor()`, appelée par le bouton 💶 de la liste des
   locataires, n'existait pas ; le clic levait une `ReferenceError`. La
   fonction ouvre désormais la saisie de paiement pré-remplie (locataire,
