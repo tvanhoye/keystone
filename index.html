@@ -255,7 +255,10 @@ tr[onclick]{cursor:pointer}
 
   /* ── BOTTOM NAV ── */
   #mob-nav{display:block;position:fixed;bottom:0;left:0;right:0;z-index:100}
-  #mob-fab{display:flex;bottom:66px;right:14px;width:46px;height:46px;font-size:1.3rem}
+  /* FAB étendu : un « ＋ » seul n'annonce pas ce qu'il crée, et son action
+     change selon la page. On affiche donc le libellé (cf. FAB_ACTIONS). */
+  #mob-fab{display:flex;bottom:66px;right:14px;width:auto;min-width:46px;height:46px;
+    border-radius:23px;padding:0 15px;gap:6px;font-size:.82rem;font-weight:700}
   .mn-item{font-size:.58rem}
   .mn-item .mn-ico{font-size:1.15rem}
 
@@ -385,6 +388,55 @@ tr[onclick]{cursor:pointer}
 
   /* ── DOC ITEMS ── */
   .di{padding:8px 10px;gap:8px}
+}
+
+/* ── HUB D'ACTIONS (mobile) ──
+   Sur téléphone, l'accueil doit répondre à une seule question : « où je clique
+   pour faire ce que je veux faire ». D'où deux blocs en tête de tableau de
+   bord — ce qui attend une action, puis les actions courantes — et des
+   libellés en toutes lettres plutôt que des pictogrammes seuls. Masqué
+   au-dessus de 700px : le menu latéral joue déjà ce rôle en desktop. */
+#mobHub{display:none;margin-bottom:14px}
+.hub-sec{font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;color:var(--t3);font-weight:700;margin:0 2px 6px}
+.hub-sec:not(:first-child){margin-top:14px}
+.hub-todo{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;text-align:left;
+  background:var(--sf);border:1px solid var(--bd);border-left:3px solid var(--ac);border-radius:var(--rs);
+  padding:10px 12px;margin-bottom:6px;font-family:inherit;color:var(--tx);box-shadow:var(--sh);cursor:pointer}
+.hub-todo:active{background:var(--s2)}
+.hub-todo.warn{border-left-color:var(--wa)}
+.hub-todo.gold{border-left-color:var(--go)}
+.hub-ico{font-size:1.2rem;flex-shrink:0;width:22px;text-align:center}
+.hub-txt{flex:1;min-width:0}
+.hub-t{display:block;font-size:.79rem;font-weight:700;line-height:1.25}
+.hub-s{display:block;font-size:.68rem;color:var(--t2);margin-top:2px;line-height:1.25}
+.hub-go{color:var(--t3);font-size:.95rem;flex-shrink:0}
+.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hub-tile{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;
+  min-height:70px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:11px 12px;
+  font-family:inherit;text-align:left;box-shadow:var(--sh);cursor:pointer}
+.hub-tile:active{background:var(--s2);transform:scale(.98)}
+.hub-tico{font-size:1.3rem;line-height:1}
+.hub-tlbl{font-size:.76rem;font-weight:700;color:var(--tx);line-height:1.2}
+
+/* ── LOCATAIRES EN CARTES (mobile) ──
+   Le tableau des locataires déborde de l'écran (7 colonnes) : les boutons
+   d'action se retrouvent hors champ, à 19px de côté. Sur mobile on rend donc
+   une carte par locataire, avec des actions libellées et cliquables au pouce. */
+#lcCards{display:none}
+.lc-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:11px 12px;margin-bottom:8px}
+.lc-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.lc-nom{font-size:.85rem;font-weight:800;line-height:1.2}
+.lc-sub{font-size:.7rem;color:var(--t2);margin-top:3px;line-height:1.35}
+.lc-acts{display:flex;gap:6px;margin-top:10px}
+.lc-acts .btn{flex:1;justify-content:center;min-height:38px;font-size:.74rem}
+
+/* Bascule mobile — placée ici, après les règles de base : à spécificité égale
+   c'est la dernière déclarée qui gagne, une surcharge dans le bloc @media plus
+   haut dans la feuille serait sans effet. */
+@media(max-width:700px){
+  #mobHub{display:block}
+  #lcCards{display:block}
+  #lcTableCard{display:none}
 }
 
 /* ── SAFE AREA ── */
@@ -666,7 +718,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.31</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 25/07/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.32</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 25/07/2026</div></div>
 </aside>
 
 <div id="main">
@@ -715,6 +767,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div id="batViewBar_dash"></div>
+      <div id="mobHub"></div>
       <div class="kpi-g" id="kpiG"><div class="kpi ka"><div class="kpi-lbl">Logements</div><div class="kpi-val">14</div><div class="kpi-sub">13 occupés</div></div><div class="kpi kg"><div class="kpi-lbl">Loyers/mois</div><div class="kpi-val">7 386€</div><div class="kpi-sub">0€ encaissé</div></div><div class="kpi kw"><div class="kpi-lbl">Retards</div><div class="kpi-val">0</div><div class="kpi-sub">impayé</div></div><div class="kpi kb"><div class="kpi-lbl">Occupation</div><div class="kpi-val">93%</div><div class="kpi-sub">1 vacant</div></div></div>
       <div class="g21">
         <div>
@@ -776,7 +829,8 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="page" id="page-locataires">
       <div id="batViewBar_lcs"></div>
       <div class="sh-row"><div><h2>Locataires</h2><p id="lcCnt"></p></div><div class="sh-right"><div class="srch"><span>🔍</span><input type="text" placeholder="Rechercher…" oninput="filterLc(this.value)"></div><button id="btnOldLc" class="btn btn-s" onclick="toggleOldLc()">👥 Anciens locataires</button><button class="btn btn-p" onclick="openNewLoc()">＋ Ajouter</button></div></div>
-      <div class="card"><div class="tblw"><table><thead><tr>
+      <div id="lcCards"></div>
+      <div class="card" id="lcTableCard"><div class="tblw"><table><thead><tr>
   <th style="cursor:pointer" onclick="sortLcs('nom')">Nom ↕</th>
   <th style="cursor:pointer" onclick="sortLcs('logement')">Logement ↕</th>
   <th>Loyer CC</th>
@@ -1281,9 +1335,19 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
 </div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mCF')">Fermer</button></div></div></div>
 
 <div id="sb-overlay" onclick="closeMobSb()"></div>
+<!-- Sélection du locataire avant une génération de document (tuile « Générer un
+     document » du hub : on part de l'intention, pas d'une ligne de tableau). -->
+<div class="overlay" id="mPickLc"><div class="modal" style="max-width:420px"><div class="mh"><span class="mtitle">Pour quel locataire ?</span><button class="mclose" onclick="closeM('mPickLc')">✕</button></div><div class="mbody"><div class="fg"><input id="pickLcSrch" placeholder="Rechercher un locataire…" oninput="rPickLc()"></div><div id="pickLcList"></div></div></div></div>
+
+<!-- « Et maintenant ? » — enchaînement explicite d'une étape à la suivante. -->
+<div class="overlay" id="mNext"><div class="modal" style="max-width:380px"><div class="mh"><span class="mtitle" id="nextTitle">Et maintenant ?</span><button class="mclose" onclick="closeM('mNext')">✕</button></div><div class="mbody"><div id="nextMsg" style="font-size:.82rem;color:var(--t2);line-height:1.5"></div><div id="nextActs" style="display:flex;flex-direction:column;gap:8px;margin-top:14px"></div></div></div></div>
+
 <nav id="mob-nav"><div class="mn-items">
   <button class="mn-item active" data-p="dashboard" onclick="mobNav(this)"><span class="mn-ico">🏠</span>Accueil</button>
-  <button class="mn-item" data-p="logements" onclick="mobNav(this)"><span class="mn-ico">🏢</span>Biens</button>
+  <!-- Bâtiments et logements se paramètrent au calme (desktop, à la mise en
+       route) ; le quotidien au pouce, ce sont les locataires et les loyers.
+       « Biens » reste accessible par « Plus ». -->
+  <button class="mn-item" data-p="locataires" onclick="mobNav(this)"><span class="mn-ico">👥</span>Locataires</button>
   <button class="mn-item" data-p="paiements" onclick="mobNav(this)"><span class="mn-ico">💶</span>Loyers<span class="mn-badge" id="mobBR" style="display:none">0</span></button>
   <button class="mn-item" data-p="charges" onclick="mobNav(this)"><span class="mn-ico">⚡</span>Compteurs</button>
   <button class="mn-item" data-p="assistant" onclick="mobNav(this)"><span class="mn-ico">🤖</span>Assistant</button>
@@ -1701,6 +1765,7 @@ function rDash(){
   // Source unique : ks_bat_view (cf. helpers getBatView/setBatView). Le badge
   // « 🏢 Bâtiment » est rendu dans la barre (plus de #dashBatKpi séparé).
   injectBatViewBar('batViewBar_dash');
+  if(typeof rMobHub==='function')rMobHub();
   const selBatId = getBatView();
 
   // ── Filter data by selected building (via computeKpisForBat — source unique) ──
@@ -2466,6 +2531,7 @@ function rLcs(f){
   const totalOld = lcs.length - totalActive;
   document.getElementById('lcCnt').textContent=totalActive+' actif'+(totalActive>1?'s':'')+(totalOld?' · '+totalOld+' ancien'+(totalOld>1?'s':''):'');
   const tb=document.getElementById('lcTbl');
+  rLcCards(list);
   if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:18px">Aucun locataire</td></tr>';return;}
   tb.innerHTML=list.map(l=>{
     const lg=gLg(l.lgId);const d=dTo(l.fin);
@@ -2476,6 +2542,36 @@ function rLcs(f){
 function filterLc(v){rLcs(v);}
 // Ouvre la modale locataire en mode création, TOUS les champs vidés — évite
 // qu'une valeur (e-mail, nom…) d'un locataire précédent persiste dans le formulaire.
+// Rendu mobile de la liste des locataires : une carte par locataire, avec des
+// actions libellées. Le tableau (7 colonnes) reste la vue desktop ; sur 390px
+// il déborde et repousse ses boutons d'action hors de l'écran.
+function rLcCards(list){
+  const el=document.getElementById('lcCards');
+  if(!el)return;
+  if(!list.length){
+    el.innerHTML='<div class="card"><div class="cb" style="text-align:center;color:var(--t3);font-size:.8rem">Aucun locataire</div></div>';
+    return;
+  }
+  el.innerHTML=list.map(l=>{
+    const lg=gLg(l.lgId),d=dTo(l.fin);
+    const bb=d===null?'':d<0?'<span class="badge br">Expiré</span>':d<=60?'<span class="badge bo">Fin dans '+d+' j.</span>':'';
+    // Badge seulement quand le bail existe : la majorité du portefeuille est
+    // antérieure à l'app et son bail est signé hors Keystone — afficher
+    // « à générer » sur chaque ligne serait un reproche permanent et faux.
+    const bail=bailGenere(l.id)?'<span class="badge bg">Bail généré</span>':'';
+    return '<div class="lc-card">'+
+      '<div class="lc-card-top" onclick="editLc(\''+l.id+'\')">'+
+        '<div style="min-width:0"><div class="lc-nom">'+esc(lcFull(l))+'</div>'+
+        '<div class="lc-sub">🏠 '+esc(lg.nom)+' · '+fE(lg.loyer+lg.ch)+'/mois<br>Entré le '+fD(l.ent)+'</div></div>'+
+        '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:4px;align-items:flex-end">'+bail+bb+'</div>'+
+      '</div>'+
+      '<div class="lc-acts">'+
+        '<button class="btn btn-p" onclick="openDocGen(\'bail\',\''+l.id+'\')">📄 Bail</button>'+
+        '<button class="btn btn-s" onclick="openPayFor(\''+l.id+'\')">💶 Loyer</button>'+
+        '<button class="btn btn-s" onclick="editLc(\''+l.id+'\')">✏ Fiche</button>'+
+      '</div></div>';
+  }).join('');
+}
 function openNewLoc(){
   ['locId','locPre','locNom','locEmail','locTel','locEnt','locFin','locUrg','locCiv','locAddr','locNaiss','locLieuNaiss','locNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const lg=document.getElementById('locLog');if(lg)lg.value='';
@@ -2514,9 +2610,18 @@ function saveLoc(){
   const eid=document.getElementById('locId').value;
   const obj={prenom:pre,nom,email:document.getElementById('locEmail').value,tel:document.getElementById('locTel').value,lgId,jour:parseInt(document.getElementById('locJour').value)||1,ent,fin:document.getElementById('locFin').value,urg:document.getElementById('locUrg').value,civilite:(document.getElementById('locCiv')||{value:''}).value,adresse:(document.getElementById('locAddr')||{value:''}).value,dateNaissance:(document.getElementById('locNaiss')||{value:''}).value,lieuNaissance:(document.getElementById('locLieuNaiss')||{value:''}).value,notes:(document.getElementById('locNotes')||{value:''}).value};
   if(typeof cfCollectFor==='function')obj.cf=cfCollectFor('locataire',eid?lcs.find(x=>x.id===eid):null);
-  if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{lcs.push({id:uid(),...obj});}
+  let nouveauId='';
+  if(eid){const i=lcs.findIndex(x=>x.id===eid);lcs[i]={...lcs[i],...obj};}else{nouveauId=uid();lcs.push({id:nouveauId,...obj});}
   sv('lc',lcs);document.getElementById('locId').value='';document.getElementById('mLocT').textContent='Ajouter un locataire';
   closeM('mLoc');rLcs();
+  // Le locataire enregistré n'est pas une fin : c'est l'étape d'avant le bail.
+  // On propose la suite plutôt que de laisser l'utilisateur la chercher.
+  if(nouveauId&&typeof nextStep==='function'){
+    setTimeout(()=>nextStep('Locataire enregistré',
+      esc(pre+' '+nom)+' est rattaché à <strong>'+esc(gLg(lgId).nom)+'</strong>.<br>Étape suivante : son contrat de bail.',
+      [{l:'📄 Générer le bail',f:()=>openDocGen('bail',nouveauId)},
+       {l:'Plus tard',f:null}]),160);
+  }
 }
 function delLc(id){
   const paysCount=pys.filter(p=>p.lcId===id).length;
@@ -4987,6 +5092,20 @@ async function docGenProduce(){
     showToast('⚠️ Échec de génération : '+e.message);
   }
 }
+// Le document produit ne laissait aucune trace : la page Documents restait
+// vide et rien ne distinguait un locataire dont le bail est fait. On référence
+// donc le document au moment où l'utilisateur l'emporte (téléchargement).
+function _docGenRecord(){
+  const fam=_docFam(_docGen.type);
+  const nom=_docGen.filename||'document.docx';
+  if(dcs.some(d=>d.lcId===_docGen.lcId&&d.nom===nom))return;
+  dcs.push({id:uid(),nom,type:fam==='bail'?'bail':'etat',lcId:_docGen.lcId,date:tod(),
+    notes:'Généré depuis Keystone — '+(DOC_LABELS[_docGen.type]||_docGen.type)});
+  sv('dc',dcs);
+  if(curP==='documents'&&typeof rDocs==='function')rDocs(typeof docF!=='undefined'?docF:'tous');
+  if(curP==='locataires'&&typeof rLcs==='function')rLcs();
+  if(curP==='dashboard'&&typeof rMobHub==='function')rMobHub();
+}
 // Étape 5/6 : confirmation → téléchargement.
 function docGenDownload(){
   if(!_docGen.blob){ showToast('Aucun document généré'); return; }
@@ -4995,7 +5114,19 @@ function docGenDownload(){
   a.download=_docGen.filename||'document.docx';
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  const etaitBail=_docFam(_docGen.type)==='bail';
+  const lcId=_docGen.lcId;
+  _docGenRecord();
   showToast('⬇ Document téléchargé');
+  // Après un bail, la suite logique est l'état des lieux d'entrée.
+  if(etaitBail&&typeof nextStep==='function'){
+    setTimeout(()=>{
+      closeM('mDocConfirm');
+      nextStep('Bail téléchargé','Il est enregistré dans <strong>Documents</strong>.<br>Étape suivante habituelle : l\'état des lieux d\'entrée.',
+        [{l:'📋 Générer l\'état des lieux',f:()=>openDocGen('edl_entree',lcId)},
+         {l:'Terminé',f:null}]);
+    },500);
+  }
 }
 // Envoi semi-manuel (phase 1) : ouvre la rédaction Gmail web pré-remplie.
 // L'utilisateur joint lui-même le .docx téléchargé et envoie depuis Gmail.
@@ -5053,10 +5184,20 @@ function closeMobSb(){
   ov.style.display='none';
 }
 function mobNav(el){const p=el.dataset.p;if(p==='more'){toggleMobSb();return;}document.querySelectorAll('.mn-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');nav(p);}
-// Action du bouton flottant, par page. Une page absente de cette table n'a pas
-// d'ajout rapide : le FAB y est masqué au lieu de rester affiché sans effet
-// (c'était le cas sur Assistant, Tableau annuel, Étude de cas, Banque…).
-const FAB_ACTIONS={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap')};
+// Action du bouton flottant, par page : libellé + action. Une page absente de
+// cette table n'a pas d'ajout rapide, le FAB y est masqué au lieu de rester
+// affiché sans effet (Assistant, Tableau annuel, Étude de cas, Banque…).
+// Le tableau de bord en est volontairement absent : le hub d'actions y répond
+// déjà, deux boutons « créer » sur le même écran brouillent la lecture.
+const FAB_ACTIONS={
+  logements:{l:'Logement',  f:()=>openM('mLog')},
+  locataires:{l:'Locataire',f:()=>openNewLoc()},
+  paiements:{l:'Paiement',  f:()=>openM('mPay')},
+  charges:{l:'Relevé',      f:()=>openM('mRel')},
+  entretien:{l:'Intervention',f:()=>openM('mEnt')},
+  documents:{l:'Document',  f:()=>openM('mDoc')},
+  rappels:{l:'Rappel',      f:()=>openM('mRap')}
+};
 // Le FAB doublait les boutons « ＋ Ajouter » que applyRoleRestrictions() masque
 // pour les rôles sans canAdd : sur mobile un profil lecture pouvait donc ouvrir
 // les modales d'ajout. On applique ici la même permission.
@@ -5071,10 +5212,139 @@ function fabCanAdd(){
 function updateMobFab(){
   const f=document.getElementById('mob-fab');
   if(!f) return;
+  const a=FAB_ACTIONS[curP];
   // display:'' rend la main au CSS (flex sous 700px, none au-dessus).
-  f.style.display=(FAB_ACTIONS[curP]&&fabCanAdd())?'':'none';
+  f.style.display=(a&&fabCanAdd())?'':'none';
+  if(a) f.textContent='＋ '+a.l;
 }
-function mobFab(){ if(FAB_ACTIONS[curP]&&fabCanAdd()) FAB_ACTIONS[curP](); }
+function mobFab(){ const a=FAB_ACTIONS[curP]; if(a&&fabCanAdd()) a.f(); }
+
+// ═══════════════════════════════════════════════════════════════
+// HUB D'ACTIONS MOBILE — « où je clique pour faire ce que je veux »
+// ═══════════════════════════════════════════════════════════════
+// Deux blocs en tête du tableau de bord sur téléphone : « À faire », déduit de
+// l'état réel des données, puis les actions courantes en toutes lettres. Le
+// but est qu'aucune tâche du quotidien ne demande de deviner dans quel module
+// elle se cache.
+
+// Un bail est « fait » quand un document de type bail existe pour le locataire
+// (l'entrée est créée automatiquement au téléchargement, cf. _docGenRecord).
+function bailGenere(lcId){ return dcs.some(d=>d.lcId===lcId && d.type==='bail'); }
+
+let _hubTodos=[];
+function hubTodos(){
+  const out=[];
+  const k=computeKpisForBat(getBatView());
+  if(!lgs.length){
+    out.push({ico:'🏢',t:'Ajoutez votre premier logement',s:'Tout part de là : bâtiment, puis logement',act:()=>openM('mLog')});
+    return out;
+  }
+  // Coordonnées bailleur : sans elles, tout bail sort incomplet.
+  if(!getBailleur().nom)
+    out.push({ico:'⚙️',cls:'gold',t:'Complétez vos coordonnées de bailleur',s:'Nom, adresse, IBAN — repris sur chaque bail',act:()=>{openM('mData');setTimeout(()=>{const e=document.getElementById('blrNom');if(e)e.focus();},250);}});
+  if(k.ret)
+    out.push({ico:'💶',cls:'warn',t:k.ret+' loyer'+(k.ret>1?'s':'')+' en retard',s:'Encaisser ou relancer',act:()=>nav('paiements')});
+  // Logements sans locataire actif.
+  k.visLgs.filter(l=>!k.occLgSet.has(l.id)).slice(0,2).forEach(l=>
+    out.push({ico:'🏠',t:esc(l.nom)+' est vacant',s:'Installer un locataire',act:()=>hubNouveauLocataire(l.id)}));
+  // Bail jamais généré — limité aux emménagements récents ou à venir, sinon la
+  // liste se remplirait des locataires historiques dont le bail est déjà signé
+  // sur papier, hors de l'app.
+  k.visLcs.filter(l=>{
+    if(!isActiveLc(l)||bailGenere(l.id))return false;
+    const d=dTo(l.ent);
+    return d!==null&&d>=-60;
+  }).slice(0,2).forEach(l=>
+    out.push({ico:'📄',t:'Bail à générer — '+esc(lcFull(l)),s:esc(gLg(l.lgId).nom),act:()=>openDocGen('bail',l.id)}));
+  // Fins de bail proches.
+  k.visLcs.forEach(l=>{
+    const d=dTo(l.fin);
+    if(d!==null&&d>=0&&d<=90)
+      out.push({ico:'📅',cls:'gold',t:'Bail de '+esc(lcFull(l))+' — fin dans '+d+' j.',s:'Préparer l\'état des lieux de sortie',act:()=>openDocGen('edl',l.id)});
+  });
+  return out.slice(0,4);
+}
+
+const HUB_TILES=[
+  {ico:'👤',lbl:'Nouveau locataire',   add:true, act:()=>hubNouveauLocataire()},
+  {ico:'📄',lbl:'Générer un document', act:()=>hubPickLc()},
+  {ico:'💶',lbl:'Encaisser un loyer',  add:true, act:()=>openM('mPay')},
+  {ico:'⚡',lbl:'Relever un compteur', add:true, act:()=>openM('mRel')},
+  {ico:'🔧',lbl:'Signaler un entretien',add:true,act:()=>openM('mEnt')},
+  {ico:'🏢',lbl:'Ajouter un logement', add:true, act:()=>openM('mLog')}
+];
+
+function rMobHub(){
+  const el=document.getElementById('mobHub');
+  if(!el) return;
+  _hubTodos=hubTodos();
+  const peutAjouter=fabCanAdd();
+  let h='';
+  if(_hubTodos.length){
+    h+='<div class="hub-sec">À faire</div>';
+    h+=_hubTodos.map((t,i)=>
+      '<button class="hub-todo '+(t.cls||'')+'" onclick="hubTodoRun('+i+')">'+
+        '<span class="hub-ico">'+t.ico+'</span>'+
+        '<span class="hub-txt"><span class="hub-t">'+t.t+'</span>'+(t.s?'<span class="hub-s">'+t.s+'</span>':'')+'</span>'+
+        '<span class="hub-go">›</span></button>').join('');
+  }
+  const tiles=HUB_TILES.map((t,i)=>({t,i})).filter(x=>!x.t.add||peutAjouter);
+  if(tiles.length){
+    h+='<div class="hub-sec">Que voulez-vous faire ?</div><div class="hub-grid">';
+    h+=tiles.map(x=>'<button class="hub-tile" onclick="hubTileRun('+x.i+')"><span class="hub-tico">'+x.t.ico+'</span><span class="hub-tlbl">'+x.t.lbl+'</span></button>').join('');
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function hubTodoRun(i){ const t=_hubTodos[i]; if(t&&t.act)t.act(); }
+function hubTileRun(i){ const t=HUB_TILES[i]; if(t)t.act(); }
+
+// Nouveau locataire, éventuellement pour un logement donné (item « vacant »).
+function hubNouveauLocataire(lgId){
+  openNewLoc();
+  if(typeof fillSels==='function')fillSels();
+  if(lgId){ const s=document.getElementById('locLog'); if(s)s.value=lgId; }
+}
+
+// Choix du locataire avant génération (le type de document se choisit ensuite,
+// dans l'écran de génération lui-même).
+function hubPickLc(){
+  const s=document.getElementById('pickLcSrch'); if(s)s.value='';
+  rPickLc();
+  openM('mPickLc');
+}
+function rPickLc(){
+  const q=((document.getElementById('pickLcSrch')||{}).value||'').toLowerCase();
+  const list=lcs.filter(l=>isActiveLc(l)&&l.lgId)
+    .filter(l=>!q||(lcFull(l)+' '+gLg(l.lgId).nom).toLowerCase().includes(q))
+    .sort((a,b)=>lcFull(a).localeCompare(lcFull(b)));
+  const el=document.getElementById('pickLcList');
+  if(!el)return;
+  if(!lcs.some(l=>l.lgId)){
+    el.innerHTML='<div style="font-size:.8rem;color:var(--t2);padding:10px 0">Aucun locataire rattaché à un logement. Créez d\'abord le locataire.</div>';
+    return;
+  }
+  el.innerHTML=list.length
+    ? list.map(l=>'<button class="hub-todo" onclick="hubPickLcGo(\''+l.id+'\')"><span class="hub-ico">👤</span><span class="hub-txt"><span class="hub-t">'+esc(lcFull(l))+'</span><span class="hub-s">'+esc(gLg(l.lgId).nom)+(bailGenere(l.id)?' · bail déjà généré':'')+'</span></span><span class="hub-go">›</span></button>').join('')
+    : '<div style="font-size:.8rem;color:var(--t2);padding:10px 0">Aucun résultat.</div>';
+}
+function hubPickLcGo(id){ closeM('mPickLc'); openDocGen('bail',id); }
+
+// ─── « Et maintenant ? » : l'étape suivante, proposée au bon moment ───
+function nextStep(titre,message,actions){
+  const t=document.getElementById('nextTitle'),m=document.getElementById('nextMsg'),a=document.getElementById('nextActs');
+  if(!t||!m||!a)return;
+  t.textContent=titre;
+  m.innerHTML=message;
+  window._nextActions=actions;
+  a.innerHTML=actions.map((x,i)=>'<button class="btn '+(i===0?'btn-p':'btn-s')+'" style="width:100%;justify-content:center;min-height:42px" onclick="nextStepRun('+i+')">'+x.l+'</button>').join('');
+  openM('mNext');
+}
+function nextStepRun(i){
+  const a=(window._nextActions||[])[i];
+  closeM('mNext');
+  if(a&&a.f)setTimeout(a.f,120);
+}
 
 
 
@@ -8257,6 +8527,29 @@ function editPay(id){
   },10);
   document.getElementById('mPay').classList.add('open');
   setTimeout(()=>injectModalNav('mPay'),50);
+}
+// Encaisser un loyer pour un locataire donné. La fonction était appelée par le
+// bouton 💶 de la liste des locataires mais n'existait pas : le clic levait une
+// ReferenceError et il ne se passait rien.
+function openPayFor(lcId){
+  const l=lcs.find(x=>x.id===lcId);
+  if(!l){ showToast('Locataire introuvable'); return; }
+  const lg=gLg(l.lgId);
+  ['payId','payNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const t=document.getElementById('mPayT');if(t)t.textContent='Enregistrer un paiement';
+  fillSels();
+  setTimeout(()=>{
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    set('payLoc',lcId);
+    set('payMois',tmth());
+    set('payDu',(lg.loyer||0)+(lg.ch||0));
+    set('payRec','');
+    set('payDate',tod());
+    set('payMode','Virement');
+    const ov=document.getElementById('payStatutOverride');if(ov)ov.value='';
+    const rec=document.getElementById('payRec');if(rec)rec.focus();
+  },10);
+  openM('mPay');
 }
 function savePay(){
   const lcId=document.getElementById('payLoc').value;
