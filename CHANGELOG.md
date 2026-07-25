@@ -4,6 +4,30 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
+## v2.32 — 2026-07-25 — `74b6f6a`
+- **Accueil mobile — hub d'actions** : bloc « À faire » déduit de l'état réel
+  (coordonnées bailleur manquantes, loyers en retard, logement vacant, bail à
+  générer, fin de bail dans moins de 90 j.) puis six tuiles d'action libellées.
+  Masqué au-dessus de 700px — le menu latéral joue déjà ce rôle en desktop.
+- **Nav basse** : « Locataires » remplace « Biens » (accessible par « Plus »).
+- **FAB** : affiche ce qu'il crée (« ＋ Locataire », « ＋ Paiement »…) et
+  disparaît de l'accueil, où le hub répond déjà.
+- **Locataires en cartes sur mobile** : le tableau à 7 colonnes débordait
+  (589 px de contenu pour 364 px visibles) et ses boutons d'action, à
+  19 × 18 px, se retrouvaient hors écran. Une carte par locataire, avec les
+  actions « Bail », « Loyer » et « Fiche » libellées.
+- **Fil conducteur** : après l'enregistrement d'un locataire, le bail est
+  proposé ; après le téléchargement du bail, l'état des lieux d'entrée.
+- **Traçabilité** : le document généré est référencé dans **Documents**. La
+  génération n'y laissait aucune trace : un bail sorti de Keystone devait être
+  ré-encodé à la main via « ＋ Ajouter » pour apparaître au dossier. Le
+  locataire porte désormais un badge « Bail généré », qui reconnaît aussi les
+  baux déjà référencés manuellement (rattachement par `lcId`).
+- **Correctif** : `openPayFor()`, appelée par le bouton 💶 de la liste des
+  locataires, n'existait pas ; le clic levait une `ReferenceError`. La
+  fonction ouvre désormais la saisie de paiement pré-remplie (locataire,
+  mois courant, montant dû).
+
 ## v2.31 — 2026-07-25 — `e3eb6da`
 - **Mobile — saisie** : tous les champs texte passent à **16px** sous 700px.
   En dessous de 16px, iOS Safari zoome le viewport à chaque focus et ne
