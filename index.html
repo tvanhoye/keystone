@@ -1,7 +1,4 @@
 <html lang="fr"><head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
-  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Keystone</title>
@@ -223,7 +220,10 @@ tr[onclick]{cursor:pointer}
 .mn-item.active{color:var(--ac2)}
 .mn-item .mn-ico{font-size:1.25rem;line-height:1}
 .mn-badge{position:absolute;top:3px;right:calc(50% - 16px);background:var(--wa);color:#fff;font-size:.5rem;padding:1px 4px;border-radius:8px;font-weight:700}
-#mob-fab{display:none;position:fixed;bottom:72px;right:16px;width:50px;height:50px;border-radius:50%;background:var(--ac);color:#fff;font-size:1.5rem;border:none;box-shadow:0 4px 16px rgba(45,90,61,.4);z-index:250;cursor:pointer;align-items:center;justify-content:center;font-family:inherit}
+/* z-index 120 : au-dessus de la nav basse (100) mais SOUS le menu latéral et
+   les modales (150/200) — à 250 le FAB flottait par-dessus les formulaires
+   ouverts et par-dessus le tiroir de navigation. */
+#mob-fab{display:none;position:fixed;bottom:72px;right:16px;width:50px;height:50px;border-radius:50%;background:var(--ac);color:#fff;font-size:1.5rem;border:none;box-shadow:0 4px 16px rgba(45,90,61,.4);z-index:120;cursor:pointer;align-items:center;justify-content:center;font-family:inherit}
 #mob-fab:active{transform:scale(.93)}
 #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;-webkit-tap-highlight-color:transparent}
 #sb-overlay.open{display:block}
@@ -297,7 +297,14 @@ tr[onclick]{cursor:pointer}
   .mbody{padding:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .mfoot{padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
   .fg label{font-size:.64rem}
-  .fg input,.fg select,.fg textarea{font-size:.82rem;padding:8px 10px}
+  /* iOS Safari zoome le viewport dès qu'un champ focalisé a une police < 16px
+     et ne dézoome pas quand le clavier se referme (la page reste décalée).
+     Tous les champs de saisie passent donc à 16px sur mobile ; le !important
+     est nécessaire pour battre les font-size posés en style inline. */
+  input:not([type=checkbox]):not([type=radio]),textarea{font-size:16px !important}
+  .fg input,.fg select,.fg textarea{font-size:16px;padding:9px 11px}
+  .ob-field input,.ob-field select,.ob-field textarea{font-size:16px}
+  .srch input{font-size:16px}
 
   /* ── TABS ── */
   .tabs{
@@ -361,7 +368,7 @@ tr[onclick]{cursor:pointer}
   #chatMessages{padding:10px;gap:9px}
   .ai-bubble{font-size:.77rem;padding:9px 11px;max-width:90%}
   .ai-avatar{width:28px;height:28px;font-size:.85rem}
-  #aiInput{font-size:.8rem;padding:8px 10px}
+  #aiInput{padding:8px 10px}
   #aiSendBtn{padding:8px 12px}
   #aiSuggestions{gap:5px;margin-bottom:12px}
   .ai-suggestion{font-size:.68rem;padding:5px 9px}
@@ -659,7 +666,7 @@ body:has(#syncBar.show) #main { padding-bottom:52px!important; }
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.30</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 21/06/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.31</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 25/07/2026</div></div>
 </aside>
 
 <div id="main">
@@ -1439,6 +1446,7 @@ function nav(p){
   curP=p;rP(p);
   closeMobSb();
   document.querySelectorAll('.mn-item').forEach(el=>el.classList.toggle('active',el.dataset.p===p));
+  if(typeof updateMobFab==='function')updateMobFab();
 }
 function rP(p){
   if(p==='dashboard')rDash();
@@ -5045,7 +5053,28 @@ function closeMobSb(){
   ov.style.display='none';
 }
 function mobNav(el){const p=el.dataset.p;if(p==='more'){toggleMobSb();return;}document.querySelectorAll('.mn-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');nav(p);}
-function mobFab(){const m={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap')};if(m[curP])m[curP]();}
+// Action du bouton flottant, par page. Une page absente de cette table n'a pas
+// d'ajout rapide : le FAB y est masqué au lieu de rester affiché sans effet
+// (c'était le cas sur Assistant, Tableau annuel, Étude de cas, Banque…).
+const FAB_ACTIONS={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap')};
+// Le FAB doublait les boutons « ＋ Ajouter » que applyRoleRestrictions() masque
+// pour les rôles sans canAdd : sur mobile un profil lecture pouvait donc ouvrir
+// les modales d'ajout. On applique ici la même permission.
+function fabCanAdd(){
+  try{
+    if(!currentProfile) return true;
+    const role=currentProfile.role;
+    if(role==='masteradmin'||role==='admin') return true;
+    return (getPermissions()[role]||{}).canAdd!==false;
+  }catch(e){ return true; }
+}
+function updateMobFab(){
+  const f=document.getElementById('mob-fab');
+  if(!f) return;
+  // display:'' rend la main au CSS (flex sous 700px, none au-dessus).
+  f.style.display=(FAB_ACTIONS[curP]&&fabCanAdd())?'':'none';
+}
+function mobFab(){ if(FAB_ACTIONS[curP]&&fabCanAdd()) FAB_ACTIONS[curP](); }
 
 
 
@@ -7183,6 +7212,9 @@ function applyRoleRestrictions(){
     el.style.display='';
     el.removeAttribute('data-role-hidden');
   });
+  // Le FAB mobile dépend du rôle (canAdd) et de la page courante, pas du DOM
+  // remis à zéro ci-dessous : il peut donc être réévalué sur tous les chemins.
+  if(typeof updateMobFab==='function')updateMobFab();
   if(!currentProfile) return;
   const role = currentProfile.role;
   if(role==='masteradmin'||role==='admin'){
@@ -7211,7 +7243,9 @@ function applyRoleRestrictions(){
     documents:'seeDocuments', rappels:'seeRappels', tableau:'seeTableauAnnuel',
     assistant:'seeAssistantIA'
   };
-  document.querySelectorAll('.sb-item[data-p]').forEach(item=>{
+  // Menu latéral ET nav basse mobile : cette dernière n'était pas filtrée, une
+  // page interdite restait donc accessible d'un tap sur téléphone.
+  document.querySelectorAll('.sb-item[data-p],.mn-item[data-p]').forEach(item=>{
     const p = item.dataset.p;
     const permKey = pagePerms[p];
     if(permKey && perms[permKey]===false){ item.style.display='none'; item.setAttribute('data-role-hidden','1'); }
