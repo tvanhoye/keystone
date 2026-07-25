@@ -74,6 +74,9 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
    cadrer.
 3. **Backlog détaillé à alimenter** : ce repo n'avait pas de backlog écrit jusqu'ici.
    Les prochaines tâches arriveront via Thomas et via `CLAUDE_NOTES.md` (canal Claude).
+4. **Audit UX « du bien au bail »** (`AUDIT_PARCOURS_BAIL.md`) : constats faits
+   sur ce HTML, rédigés pour être **transposés à l'app Next.js**. À passer à
+   l'agent qui travaillera sur `foundation` plutôt qu'à traiter ici.
 
 ## MARQUEURS DE TEST EN PLACE (données-sondes en prod)
 - **Aucun marqueur de test connu** laissé en prod pour ce repo. L'app stocke les
