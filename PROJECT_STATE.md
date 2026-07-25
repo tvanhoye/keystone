@@ -14,6 +14,11 @@
 - URL : https://tvanhoye.github.io/keystone/
 
 ## DERNIER TRAVAIL POUSSÉ
+- **v2.32 — PAS ENCORE EN PROD** : branche `cursor/parcours-bail-mobile-9845`
+  (empilée sur la branche v2.31). Parcours mobile jusqu'au bail : hub d'actions
+  sur l'accueil, nav basse « Locataires », FAB libellé, locataires en cartes,
+  enchaînement locataire → bail → état des lieux, référencement du document
+  généré dans Documents, et correctif `openPayFor()` (fonction inexistante).
 - **v2.31 — PAS ENCORE EN PROD** : proposée sur la branche
   `cursor/mobile-ux-quick-wins-9845` (PR ouverte, non fusionnée). Lot de
   correctifs mobiles : champs de saisie à 16px (zoom iOS), FAB masqué sur les
@@ -54,7 +59,25 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
    verrou demanderait un contrôle dans `sv()`/les fonctions `save*`, pas dans
    le DOM. À arbitrer selon le modèle de menace (l'app est mono-poste, les
    profils servent surtout à éviter les fausses manœuvres).
-3. **Mobile — pistes non tranchées** (à arbitrer avec Thomas) :
+3. **Parcours « bail » — reste à faire** (audit du 2026-07-25) :
+   - **L'assistant guidé (`obShow`) est inatteignable** : `checkOnboarding()`
+     ne s'ouvre que si `lgs.length===0`, or `injectRealData()` réinjecte les 14
+     logements à chaque boot. Son seul autre point d'entrée est l'état vide de
+     la page Logements. Et il ne mène pas au bail (logement → locataire →
+     compteurs → fin), il faudrait le recâbler ou l'assumer comme caduc.
+   - **L'écran de génération demande 30 variables, dont 20 vides** : le PEB
+     (3 champs) devrait vivre sur le logement (certificat valable 10 ans), le
+     lieu de signature est constant, et les 5 champs bailleur saisis là ne sont
+     **pas réécrits** dans `ks_bailleur` — ils sont donc à retaper à chaque bail.
+   - **`bail.garantie` est recalculée à 2 × loyer** et ignore le champ « Dépôt
+     garantie » (`lg.dep`) saisi sur le logement.
+   - **Les paramètres bailleur sont enterrés** dans la modale « 💾 Gestion des
+     données », entre Exporter et Effacer. Le hub v2.32 y renvoie, mais leur
+     place serait dans un vrai écran de réglages.
+   - Pistes de fond proposées et non tranchées : fiche logement comme plaque
+     tournante (navigation par objet), et entité `baux` de plein droit — cette
+     dernière plutôt côté foundation.
+4. **Mobile — pistes non tranchées** (à arbitrer avec Thomas) :
    - **PWA installable + hors-ligne** (`manifest.webmanifest` + service worker).
      Les données vivent déjà en localStorage : l'app pourrait servir sans réseau
      (relevés de compteurs en cave/sous-sol). Attention à la stratégie de cache —
@@ -65,7 +88,7 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
      par ligne serait plus lisible sur les pages Locataires/Entretien/Documents.
    - **Clavier virtuel** : les bottom-sheets (`max-height:92dvh`) ne se
      redimensionnent pas à l'ouverture du clavier iOS (piste : `visualViewport`).
-4. **Suite éventuelle du chantier « bâtiment »** (phases au-delà de la Phase 2) — à
+5. **Suite éventuelle du chantier « bâtiment »** (phases au-delà de la Phase 2) — à
    cadrer.
 
 ## MARQUEURS DE TEST EN PLACE (données-sondes en prod)
