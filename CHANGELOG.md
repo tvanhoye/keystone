@@ -18,6 +18,15 @@
   menu latéral (une page interdite restait accessible d'un tap).
 - **Perf** : retrait du script CDN `html-to-image`, chargé de façon
   bloquante dans le `<head>` alors qu'aucune fonction ne l'utilise.
+- **Permissions** (`ec5cd84`) — deux trous corrigés :
+  - `applyRoleRestrictions()` ne masquait que les nœuds présents au moment
+    de l'appel (login, enregistrement des permissions) ; toute page
+    re-rendue ensuite recréait ses boutons ✏/🗑/＋ Ajouter, à nouveau
+    cliquables pour un rôle restreint. Un `MutationObserver` sur `#content`
+    réapplique les règles après chaque rendu (no-op pour admin/masteradmin).
+  - `pagePerms` mappait la clé `tableau` alors que l'entrée de menu porte
+    `data-p="annuel"` : la permission « Voir Tableau annuel », pourtant
+    décochable dans le gestionnaire de profils, n'avait aucun effet.
 
 ## v2.30 — 2026-06-21 — `d6e661e`
 - **Étude de cas** : défaut « charges annuelles non récupérables » abaissé

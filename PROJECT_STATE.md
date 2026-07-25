@@ -19,7 +19,10 @@
   correctifs mobiles : champs de saisie à 16px (zoom iOS), FAB masqué sur les
   pages sans action d'ajout et pour les rôles sans `canAdd`, FAB repassé sous
   les modales/tiroir (z-index 120), nav basse filtrée par les permissions,
-  retrait du CDN `html-to-image` inutilisé. Détail : `CHANGELOG.md`.
+  retrait du CDN `html-to-image` inutilisé. Plus deux correctifs de
+  permissions : restrictions de rôle réappliquées après chaque rendu de
+  `#content`, et permission « Voir Tableau annuel » rebranchée. Détail :
+  `CHANGELOG.md`.
 - **v2.30** — dernière version réellement déployée : étude de cas, défaut
   « charges non récupérables » **1400 → 600 €/an**.
 
@@ -45,13 +48,12 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
    tant que la migration fonctionnelle n'est pas validée. Tant que c'est le cas, ce
    repo reçoit la **maintenance corrective** ; les nouvelles features lourdes vont
    plutôt côté foundation.
-2. **Permissions — deux trous identifiés le 2026-07-25, non corrigés** :
-   - `applyRoleRestrictions()` masque des **nœuds DOM existants** ; toute page
-     re-rendue après le login (`rP()` → `rLgs()`, `rEnts()`…) recrée les boutons
-     ✏/🗑/＋ Ajouter, qui redeviennent visibles pour un rôle restreint. Piste :
-     rappeler `applyRoleRestrictions()` en fin de `nav()`.
-   - `pagePerms` mappe `tableau:'seeTableauAnnuel'` alors que l'entrée de menu
-     porte `data-p="annuel"` → la permission « Tableau annuel » n'a jamais d'effet.
+2. **Permissions — reste à faire** : le masquage est purement visuel. Un rôle
+   restreint qui appelle une fonction depuis la console (ou via un `onclick`
+   d'un nœud non couvert par les sélecteurs) peut toujours écrire. Un vrai
+   verrou demanderait un contrôle dans `sv()`/les fonctions `save*`, pas dans
+   le DOM. À arbitrer selon le modèle de menace (l'app est mono-poste, les
+   profils servent surtout à éviter les fausses manœuvres).
 3. **Mobile — pistes non tranchées** (à arbitrer avec Thomas) :
    - **PWA installable + hors-ligne** (`manifest.webmanifest` + service worker).
      Les données vivent déjà en localStorage : l'app pourrait servir sans réseau
@@ -80,8 +82,12 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
 - **Architecture mono-fichier** : tout tient dans `index.html` (~548 Ko), sans build.
   Toute modification édite ce fichier unique → diffs volumineux, vigilance sur les
   régressions transverses.
-- **Restrictions de rôle appliquées au DOM** : cf. backlog #2 — tout code qui
-  re-rend une page annule le masquage posé au login.
+- **Restrictions de rôle appliquées au DOM** : le masquage suit désormais les
+  re-rendus (`MutationObserver` sur `#content`, cf. v2.31), mais il reste
+  **cosmétique** — cf. backlog #2. Les sélecteurs sont heuristiques
+  (`.btn-d`, `onclick*="openM("` + libellé « ＋ »/« Ajouter », `.btn-s.btn-xs`
+  + « ✏ ») : un nouveau bouton d'action doit respecter ces conventions de
+  classe/libellé pour être couvert.
 - **Empilement mobile** : `#mob-nav`, `#mob-fab`, `#syncBar`, `#sb`, `.overlay` sont
   tous en `position:fixed` avec des z-index proches (100 → 200). Toute nouvelle
   couche flottante doit être replacée dans cette échelle.
