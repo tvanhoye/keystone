@@ -7240,7 +7240,10 @@ function applyRoleRestrictions(){
   const pagePerms = {
     batiments:'seeBatiments', logements:'seeLogements', locataires:'seeLocataires',
     paiements:'seePaiements', charges:'seeCharges', entretien:'seeEntretien',
-    documents:'seeDocuments', rappels:'seeRappels', tableau:'seeTableauAnnuel',
+    // La clé était 'tableau' alors que l'entrée de menu porte data-p="annuel" :
+    // la permission « Voir Tableau annuel » (exposée dans PERM_LABELS, donc
+    // décochable par un admin) n'avait jamais le moindre effet.
+    documents:'seeDocuments', rappels:'seeRappels', annuel:'seeTableauAnnuel',
     assistant:'seeAssistantIA'
   };
   // Menu latéral ET nav basse mobile : cette dernière n'était pas filtrée, une
@@ -7267,6 +7270,37 @@ function applyRoleRestrictions(){
   const lb=document.getElementById('logoutBtn');
   if(lb) lb.style.display='';
 }
+
+// Les masquages ci-dessus portent sur les nœuds DOM présents au moment de
+// l'appel. Or toute page qui se re-rend (nav, enregistrement, filtre,
+// recherche…) recrée ses boutons ✏/🗑/＋ Ajouter : ils redevenaient visibles
+// pour un rôle restreint, alors que applyRoleRestrictions() n'est appelé qu'au
+// login et à l'enregistrement des permissions. On réapplique donc les règles à
+// chaque rendu de #content.
+let _roleReapplyQueued=false;
+function scheduleRoleRestrictions(){
+  if(_roleReapplyQueued) return;
+  // Pour un admin, applyRoleRestrictions() ne masque rien : inutile de payer
+  // le parcours du DOM à chaque rendu.
+  if(!currentProfile) return;
+  const r=currentProfile.role;
+  if(r==='masteradmin'||r==='admin') return;
+  // setTimeout plutôt que requestAnimationFrame : rAF ne se déclenche pas tant
+  // que l'onglet est en arrière-plan, les restrictions resteraient donc en
+  // attente sur un rendu déclenché par la synchro Drive dans un onglet caché.
+  _roleReapplyQueued=true;
+  setTimeout(()=>{ _roleReapplyQueued=false; applyRoleRestrictions(); },0);
+}
+(function watchRoleRestrictedRenders(){
+  const content=document.getElementById('content');
+  if(!content||typeof MutationObserver==='undefined') return;
+  // childList seul, et #content seul : applyRoleRestrictions() ne modifie que
+  // des styles là-dedans (le badge de profil est écrit dans #topbar), donc
+  // l'observateur ne peut pas se déclencher lui-même en boucle.
+  new MutationObserver(muts=>{
+    if(muts.some(m=>m.addedNodes.length)) scheduleRoleRestrictions();
+  }).observe(content,{childList:true,subtree:true});
+})();
 
 function logout(){
   // Clear stored sessions (les deux scopes : masteradmin persistant + tab-scoped)
