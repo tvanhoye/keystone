@@ -4,6 +4,30 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
+## v2.31 — 2026-07-25 — `e3eb6da`
+- **Mobile — saisie** : tous les champs texte passent à **16px** sous 700px.
+  En dessous de 16px, iOS Safari zoome le viewport à chaque focus et ne
+  dézoome pas à la fermeture du clavier (la page restait décalée).
+- **Mobile — bouton flottant (FAB)** : masqué sur les pages sans action
+  d'ajout (Assistant, Tableau annuel, Étude de cas, Banque, To-do…) où il
+  restait affiché sans effet ; masqué pour les rôles sans permission
+  `canAdd` (il ouvrait les modales d'ajout que `applyRoleRestrictions()`
+  masque partout ailleurs) ; passé en **z-index 120** — à 250 il flottait
+  par-dessus les formulaires ouverts et le tiroir de navigation.
+- **Mobile — nav basse** : filtrée par les permissions de page, comme le
+  menu latéral (une page interdite restait accessible d'un tap).
+- **Perf** : retrait du script CDN `html-to-image`, chargé de façon
+  bloquante dans le `<head>` alors qu'aucune fonction ne l'utilise.
+- **Permissions** (`ec5cd84`) — deux trous corrigés :
+  - `applyRoleRestrictions()` ne masquait que les nœuds présents au moment
+    de l'appel (login, enregistrement des permissions) ; toute page
+    re-rendue ensuite recréait ses boutons ✏/🗑/＋ Ajouter, à nouveau
+    cliquables pour un rôle restreint. Un `MutationObserver` sur `#content`
+    réapplique les règles après chaque rendu (no-op pour admin/masteradmin).
+  - `pagePerms` mappait la clé `tableau` alors que l'entrée de menu porte
+    `data-p="annuel"` : la permission « Voir Tableau annuel », pourtant
+    décochable dans le gestionnaire de profils, n'avait aucun effet.
+
 ## v2.30 — 2026-06-21 — `d6e661e`
 - **Étude de cas** : défaut « charges annuelles non récupérables » abaissé
   **1400 → 600 €/an** (1400 supposait copropriété + agence, ~14 % du loyer ;
