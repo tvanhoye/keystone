@@ -5,14 +5,43 @@
 > des coordonnées (repo, branche, domaine), voir `CLAUDE_SYNC.md`. Pour les
 > demandes entrantes de Claude, voir `CLAUDE_NOTES.md`.
 
-*Dernière réécriture : 2026-06-21.*
+*Dernière réécriture : 2026-06-21. Statut de production corrigé le 2026-07-25.*
 
-## VERSION ACTUELLE EN PROD
+## ⚠️ QUELLE APP EST RÉELLEMENT UTILISÉE ? (lire en premier)
+
+Deux apps « Keystone » coexistent, et **ce dépôt n'est plus celle du quotidien** :
+
+| | Ce dépôt (`tvanhoye/keystone`) | L'app utilisée (`keystone.batiq.eu`) |
+|---|---|---|
+| Techno | HTML mono-fichier, sans build | Next.js (portage `foundation`) |
+| Stockage | localStorage + Google Drive | compte serveur, quota (5 Go), partage |
+| Version | `Keystone v2.30` (footer) | `v0.1.207` |
+| Statut | en ligne, mais plus l'outil de travail | **utilisée quotidiennement** |
+
+Constaté le 2026-07-25 : Thomas travaille dans l'app Next.js (session
+synchronisée, documents réellement stockés, console d'administration,
+parrainage, « Quick scan », menus « Suivi » / « Finances » / « Découverte » —
+**aucun de ces libellés n'existe dans `index.html`**). Les versions elles-mêmes
+sont incompatibles (`v0.1.207` contre `v2.30`).
+
+**Conséquence pour tout agent ou assistant lisant ce dépôt** : une demande
+fonctionnelle de Thomas (« améliorer le parcours », « corriger l'app mobile »…)
+concerne par défaut **l'autre dépôt**, pas celui-ci. Demander confirmation
+avant d'écrire du code ici. Un audit UX complet, transposable, est disponible
+dans `AUDIT_PARCOURS_BAIL.md`.
+
+Le rôle qui reste à ce dépôt (secours, archive, ou maintenance corrective
+jusqu'à bascule complète) **est à trancher par Thomas** — il n'est pas
+documenté.
+
+## VERSION EN PROD DE CE DÉPÔT
 - **Footer : `Keystone v2.30`**
 - **SHA déployé : `d6e661e`** (branche `main`, servie par GitHub Pages ; le commit de
   doc qui suit ne modifie pas l'app)
 - **Date du commit déployé : 2026-06-21**
 - URL : https://tvanhoye.github.io/keystone/
+- Vérifié le 2026-07-25 : le fichier servi par GitHub Pages est **identique au
+  bit près** (MD5 `3ec0db7a…`) au `index.html` de `main`.
 
 ## DERNIER TRAVAIL POUSSÉ
 - **v2.30** — Maintenance corrective : étude de cas, défaut « charges non
@@ -33,16 +62,21 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
 - Aucune modification non commitée dans le working tree au 2026-06-20 (propre).
 
 ## BACKLOG ACTIF (par priorité)
-1. **(Stratégique) Migration HTML → monorepo `foundation/apps/keystone`** : un port
-   de cette app est en cours dans `tvanhoye/foundation` (Next.js + Supabase, déployé
-   sur Vercel à `keystone.batiq.eu`). **Ce HTML reste la source de vérité en prod**
-   tant que la migration fonctionnelle n'est pas validée. Tant que c'est le cas, ce
-   repo reçoit la **maintenance corrective** ; les nouvelles features lourdes vont
-   plutôt côté foundation.
+1. **(Stratégique) Statut de ce dépôt à trancher.** La migration vers
+   `foundation` (Next.js, `keystone.batiq.eu`) n'est plus « en cours » : c'est
+   **l'app effectivement utilisée** (cf. encadré en tête de fichier). La phrase
+   « ce HTML reste la source de vérité en prod », qui figurait ici, était
+   périmée et a déjà conduit un agent à développer plusieurs heures dans le
+   mauvais dépôt. Reste à décider : ce dépôt est-il archivé, gardé en secours,
+   ou maintenu en correctif ? Tant que ce n'est pas tranché, **ne rien
+   développer ici sans confirmation explicite de Thomas**.
 2. **Suite éventuelle du chantier « bâtiment »** (phases au-delà de la Phase 2) — à
    cadrer.
 3. **Backlog détaillé à alimenter** : ce repo n'avait pas de backlog écrit jusqu'ici.
    Les prochaines tâches arriveront via Thomas et via `CLAUDE_NOTES.md` (canal Claude).
+4. **Audit UX « du bien au bail »** (`AUDIT_PARCOURS_BAIL.md`) : constats faits
+   sur ce HTML, rédigés pour être **transposés à l'app Next.js**. À passer à
+   l'agent qui travaillera sur `foundation` plutôt qu'à traiter ici.
 
 ## MARQUEURS DE TEST EN PLACE (données-sondes en prod)
 - **Aucun marqueur de test connu** laissé en prod pour ce repo. L'app stocke les
@@ -65,13 +99,19 @@ correctifs de la synchronisation Google Drive au boot (v2.23–v2.24).
   `CLAUDE_SYNC.md`.
 
 ## ÉTAT MÉMOIRE À CORRIGER CÔTÉ CLAUDE (faits devenus faux)
-- ❌ « Prod en **v2.28** » → ✅ **v2.29** (SHA `e15a28f`, 2026-06-18).
+- ❌ « Ce HTML est **la source de vérité en prod**, foundation est en
+  validation » → ✅ **l'inverse** : l'app utilisée au quotidien est celle de
+  `keystone.batiq.eu` (`v0.1.207`). Ce dépôt reste en ligne à son URL mais
+  n'est plus l'outil de travail. Cf. l'encadré en tête de fichier.
+- ❌ « Prod en **v2.28** » → ✅ **v2.30** (SHA `d6e661e`, 2026-06-21) pour CE dépôt.
 - ❌ « Domaine **keystone.briq.eu** » → ✅ **n'existe pas** ; la prod de CE repo est
   sur **`tvanhoye.github.io/keystone/`** (aucun domaine custom). `keystone.batiq.eu`
   est l'app **foundation** (repo séparé `tvanhoye/foundation`, sur Vercel), **pas ce repo**.
 - ⚠️ « Repo `tvanhoye/keystone` » et « URL `tvanhoye.github.io/keystone` » → **corrects**
   (ce sont bien les coordonnées réelles ; seule la version et le « nouveau domaine »
   étaient faux dans la mémoire de Claude).
-- ℹ️ Relation à retenir : **deux** apps « keystone » coexistent — ce **HTML standalone**
-  (source de vérité prod, en migration) et l'**app foundation** (`keystone.batiq.eu`,
-  Vercel, en validation). Ne pas les confondre.
+- ℹ️ Relation à retenir : **deux** apps « keystone » coexistent — ce **HTML
+  standalone** (`tvanhoye.github.io/keystone`, en ligne mais plus l'outil de
+  travail) et l'**app foundation** (`keystone.batiq.eu`, Next.js sur Vercel,
+  **celle que Thomas utilise**). Ne pas les confondre : c'est l'erreur la plus
+  coûteuse possible sur ce projet, elle a déjà été commise.
