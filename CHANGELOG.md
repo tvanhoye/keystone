@@ -4,7 +4,7 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
-## v2.31 — 2026-08-29 — `bef5e77`
+## v2.31 — 2026-08-29 — `9f46afc`
 - **États des lieux photographiques** : nouveau module (entrée **et** sortie).
   Prise de photos (appareil / galerie) et de vidéos pièce par pièce, dossier
   attaché au **logement** (réutilisable avant d'avoir un locataire), transfert
