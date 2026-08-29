@@ -9014,6 +9014,21 @@ function activateDemo(){
   location.reload();
 }
 
+function openPayFor(lcId){
+  document.getElementById('mPayT').textContent='Enregistrer un paiement';
+  const hid=document.getElementById('payId'); if(hid) hid.value='';
+  fillSels();
+  openM('mPay');
+  setTimeout(function(){
+    const sel=document.getElementById('payLoc'); if(sel) sel.value=lcId||'';
+    const lc=lcs.find(function(x){ return x.id===lcId; });
+    const lg=lc?gLg(lc.lgId):null;
+    const du=document.getElementById('payDu');
+    if(du && lg) du.value=(lg.loyer||0)+(lg.ch||0);
+    const pm=document.getElementById('payMois'); if(pm && !pm.value) pm.value=tmth();
+    const pd=document.getElementById('payDate'); if(pd && !pd.value) pd.value=tod();
+  },20);
+}
 function editPay(id){
   const p=pys.find(x=>x.id===id);if(!p)return;
   document.getElementById('mPayT').textContent='Modifier le paiement';
