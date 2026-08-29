@@ -4,7 +4,7 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
-## v2.31 — 2026-08-29 — (à renseigner)
+## v2.31 — 2026-08-29 — `f88d82d`
 - **Annonces de location** : nouvel onglet dans la barre latérale. Création d'une
   annonce à partir d'une fiche logement (photos, vidéo, sphère 360° / visite
   virtuelle). Lien public à envoyer à un amateur (WhatsApp, e-mail, SMS, copie,
