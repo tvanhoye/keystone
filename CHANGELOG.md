@@ -4,6 +4,14 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
+## v2.31 — 2026-08-29 — (à renseigner)
+- **Annonces de location** : nouvel onglet dans la barre latérale. Création d'une
+  annonce à partir d'une fiche logement (photos, vidéo, sphère 360° / visite
+  virtuelle). Lien public à envoyer à un amateur (WhatsApp, e-mail, SMS, copie,
+  fichier HTML) : galerie, vidéo, visite 360°, descriptif repris de la fiche, et
+  bandeau de promotion de l'espace locataire Keystone. Pas de compte requis pour
+  ouvrir le lien.
+
 ## v2.30 — 2026-06-21 — `d6e661e`
 - **Étude de cas** : défaut « charges annuelles non récupérables » abaissé
   **1400 → 600 €/an** (1400 supposait copropriété + agence, ~14 % du loyer ;
