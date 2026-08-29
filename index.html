@@ -7350,7 +7350,7 @@ function applyRoleRestrictions(){
   // Hide add/edit/delete buttons — chaque masquage marque data-role-hidden
   // pour permettre la remise à zéro idempotente au prochain appel.
   if(!perms.canDelete) document.querySelectorAll('.btn-d').forEach(b=>{b.style.display='none';b.setAttribute('data-role-hidden','1');});
-  if(!perms.canAdd) document.querySelectorAll('[onclick*="openM("]').forEach(b=>{ if(b.textContent.includes('＋')||b.textContent.includes('Ajouter')){ b.style.display='none'; b.setAttribute('data-role-hidden','1'); } });
+  if(!perms.canAdd) document.querySelectorAll('[onclick*="openM("],[onclick*="openAnForm"]').forEach(b=>{ if(b.textContent.includes('＋')||b.textContent.includes('Ajouter')||b.textContent.includes('Nouvelle')){ b.style.display='none'; b.setAttribute('data-role-hidden','1'); } });
   if(!perms.canEdit) document.querySelectorAll('.btn-s.btn-xs').forEach(b=>{ if(b.textContent.includes('✏')){ b.style.display='none'; b.setAttribute('data-role-hidden','1'); } });
 
   // Show profile badge in topbar
@@ -8787,7 +8787,7 @@ function _loadDemoData(){
   }
   ens=[{id:'en_d1',lgId:'lg_d1',tit:'Fuite robinet cuisine',prio:'urgent',stat:'ouvert',date:'2026-05-10',notes:'Plombier contacté'},{id:'en_d2',lgId:'lg_d3',tit:'Peinture couloir',prio:'normal',stat:'planifié',date:'2026-06-15',notes:''}];
   rps=[{id:'rp_d1',tit:'Renouvellement bail Dupont',date:'2026-06-01',stat:'en cours',notes:''},{id:'rp_d2',tit:'Révision loyer Renard',date:'2026-09-01',stat:'en cours',notes:''}];
-  ans=[{id:'an_d1',lgId:'lg_d4',titre:'Studio A — à louer',desc:'Studio · Idéal pour une personne. Lumineux, au calme, à deux pas du parc. Cuisine équipée, salle d\'eau, cave partagée.',photos:[{id:'ph_d1',data:'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect fill="%232d5a3d" width="800" height="500"/><text x="400" y="248" fill="white" font-size="36" text-anchor="middle" font-family="system-ui">Studio A</text><text x="400" y="292" fill="%23cde6d6" font-size="18" text-anchor="middle">Annonce demo Keystone</text></svg>'}],videoUrl:'',sphereUrl:'',contactTel:'04/221.00.00',contactEmail:'bailleur@demo.be',created:Date.now()-86400000,updated:Date.now()-86400000}];
+  ans=[{id:'an_d1',lgId:'lg_d4',titre:'Studio A — à louer',desc:'Studio · Idéal pour une personne. Lumineux, au calme, à deux pas du parc. Cuisine équipée, salle d\'eau, cave partagée.',photos:[{id:'ph_d1',data:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect fill="#2d5a3d" width="800" height="500"/><text x="400" y="248" fill="white" font-size="36" text-anchor="middle" font-family="system-ui">Studio A</text><text x="400" y="292" fill="#cde6d6" font-size="18" text-anchor="middle">Annonce demo Keystone</text></svg>')}],videoUrl:'',sphereUrl:'',contactTel:'04/221.00.00',contactEmail:'bailleur@demo.be',created:Date.now()-86400000,updated:Date.now()-86400000}];
 }
 
 // APPROCHE A (v2.12) : un reload garantit qu'aucune référence DOM ou variable
