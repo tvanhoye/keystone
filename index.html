@@ -687,6 +687,28 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
   .anp-ph img{height:110px}
 }
 
+/* ── États des lieux photographiques ── */
+.edl-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;margin-bottom:8px}
+.edl-card:hover{border-color:var(--ac)}
+.edl-thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.edl-thumb{width:72px;height:72px;border-radius:6px;object-fit:cover;background:var(--s2);border:1px solid var(--bd);position:relative}
+.edl-thumb video,.edl-thumb img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}
+.edl-thumb .edl-x{position:absolute;top:2px;right:2px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:.65rem;cursor:pointer;line-height:18px;padding:0}
+.edl-room{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
+.edl-room textarea{width:100%;min-height:64px;padding:7px 9px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:inherit;font-size:.79rem;color:var(--tx);background:var(--sf);resize:vertical;margin-bottom:8px}
+.edl-room h3{font-size:.82rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.edl-room h3 input{flex:1;font:inherit;font-weight:700;border:1px solid transparent;background:transparent;padding:4px 6px;border-radius:4px}
+.edl-room h3 input:focus{border-color:var(--bd);background:var(--s2)}
+.edl-cap{width:100%;border:1px solid var(--bd);border-radius:4px;font:inherit;font-size:.68rem;padding:3px 5px;margin-top:4px;background:var(--sf)}
+.edl-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.edl-editor-head{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:12px}
+#edlLightbox{z-index:400}
+#edlLightbox .modal{max-width:min(960px,96vw);background:#111;color:#fff}
+#edlLightbox img,#edlLightbox video{max-width:100%;max-height:80vh;display:block;margin:0 auto}
+@media(max-width:700px){
+  .edl-thumb{width:64px;height:64px}
+  .edl-actions .btn{flex:1;justify-content:center;padding:10px 8px}
+}
 </style>
 </head>
 <body id="artifacts-component-root-html">
@@ -703,6 +725,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
     <div class="sb-item" data-p="batiments" data-tip="Bâtiments"><span class="sb-icon">🏢</span><span class="sb-lbl">Bâtiments</span></div>
     <div class="sb-item" data-p="logements" data-tip="Logements"><span class="sb-icon">🏢</span><span class="sb-lbl">Logements</span></div>
     <div class="sb-item" data-p="annonces" data-tip="Annonces"><span class="sb-icon">📣</span><span class="sb-lbl">Annonces</span></div>
+    <div class="sb-item" data-p="edl" data-tip="États des lieux"><span class="sb-icon">📷</span><span class="sb-lbl">États des lieux</span></div>
     <div class="sb-item" data-p="locataires" data-tip="Locataires"><span class="sb-icon">👥</span><span class="sb-lbl">Locataires</span></div>
     <div class="sb-item" data-p="paiements" data-tip="Loyers"><span class="sb-icon">💶</span><span class="sb-lbl">Loyers</span><span class="sb-badge" id="bRet" style="display:none">0</span></div>
     <div class="sb-sec">DÉPENSES</div>
@@ -724,7 +747,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.31</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 29/08/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.32</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 29/08/2026</div></div>
 </aside>
 
 <div id="main">
@@ -928,6 +951,79 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
       <div class="sh-row"><div><h2>Entretien &amp; Maintenance</h2></div><div class="sh-right"><button class="btn btn-p" onclick="openM('mEnt')">＋ Ajouter</button></div></div>
       <div class="tabs" id="entTabs"><button class="tab active" onclick="tabEnt('tous',this)">Tous</button><button class="tab" onclick="tabEnt('urgent',this)">Urgent</button><button class="tab" onclick="tabEnt('planifié',this)">Planifiés</button><button class="tab" onclick="tabEnt('terminé',this)">Terminés</button></div>
       <div id="entL"></div>
+    </div>
+
+    <!-- ÉTATS DES LIEUX -->
+    <div class="page" id="page-edl">
+      <div id="batViewBar_edl"></div>
+      <div id="edlListView">
+        <div class="sh-row">
+          <div><h2>États des lieux</h2><p id="edlCnt">Photos et vidéos attachées au logement, réutilisables à l'entrée d'un locataire</p></div>
+          <div class="sh-right">
+            <button class="btn btn-p" onclick="edlNew()">＋ Nouvel état des lieux</button>
+          </div>
+        </div>
+        <div class="tabs" id="edlTabs">
+          <button class="tab active" onclick="tabEdl('tous',this)">Tous</button>
+          <button class="tab" onclick="tabEdl('entree',this)">Entrée</button>
+          <button class="tab" onclick="tabEdl('sortie',this)">Sortie</button>
+          <button class="tab" onclick="tabEdl('brouillon',this)">Brouillons</button>
+        </div>
+        <div id="edlList"></div>
+      </div>
+      <div id="edlEditView" style="display:none">
+        <div class="sh-row">
+          <div>
+            <button class="btn btn-s" onclick="edlBackToList()">← Liste</button>
+            <h2 id="edlEditTitle" style="display:inline;margin-left:8px">État des lieux</h2>
+            <p id="edlEditSub"></p>
+          </div>
+          <div class="sh-right">
+            <button class="btn btn-s" onclick="edlPrint()">🖨 Aperçu photos</button>
+            <button class="btn btn-s" onclick="edlGenWord()">📋 Document Word</button>
+            <button class="btn btn-s" onclick="edlOpenTransfer()">✉ Transférer</button>
+            <button class="btn btn-p" onclick="edlSave(true)">💾 Enregistrer</button>
+          </div>
+        </div>
+        <div class="edl-editor-head">
+          <div class="fr">
+            <div class="fg"><label>Logement *</label><select id="edlLg" onchange="edlOnMeta()"></select></div>
+            <div class="fg"><label>Type</label><select id="edlType" onchange="edlOnMeta()"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select></div>
+          </div>
+          <div class="fr">
+            <div class="fg"><label>Date</label><input id="edlDate" type="date" onchange="edlOnMeta()"></div>
+            <div class="fg"><label>Locataire <span style="font-weight:400;color:var(--t3);font-size:.65rem">(optionnel — peut être rattaché plus tard)</span></label><select id="edlLc" onchange="edlOnMeta()"><option value="">Aucun — modèle du logement</option></select></div>
+          </div>
+          <div class="fr">
+            <div class="fg"><label>Clés / accès remis</label><input id="edlCles" placeholder="Ex : 2 clés entrée, 1 boîte aux lettres" onchange="edlOnMeta()"></div>
+            <div class="fg"><label>Détecteurs de fumée</label><input id="edlDetecteurs" placeholder="Nombre et localisation" onchange="edlOnMeta()"></div>
+          </div>
+          <div class="fg"><label>Documents d'entretien remis</label><input id="edlDocsEnt" placeholder="Chaudière, VMC…" onchange="edlOnMeta()"></div>
+          <p style="font-size:.68rem;color:var(--t2);margin:8px 0 0;line-height:1.45">Prenez les photos pièce par pièce. Elles restent dans l'application (cet appareil) et voyagent dans l'export JSON sous forme de miniatures. Pour envoyer le dossier complet, utilisez <b>Aperçu photos</b> (HTML imprimable / PDF) ou <b>Transférer</b>.</p>
+        </div>
+        <h3 style="font-size:.78rem;font-weight:700;margin:4px 0 8px">Relevé des compteurs</h3>
+        <div class="edl-editor-head">
+          <div class="fr">
+            <div class="fg"><label>Électricité — heures pleines</label><input id="edlElecHP" onchange="edlOnMeta()"></div>
+            <div class="fg"><label>Électricité — heures creuses</label><input id="edlElecHC" onchange="edlOnMeta()"></div>
+          </div>
+          <div class="fr">
+            <div class="fg"><label>Gaz naturel</label><input id="edlGaz" onchange="edlOnMeta()"></div>
+            <div class="fg"><label>Eau</label><input id="edlEau" onchange="edlOnMeta()"></div>
+          </div>
+          <div class="fg"><label>Mazout / citerne (%)</label><input id="edlMazout" onchange="edlOnMeta()"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px">
+          <h3 style="font-size:.78rem;font-weight:700;margin:0">Pièces</h3>
+          <button class="btn btn-s btn-xs" onclick="edlAddRoom()">＋ Pièce</button>
+        </div>
+        <div id="edlRooms"></div>
+        <div class="fg" style="margin-top:8px"><label>Conclusion</label><textarea id="edlConclusion" placeholder="Aperçu général, propreté, équipements…" onchange="edlOnMeta()"></textarea></div>
+        <input type="file" id="edlPhotoCam" accept="image/*" capture="environment" style="display:none" onchange="edlHandleFiles(this, 'photo')">
+        <input type="file" id="edlPhotoGal" accept="image/*" multiple style="display:none" onchange="edlHandleFiles(this, 'photo')">
+        <input type="file" id="edlVideoCam" accept="video/*" capture="environment" style="display:none" onchange="edlHandleFiles(this, 'video')">
+        <input type="file" id="edlVideoGal" accept="video/*" style="display:none" onchange="edlHandleFiles(this, 'video')">
+      </div>
     </div>
 
     <!-- DOCUMENTS -->
@@ -1196,6 +1292,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
 </div><div class="fr"><div class="fg"><label>Surface (m²)</label><input id="lSurf" type="number"></div><div class="fg"><label>Loyer HC (€) *</label><input id="lLoyer" type="number"></div></div><div class="fr"><div class="fg"><label>Charges (€/mois)</label><input id="lCh" type="number"></div><div class="fg"><label>Dépôt garantie (€)</label><input id="lDep" type="number"></div></div><div id="lHistWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">📈 Historique du loyer (indexations)</label><button type="button" class="btn btn-s btn-xs" onclick="openIndexModal()">+ Indexer</button></div><div id="lHistList" style="font-size:.78rem"></div></div><div id="lTravauxWrap" style="margin-top:8px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label style="margin:0">🚧 Périodes de travaux</label><button type="button" class="btn btn-s btn-xs" onclick="openTravauxModal()">+ Ajouter période</button></div><div id="lTravauxList" style="font-size:.78rem"></div></div><div class="fg"><label>Notes</label><textarea id="lNotes"></textarea></div>
 <div class="fg"><label>Contenu / description <span style="font-weight:400;color:var(--t3);font-size:.65rem">(pour bail &amp; état des lieux — ex : 2 pièces, cabine de douche, WC, kitchenette…)</span></label><textarea id="lContenu" placeholder="Description détaillée du logement"></textarea></div>
 <div class="fg"><label>Clés / accès remis <span style="font-weight:400;color:var(--t3);font-size:.65rem">(pour l'état des lieux)</span></label><input id="lCles" placeholder="Ex : 2 clés porte d'entrée, 1 clé boîte aux lettres"></div>
+<div id="lEdlBtnWrap" style="margin:4px 0 10px;display:none"><button type="button" class="btn btn-s" style="width:100%;justify-content:center" onclick="(function(){var id=document.getElementById('lId').value;if(id){closeM('mLog');edlOpenForLg(id);}})()">📷 Ouvrir / créer l'état des lieux photographique</button></div>
 <div class="fg"><label>Compteurs associés <span style="font-weight:400;color:var(--t3);font-size:.65rem">(sélectionner ceux desservis par ce logement)</span></label>
 <div id="lCompteurs" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0"></div>
 <div id="cfbox-logement"></div>
@@ -1375,6 +1472,14 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
   <div style="background:var(--acl);border-radius:var(--rs);padding:10px;margin-top:12px;font-size:.74rem;color:var(--ac);line-height:1.5">1. <strong>Téléchargez</strong> le document et vérifiez-le. 2. <strong>Rédiger dans Gmail</strong> ouvre un message pré-rempli pour le locataire — joignez-y le fichier téléchargé, puis envoyez depuis Gmail.</div>
 </div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mDocConfirm')">Fermer</button><button class="btn btn-s" id="docEmailBtn" onclick="docGenEmail()">✉ Rédiger dans Gmail</button><button class="btn btn-p" onclick="docGenDownload()">⬇ Télécharger</button></div></div></div>
 
+<div class="overlay" id="mEdlTransfer"><div class="modal" style="max-width:480px"><div class="mh"><span class="mtitle">✉ Transférer l'état des lieux</span><button class="mclose" onclick="closeM('mEdlTransfer')">✕</button></div><div class="mbody">
+  <p style="font-size:.74rem;color:var(--t2);line-height:1.5;margin-bottom:10px">Rattachez cet état des lieux à un locataire (entrée dans le logement) ou envoyez-le à un candidat. Le document HTML avec photos est téléchargé ; Gmail s'ouvre ensuite pour joindre le fichier.</p>
+  <div class="fg"><label>Locataire du logement</label><select id="edlTransferLc"><option value="">Aucun — envoi libre</option></select></div>
+  <div class="fg"><label>E-mail du destinataire</label><input id="edlTransferEmail" type="email" placeholder="candidat@… ou e-mail du locataire"></div>
+</div><div class="mfoot"><button class="btn btn-s" onclick="closeM('mEdlTransfer')">Annuler</button><button class="btn btn-p" onclick="edlDoTransfer()">⬇ Télécharger et rédiger l'e-mail</button></div></div></div>
+
+<div class="overlay" id="edlLightbox"><div class="modal" style="max-width:min(960px,96vw)"><div class="mh"><span class="mtitle" id="edlLbTitle">Média</span><button class="mclose" onclick="closeM('edlLightbox')">✕</button></div><div class="mbody" id="edlLbBody" style="background:#111"></div></div></div>
+
 <div class="overlay" id="mCF"><div class="modal" style="max-width:520px"><div class="mh"><span class="mtitle">⚙️ Champs personnalisés</span><button class="mclose" onclick="closeM('mCF')">✕</button></div><div class="mbody">
   <div style="font-size:.72rem;color:var(--t2);margin-bottom:10px;line-height:1.5">Champs supplémentaires affichés sur les fiches <b>bâtiment</b>, <b>logement</b> et <b>locataire</b> (dans la modale d'édition, après les champs standard). Le type est figé à la création.</div>
   <div id="cfMgrList"></div>
@@ -1405,7 +1510,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
 
 <script>
 // ═══ STORAGE ═══
-const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp',td:'ig3_td',an:'ig3_an'};
+const K={bt:'ig3_bt',lg:'ig3_lg',lc:'ig3_lc',py:'ig3_py',en:'ig3_en',dc:'ig3_dc',rp:'ig3_rp',co:'ig3_co',rl:'ig3_rl',cr:'ig3_cr',ch:'ig3_ch',dp:'ig3_dp',td:'ig3_td',an:'ig3_an',el:'ig3_el'};
 const ld=k=>{if(window._ksIsolated){try{return JSON.parse(localStorage.getItem('_ksi_'+K[k]))||[]}catch{return[]}}try{return JSON.parse(localStorage.getItem(K[k]))||[]}catch{return[]}};
 // Partie B (Étape 3) — pendant l'application d'un pull Drive, window._ksLoadingDrive
 // est vrai : on écrit bien la donnée en localStorage, mais on NE marque PAS de
@@ -1442,7 +1547,7 @@ document.addEventListener('click',function(e){
 ['batNom','lNom','locPre','locNom','entTit','docNom','rapTit','crNom','chNom','dpNom','cNom','anTitre'].forEach(function(id){
   const e=document.getElementById(id);if(e)e.maxLength=120;
 });
-let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp'),tds=ld('td'),ans=ld('an');
+let bats=ld('bt'),lgs=ld('lg'),lcs=ld('lc'),pys=ld('py'),ens=ld('en'),dcs=ld('dc'),rps=ld('rp'),cos=ld('co'),rls=ld('rl'),crs=ld('cr'),chs=ld('ch'),dps=ld('dp'),tds=ld('td'),ans=ld('an'),edls=ld('el');
 const gLg=id=>lgs.find(l=>l.id===id)||{nom:'—',loyer:0,ch:0};
 const gLc=id=>lcs.find(l=>l.id===id);
 const lcFull=l=>l?l.prenom+' '+l.nom:'—';
@@ -1542,7 +1647,7 @@ function injectRealData(){
 }
 
 // ═══ NAVIGATION ═══
-const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',batiment:'Fiche bâtiment',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',etude:'Étude de cas — simulateur de rentabilité',assistant:'Assistant IA',todo:'To-do list',annonces:'Annonces de location'};
+const pTitles={dashboard:'Tableau de bord',batiments:'Bâtiments',batiment:'Fiche bâtiment',logements:'Logements',locataires:'Locataires',paiements:'Paiements',charges:'Charges & Compteurs',banque:'Banque & Crédits',entretien:'Entretien & Maintenance',edl:'États des lieux',documents:'Documents',rappels:'Rappels & Échéances',annuel:'Tableau annuel & Rentabilité',etude:'Étude de cas — simulateur de rentabilité',assistant:'Assistant IA',todo:'To-do list',annonces:'Annonces de location'};
 let curP='dashboard',payF='tous',entF='tous',docF='tous';
 
 // v2.16 : ne déclenche nav() que si l'item porte un data-p. L'accordéon
@@ -1584,6 +1689,7 @@ function rP(p){
     });
   }
   else if(p==='entretien')rEnts(entF);
+  else if(p==='edl')rEdls();
   else if(p==='documents')rDocs(docF);
   else if(p==='rappels')rRaps();
   else if(p==='annuel')rAnnuel();
@@ -1602,6 +1708,7 @@ function openM(id){
     setTimeout(initPhotoDrop, 50);
   }
   if(id==='mLog'){const _hw=document.getElementById('lHistWrap');if(_hw)_hw.style.display='none';window._pendingHist=null;const _tw=document.getElementById('lTravauxWrap');if(_tw)_tw.style.display='none';window._pendingTravaux=null;
+    const _edlw=document.getElementById('lEdlBtnWrap');if(_edlw)_edlw.style.display='none';
     setTimeout(()=>{
       fillLogCompteurs([]);
       // Populate address suggestions from existing logements
@@ -1796,6 +1903,11 @@ function filterDcsByBat(batId){
   if(!batId) return dcs.slice();
   const lcIds = new Set(filterLcsByBat(batId).map(c=>c.id));
   return dcs.filter(d=>lcIds.has(d.lcId));
+}
+function filterEdlsByBat(batId){
+  if(!batId) return edls.slice();
+  const lgIds = new Set(lgs.filter(l=>l.batId===batId).map(l=>l.id));
+  return edls.filter(e=>lgIds.has(e.lgId));
 }
 function filterRpsByBat(batId){
   if(!batId) return rps.slice();
@@ -2288,7 +2400,8 @@ function rLgs(){
           '<div style="font-family:monospace;font-weight:800;font-size:.84rem;color:var(--ac)">'+(l.loyer+l.ch)+'€</div>'+
           '<span class="badge '+(lc?'bg':'bx')+'" style="font-size:.6rem">'+(lc?'occupé':'vacant')+'</span>'+
         '</div>'+
-        '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')" style="margin-left:8px">✕</button>'+
+        '<button class="btn btn-s btn-xs" onclick="event.stopPropagation();edlOpenForLg(\''+l.id+'\')" title="État des lieux" style="margin-left:8px">📷</button>'+
+        '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')" style="margin-left:4px">✕</button>'+
       '</div>';
     }).join('');
   } else if(v==='compact'){
@@ -2304,7 +2417,7 @@ function rLgs(){
           '<td>'+(l.surf?l.surf+' m²':'—')+'</td>'+
           '<td class="mono" style="font-weight:700">'+(l.loyer+l.ch)+'€</td>'+
           '<td>'+(lc?'<span class="badge bg">occupé</span>':'<span class="badge bx">vacant</span>')+'</td>'+
-          '<td onclick="event.stopPropagation()"><button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></td>'+
+          '<td onclick="event.stopPropagation()"><button class="btn btn-s btn-xs" onclick="edlOpenForLg(\''+l.id+'\')" title="État des lieux">📷</button> <button class="btn btn-d btn-xs" onclick="delLg(\''+l.id+'\')">✕</button></td>'+
         '</tr>';
       }).join('')+
       '</tbody></table>';
@@ -2331,6 +2444,7 @@ function rLgs(){
             _statusBadge+
           '</div>'+
           '<div style="display:flex;gap:5px;margin-top:7px;justify-content:flex-end">'+
+            '<button class="btn btn-s btn-xs" onclick="event.stopPropagation();edlOpenForLg(\''+l.id+'\')" title="État des lieux photographique">📷 EDL</button>'+
             '<button class="btn btn-d btn-xs" onclick="event.stopPropagation();delLg(\''+l.id+'\')">✕</button>'+
           '</div>'+
         '</div>'+
@@ -2364,6 +2478,7 @@ function editLg(id){
   }, 10);
   document.getElementById('lHistWrap').style.display='block';renderLoyerHist(l);
   document.getElementById('lTravauxWrap').style.display='block';renderTravauxList(l);
+  const _edlw=document.getElementById('lEdlBtnWrap');if(_edlw)_edlw.style.display='block';
   if(typeof cfOnModalOpen==='function')cfOnModalOpen('mLog');
   document.getElementById('mLog').classList.add('open');setTimeout(()=>injectModalNav('mLog'),50);
 }
@@ -2401,10 +2516,12 @@ function delLg(id){
   const rapsCount=rps.filter(r=>r.lgId===id).length;
   const cosCount=cos.filter(c=>c.lgId===id).length;
   const rlsCount=rls.filter(r=>cos.some(c=>c.id===r.coId&&c.lgId===id)).length;
+  const edlCount=(typeof edls!=='undefined'?edls.filter(e=>e.lgId===id).length:0);
   const counts=[];
   if(locs.length)counts.push(locs.length+' locataire(s)');
   if(paysCount)counts.push(paysCount+' paiement(s)');
   if(docsCount)counts.push(docsCount+' document(s)');
+  if(edlCount)counts.push(edlCount+' état(s) des lieux');
   if(entsCount)counts.push(entsCount+' entretien(s)');
   if(rapsCount)counts.push(rapsCount+' rappel(s)');
   if(cosCount)counts.push(cosCount+' compteur(s)');
@@ -2416,6 +2533,7 @@ function delLg(id){
   lcs=lcs.filter(l=>l.lgId!==id);
   pys=pys.filter(p=>!locIds.includes(p.lcId));
   dcs=dcs.filter(d=>!locIds.includes(d.lcId));
+  if(typeof edlDeleteForLg==='function') edlDeleteForLg(id);
   ens=ens.filter(e=>e.lgId!==id);
   rps=rps.filter(r=>r.lgId!==id);
   rls=rls.filter(r=>!cosToDel.includes(r.coId));
@@ -2588,7 +2706,7 @@ function rLcs(f){
   tb.innerHTML=list.map(l=>{
     const lg=gLg(l.lgId);const d=dTo(l.fin);
     const bb=d===null?'<span class="badge bx">—</span>':d<0?'<span class="badge br">Expiré</span>':d<=60?'<span class="badge bo">⚠ '+d+'j</span>':'<span class="badge bg">OK</span>';
-    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+esc(lcFull(l))+'</strong><div style="font-size:.67rem;color:var(--t2)">'+esc(l.email||'')+'</div></td><td style="font-size:.77rem">'+esc(lg.nom)+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();openDocGen(\'bail\',\''+l.id+'\')" title="Générer un bail">📄</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();openDocGen(\'edl\',\''+l.id+'\')" title="Générer un état des lieux">📋</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
+    return'<tr onclick="editLc(\''+l.id+'\')" style="cursor:pointer"><td><strong>'+esc(lcFull(l))+'</strong><div style="font-size:.67rem;color:var(--t2)">'+esc(l.email||'')+'</div></td><td style="font-size:.77rem">'+esc(lg.nom)+'</td><td class="mono">'+fE(lg.loyer+lg.ch)+'</td><td>'+fD(l.ent)+'</td><td>'+fD(l.fin)+'</td><td>'+bb+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-s btn-xs" onclick="editLc(\''+l.id+'\')">✏</button><button class="btn btn-s btn-xs" onclick="openPayFor(\''+l.id+'\')">💶</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();openDocGen(\'bail\',\''+l.id+'\')" title="Générer un bail">📄</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();edlOpenForLc(\''+l.id+'\')" title="État des lieux photographique">📷</button><button class="btn btn-s btn-xs" onclick="event.stopPropagation();openDocGen(\'edl\',\''+l.id+'\')" title="Générer un état des lieux Word">📋</button><button class="btn btn-d btn-xs" onclick="delLc(\''+l.id+'\')">✕</button></div></td></tr>';
   }).join('');
 }
 function filterLc(v){rLcs(v);}
@@ -4662,7 +4780,7 @@ function isFutureMois(m){return new Date(m+'-15')>new Date();}
 })();
 
 // ═══ DATA MANAGEMENT ═══
-function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];}
+function clearStorage(){Object.values(K).forEach(k=>localStorage.removeItem(k));bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];edls=[];if(typeof edlClearDb==='function')edlClearDb();}
 function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;clearStorage();injectRealData();closeM('mData');rDash();}
 // ═══════════════════════════════════════════════════════════════
 // AFFICHAGE DES CARTES — toggles de visibilité des blocs du dashboard
@@ -4748,7 +4866,7 @@ function clearAll(){if(!confirm('⚠️ Effacer toutes les données ?'))return;c
 })();
 
 function exportData(){
-  const data={version:'3.3',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,rappels:rps,compteurs:cos,releves:rls,todos:tds,annonces:ans,
+  const data={version:'3.4',exported:new Date().toISOString(),batiments:bats,logements:lgs,locataires:lcs,paiements:pys,credits:crs,charges:chs,depenses:dps,entretiens:ens,documents:dcs,edls:edls,rappels:rps,compteurs:cos,releves:rls,todos:tds,annonces:ans,
     customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
     cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})(),
     // Phase 2 chantier bâtiment : la préférence « Vue par bâtiment » voyage
@@ -4776,6 +4894,7 @@ function importData(input){
       if(data.annonces){ans=data.annonces;sv('an',ans);}
       if(data.entretiens){ens=data.entretiens;sv('en',ens);}
       if(data.documents){dcs=data.documents;sv('dc',dcs);}
+      if(data.edls){edls=data.edls;sv('el',edls);}
       if(data.rappels){rps=data.rappels;sv('rp',rps);}
       if(data.compteurs){cos=data.compteurs;sv('co',cos);}
       if(data.releves){rls=data.releves;sv('rl',rls);}
@@ -5025,6 +5144,13 @@ function _collectDocVars(type,lc){
   }else{
     v['bail.dateDebut']=lc.ent||'';
     v['edl.date']=tod();v['edl.conclusion']='';
+    const photo=typeof edlPhotoEdlForLc==='function'?edlPhotoEdlForLc(lc):null;
+    if(photo){
+      if(photo.cles) v['lgt.cles']=photo.cles;
+      v['edl.date']=photo.date||tod();
+      const sum=(photo.conclusion?photo.conclusion+'\n\n':'')+(typeof edlSummaryText==='function'?edlSummaryText(photo):'');
+      if(sum.trim()) v['edl.conclusion']=sum.trim();
+    }
   }
   return v;
 }
@@ -5042,6 +5168,16 @@ function openDocGen(type,lcId){
   _docGen={lcId:lcId,type:t,blob:null,filename:'',email:''};
   const sel=document.getElementById('docGenType');if(sel)sel.value=_docGen.type;
   docGenRenderFields();
+  if(window._edlPendingConclusion){
+    const el=document.getElementById('dvf_edl_conclusion');
+    if(el && !String(el.value||'').trim()) el.value=window._edlPendingConclusion;
+    window._edlPendingConclusion=null;
+  }
+  if(window._edlPendingCles){
+    const el=document.getElementById('dvf_lgt_cles');
+    if(el && !String(el.value||'').trim()) el.value=window._edlPendingCles;
+    window._edlPendingCles=null;
+  }
   openM('mDocVars');
 }
 function docGenReload(){ docGenRenderFields(); }
@@ -5145,6 +5281,690 @@ function docGenEmail(){
   showToast('✉ Rédaction Gmail ouverte — joignez le fichier téléchargé avant d\'envoyer.');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ÉTATS DES LIEUX PHOTOGRAPHIQUES (pièces, photos, vidéos)
+// Métadonnées : ig3_el (localStorage / Drive). Originaux : IndexedDB.
+// ═══════════════════════════════════════════════════════════════
+let _edlCur=null, _edlRoomTarget='', _edlFilter='tous', _edlFocusLg='', _edlKeepEditor=false;
+const EDL_ROOMS_DEFAULT=[
+  'Entrée / Hall','Séjour – Salle à manger','Cuisine','Chambre 1','Chambre 2',
+  'Salle de bain','WC','Autres pièces (couloirs, cave, grenier, garage)',
+  'Extérieurs (terrasse, jardin, façade)'
+];
+function edlDbName(){ return window._ksIsolated ? 'ksi-edl-media' : 'ks-edl-media'; }
+function edlOpenDb(){
+  return new Promise(function(res,rej){
+    const r=indexedDB.open(edlDbName(),1);
+    r.onupgradeneeded=function(){ r.result.createObjectStore('blobs'); };
+    r.onsuccess=function(){ res(r.result); };
+    r.onerror=function(){ rej(r.error); };
+  });
+}
+function edlPutBlob(id,blob){
+  return edlOpenDb().then(function(db){
+    return new Promise(function(res,rej){
+      const tx=db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').put(blob,id);
+      tx.oncomplete=function(){ res(); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function edlGetBlob(id){
+  return edlOpenDb().then(function(db){
+    return new Promise(function(res,rej){
+      const tx=db.transaction('blobs','readonly');
+      const q=tx.objectStore('blobs').get(id);
+      q.onsuccess=function(){ res(q.result||null); };
+      q.onerror=function(){ rej(q.error); };
+    });
+  });
+}
+function edlDelBlob(id){
+  return edlOpenDb().then(function(db){
+    return new Promise(function(res,rej){
+      const tx=db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').delete(id);
+      tx.oncomplete=function(){ res(); };
+      tx.onerror=function(){ rej(tx.error); };
+    });
+  });
+}
+function edlClearDb(){
+  try{ indexedDB.deleteDatabase(edlDbName()); }catch(e){}
+}
+function edlMediaIds(e){
+  const ids=[];
+  (e.rooms||[]).forEach(function(r){ (r.media||[]).forEach(function(m){ if(m.id) ids.push(m.id); }); });
+  return ids;
+}
+async function edlDeleteBlobsOf(e){
+  const ids=edlMediaIds(e);
+  for(let i=0;i<ids.length;i++){ try{ await edlDelBlob(ids[i]); }catch(err){} }
+}
+function edlBlank(lgId,type,lcId){
+  const lg=gLg(lgId);
+  return {
+    id:uid(), lgId:lgId||'', lcId:lcId||'', type:type||'entree', date:tod(),
+    status:'brouillon',
+    rooms:EDL_ROOMS_DEFAULT.map(function(n){ return {id:uid(),name:n,notes:'',media:[]}; }),
+    meters:{elecHP:'',elecHC:'',gaz:'',eau:'',mazout:''},
+    cles:(lg&&lg.cles)||'', detecteurs:'', docsEntretien:'', conclusion:'',
+    created:Date.now(), updated:Date.now()
+  };
+}
+function edlPersist(){
+  if(!_edlCur) return;
+  _edlCur.updated=Date.now();
+  const i=edls.findIndex(function(x){ return x.id===_edlCur.id; });
+  if(i>=0) edls[i]=_edlCur; else edls.unshift(_edlCur);
+  sv('el',edls);
+}
+function edlSave(toast){
+  if(!_edlCur) return;
+  edlReadMeta();
+  if(!_edlCur.lgId){ showToast('Choisissez un logement'); return false; }
+  _edlCur.status=edlMediaCount(_edlCur)?'pret':'brouillon';
+  edlPersist();
+  if(toast) showToast('💾 État des lieux enregistré');
+  return true;
+}
+function edlMediaCount(e){
+  return (e.rooms||[]).reduce(function(n,r){ return n+(r.media||[]).length; },0);
+}
+function edlSummaryText(e){
+  if(!e) return '';
+  const lines=[];
+  (e.rooms||[]).forEach(function(r){
+    const n=(r.media||[]).length;
+    const note=(r.notes||'').trim();
+    if(!note && !n) return;
+    lines.push((r.name||'Pièce')+' : '+(note||'sans remarque')+(n?' ('+n+' visuel'+(n>1?'s':'')+')':''));
+  });
+  const m=e.meters||{};
+  const meters=[];
+  if(m.elecHP) meters.push('Élec. HP '+m.elecHP);
+  if(m.elecHC) meters.push('Élec. HC '+m.elecHC);
+  if(m.gaz) meters.push('Gaz '+m.gaz);
+  if(m.eau) meters.push('Eau '+m.eau);
+  if(m.mazout) meters.push('Mazout '+m.mazout+'%');
+  if(meters.length) lines.push('Compteurs : '+meters.join(' · '));
+  return lines.join('\n');
+}
+function edlFindForLg(lgId){
+  return edls.filter(function(e){ return e.lgId===lgId; }).sort(function(a,b){ return (b.updated||0)-(a.updated||0); });
+}
+function tabEdl(f,el){
+  _edlFilter=f;
+  document.querySelectorAll('#edlTabs .tab').forEach(function(t){ t.classList.remove('active'); });
+  if(el) el.classList.add('active');
+  rEdls();
+}
+function edlShowList(){
+  document.getElementById('edlListView').style.display='';
+  document.getElementById('edlEditView').style.display='none';
+  _edlCur=null;
+}
+function edlBackToList(){
+  edlSave(false);
+  _edlFocusLg='';
+  edlShowList();
+  rEdls();
+}
+function rEdls(){
+  injectBatViewBar('batViewBar_edl');
+  if(_edlKeepEditor && _edlCur){
+    _edlKeepEditor=false;
+    document.getElementById('edlListView').style.display='none';
+    document.getElementById('edlEditView').style.display='';
+    return;
+  }
+  _edlKeepEditor=false;
+  if(_edlCur){
+    try{ edlReadMeta(); edlPersist(); }catch(e){}
+    _edlCur=null;
+  }
+  document.getElementById('edlListView').style.display='';
+  document.getElementById('edlEditView').style.display='none';
+  const cont=document.getElementById('edlList');
+  if(!cont) return;
+  let list=filterEdlsByBat(getBatView());
+  if(_edlFocusLg) list=list.filter(function(e){ return e.lgId===_edlFocusLg; });
+  if(_edlFilter==='entree'||_edlFilter==='sortie') list=list.filter(function(e){ return e.type===_edlFilter; });
+  if(_edlFilter==='brouillon') list=list.filter(function(e){ return e.status==='brouillon'; });
+  list=list.slice().sort(function(a,b){ return (b.updated||0)-(a.updated||0); });
+  const n=list.length;
+  const sub=document.getElementById('edlCnt');
+  if(sub) sub.textContent=n? (n+' dossier'+(n>1?'s':'')) : 'Photos et vidéos attachées au logement, réutilisables à l\'entrée d\'un locataire';
+  if(!lgs.length){
+    cont.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-text">Créez d\'abord un logement, puis lancez l\'état des lieux.</div></div>';
+    return;
+  }
+  if(!list.length){
+    cont.innerHTML='<div class="empty"><div class="empty-icon">📷</div><div class="empty-text">Aucun état des lieux. Créez-en un, prenez les photos pièce par pièce, puis générez le document.</div></div>';
+    return;
+  }
+  cont.innerHTML=list.map(function(e){
+    const lg=gLg(e.lgId);
+    const lc=e.lcId?gLc(e.lcId):null;
+    const n=edlMediaCount(e);
+    const thumbs=[];
+    (e.rooms||[]).forEach(function(r){
+      (r.media||[]).forEach(function(m){ if(thumbs.length<4 && m.thumb) thumbs.push(m); });
+    });
+    const typeLbl=e.type==='sortie'?'Sortie':'Entrée';
+    const badge=e.status==='brouillon'?'<span class="badge bo">brouillon</span>':'<span class="badge bg">prêt</span>';
+    return '<div class="edl-card" onclick="edlOpen(\''+e.id+'\')">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+          '<strong>'+esc(lg.nom||'Logement')+'</strong>'+
+          '<span class="badge '+(e.type==='sortie'?'bb':'bgo')+'">'+typeLbl+'</span>'+badge+
+        '</div>'+
+        '<div style="font-size:.68rem;color:var(--t2);margin-top:3px">'+fD(e.date)+(lc?' · '+esc(lcFull(lc)):' · modèle du logement')+' · '+n+' visuel'+(n>1?'s':'')+'</div>'+
+        (thumbs.length?'<div class="edl-thumbs">'+thumbs.map(function(m){
+          return '<div class="edl-thumb"><img src="'+m.thumb+'" alt=""></div>';
+        }).join('')+'</div>':'')+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px" onclick="event.stopPropagation()">'+
+        '<button class="btn btn-s btn-xs" onclick="edlDuplicate(\''+e.id+'\')" title="Dupliquer pour un prochain locataire">⧉</button>'+
+        '<button class="btn btn-d btn-xs" onclick="edlDelete(\''+e.id+'\')">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function edlNew(lgId,type,lcId){
+  if(!lgs.length){ showToast('Créez d\'abord un logement'); nav('logements'); return; }
+  const e=edlBlank(lgId||(_edlFocusLg)||lgs[0].id, type||'entree', lcId||'');
+  edls.unshift(e); sv('el',edls);
+  edlOpen(e.id);
+}
+function edlOpenForLg(lgId){
+  _edlFocusLg=lgId||'';
+  nav('edl');
+  const found=edlFindForLg(lgId);
+  if(found.length===1){ edlOpen(found[0].id); return; }
+  if(found.length>1){ showToast(found.length+' états des lieux pour ce logement'); rEdls(); return; }
+  edlNew(lgId,'entree','');
+}
+function edlOpenForLc(lcId){
+  const lc=lcs.find(function(x){ return x.id===lcId; });
+  if(!lc||!lc.lgId){ showToast('Locataire sans logement'); return; }
+  const own=edls.filter(function(e){ return e.lcId===lcId; }).sort(function(a,b){ return (b.updated||0)-(a.updated||0); });
+  if(own.length){ edlOpen(own[0].id); return; }
+  const tpl=edlFindForLg(lc.lgId);
+  if(tpl.length){
+    nav('edl');
+    edlOpen(tpl[0].id);
+    showToast('Modèle du logement ouvert — rattachez le locataire via Transférer');
+    return;
+  }
+  edlNew(lc.lgId, isActiveLc(lc)?'entree':'sortie', lcId);
+}
+function edlOpen(id){
+  const e=edls.find(function(x){ return x.id===id; });
+  if(!e){ showToast('État des lieux introuvable'); return; }
+  _edlCur=e;
+  _edlKeepEditor=true;
+  if(curP!=='edl') nav('edl');
+  _edlKeepEditor=false;
+  document.getElementById('edlListView').style.display='none';
+  document.getElementById('edlEditView').style.display='';
+  const typeLbl=e.type==='sortie'?'de sortie':'d\'entrée';
+  document.getElementById('edlEditTitle').textContent='État des lieux '+typeLbl;
+  document.getElementById('edlEditSub').textContent=(gLg(e.lgId).nom||'')+' · enregistré automatiquement';
+  edlFillMeta();
+  edlRenderRooms();
+}
+function edlFillMeta(){
+  const e=_edlCur; if(!e) return;
+  const lgSel=document.getElementById('edlLg');
+  lgSel.innerHTML=lgs.map(function(l){ return '<option value="'+l.id+'">'+esc(l.nom)+'</option>'; }).join('');
+  lgSel.value=e.lgId||'';
+  document.getElementById('edlType').value=e.type||'entree';
+  document.getElementById('edlDate').value=e.date||tod();
+  edlFillLcSel();
+  document.getElementById('edlCles').value=e.cles||'';
+  document.getElementById('edlDetecteurs').value=e.detecteurs||'';
+  document.getElementById('edlDocsEnt').value=e.docsEntretien||'';
+  const m=e.meters||{};
+  document.getElementById('edlElecHP').value=m.elecHP||'';
+  document.getElementById('edlElecHC').value=m.elecHC||'';
+  document.getElementById('edlGaz').value=m.gaz||'';
+  document.getElementById('edlEau').value=m.eau||'';
+  document.getElementById('edlMazout').value=m.mazout||'';
+  document.getElementById('edlConclusion').value=e.conclusion||'';
+}
+function edlFillLcSel(){
+  const e=_edlCur; if(!e) return;
+  const sel=document.getElementById('edlLc');
+  const vis=lcs.filter(function(l){ return !e.lgId || l.lgId===e.lgId; });
+  sel.innerHTML='<option value="">Aucun — modèle du logement</option>'+vis.map(function(l){
+    return '<option value="'+l.id+'">'+esc(lcFull(l))+'</option>';
+  }).join('');
+  sel.value=e.lcId||'';
+}
+function edlReadMeta(){
+  if(!_edlCur) return;
+  _edlCur.lgId=document.getElementById('edlLg').value;
+  _edlCur.type=document.getElementById('edlType').value;
+  _edlCur.date=document.getElementById('edlDate').value||tod();
+  _edlCur.lcId=document.getElementById('edlLc').value;
+  _edlCur.cles=document.getElementById('edlCles').value;
+  _edlCur.detecteurs=document.getElementById('edlDetecteurs').value;
+  _edlCur.docsEntretien=document.getElementById('edlDocsEnt').value;
+  _edlCur.meters={
+    elecHP:document.getElementById('edlElecHP').value,
+    elecHC:document.getElementById('edlElecHC').value,
+    gaz:document.getElementById('edlGaz').value,
+    eau:document.getElementById('edlEau').value,
+    mazout:document.getElementById('edlMazout').value
+  };
+  _edlCur.conclusion=document.getElementById('edlConclusion').value;
+}
+function edlOnMeta(){
+  if(!_edlCur) return;
+  const prevLg=_edlCur.lgId;
+  edlReadMeta();
+  if(_edlCur.lgId!==prevLg){
+    const lg=gLg(_edlCur.lgId);
+    if(lg && lg.cles && !_edlCur.cles) _edlCur.cles=lg.cles;
+    document.getElementById('edlCles').value=_edlCur.cles||'';
+    edlFillLcSel();
+  }
+  const typeLbl=_edlCur.type==='sortie'?'de sortie':'d\'entrée';
+  document.getElementById('edlEditTitle').textContent='État des lieux '+typeLbl;
+  edlPersist();
+}
+function edlRenderRooms(){
+  const e=_edlCur; if(!e) return;
+  const cont=document.getElementById('edlRooms');
+  cont.innerHTML=(e.rooms||[]).map(function(r){
+    const media=(r.media||[]).map(function(m){
+      const isVid=m.kind==='video';
+      const src=m.thumb||'';
+      return '<div style="width:76px">'+
+        '<div class="edl-thumb">'+
+        (src?'<img src="'+src+'" alt="" onclick="edlViewMedia(\''+r.id+'\',\''+m.id+'\')">':
+          '<div onclick="edlViewMedia(\''+r.id+'\',\''+m.id+'\')" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">'+(isVid?'🎥':'📷')+'</div>')+
+        (isVid?'<span style="position:absolute;bottom:2px;left:2px;font-size:.6rem;background:rgba(0,0,0,.6);color:#fff;padding:0 3px;border-radius:3px">▶</span>':'')+
+        '<button type="button" class="edl-x" onclick="event.stopPropagation();edlDelMedia(\''+r.id+'\',\''+m.id+'\')">✕</button>'+
+        '</div>'+
+        '<input class="edl-cap" placeholder="Légende" value="'+esc(m.caption||'')+'" onchange="edlCapMedia(\''+r.id+'\',\''+m.id+'\',this.value)">'+
+      '</div>';
+    }).join('');
+    return '<div class="edl-room" data-rid="'+r.id+'">'+
+      '<h3><input value="'+esc(r.name)+'" onchange="edlRenameRoom(\''+r.id+'\',this.value)"><button class="btn btn-d btn-xs" onclick="edlDelRoom(\''+r.id+'\')">✕</button></h3>'+
+      '<textarea placeholder="Sols, murs, équipements, dégâts, propreté…" onchange="edlRoomNotes(\''+r.id+'\',this.value)">'+esc(r.notes||'')+'</textarea>'+
+      '<div class="edl-thumbs">'+media+'</div>'+
+      '<div class="edl-actions">'+
+        '<button type="button" class="btn btn-p btn-sm" onclick="edlPick(\''+r.id+'\',\'edlPhotoCam\')">📷 Photo</button>'+
+        '<button type="button" class="btn btn-s btn-sm" onclick="edlPick(\''+r.id+'\',\'edlPhotoGal\')">🖼 Galerie</button>'+
+        '<button type="button" class="btn btn-s btn-sm" onclick="edlPick(\''+r.id+'\',\'edlVideoCam\')">🎥 Vidéo</button>'+
+        '<button type="button" class="btn btn-s btn-sm" onclick="edlPick(\''+r.id+'\',\'edlVideoGal\')">📁 Fichier vidéo</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function edlAddRoom(){
+  if(!_edlCur) return;
+  const name=prompt('Nom de la pièce','Pièce');
+  if(!name) return;
+  _edlCur.rooms.push({id:uid(),name:name.trim(),notes:'',media:[]});
+  edlPersist(); edlRenderRooms();
+}
+function edlDelRoom(rid){
+  if(!_edlCur) return;
+  const r=_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return;
+  if((r.media||[]).length && !confirm('Supprimer cette pièce et ses visuels ?')) return;
+  (r.media||[]).forEach(function(m){ edlDelBlob(m.id); });
+  _edlCur.rooms=_edlCur.rooms.filter(function(x){ return x.id!==rid; });
+  edlPersist(); edlRenderRooms();
+}
+function edlRenameRoom(rid,name){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return;
+  r.name=name; edlPersist();
+}
+function edlRoomNotes(rid,notes){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return;
+  r.notes=notes; edlPersist();
+}
+function edlPick(rid,inputId){
+  _edlRoomTarget=rid;
+  const el=document.getElementById(inputId);
+  if(el){ el.value=''; el.click(); }
+}
+function edlHandleFiles(input,kind){
+  const files=input.files; if(!files||!files.length) return;
+  const rid=_edlRoomTarget;
+  const arr=[];
+  for(let i=0;i<files.length;i++) arr.push(files[i]);
+  input.value='';
+  (async function(){
+    for(let i=0;i<arr.length;i++){
+      try{ await edlAddFile(rid, arr[i], kind); }
+      catch(err){ showToast('⚠️ '+arr[i].name+' : '+(err.message||err)); }
+    }
+    edlPersist(); edlRenderRooms();
+  })();
+}
+function edlAddFile(rid,file,kind){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return Promise.reject(new Error('pièce introuvable'));
+  const isVid=kind==='video' || (file.type||'').indexOf('video')===0;
+  if(isVid && file.size>40*1024*1024) return Promise.reject(new Error('vidéo trop lourde (max 40 Mo)'));
+  if(isVid) return edlAddVideo(r,file);
+  return edlAddPhoto(r,file);
+}
+function edlReadAsDataURL(file){
+  return new Promise(function(res,rej){
+    const fr=new FileReader();
+    fr.onload=function(){ res(fr.result); };
+    fr.onerror=function(){ rej(new Error('lecture fichier')); };
+    fr.readAsDataURL(file);
+  });
+}
+function edlCompressDataUrl(dataUrl,max,quality){
+  return new Promise(function(res,rej){
+    const img=new Image();
+    img.onload=function(){
+      try{
+        let w=img.width,h=img.height;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+        else if(h>max){ w=Math.round(w*max/h); h=max; }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        let q=quality, out=c.toDataURL('image/jpeg',q);
+        while(out.length>1.4*1024*1024 && q>0.4){ q-=0.1; out=c.toDataURL('image/jpeg',q); }
+        res({dataUrl:out,w:w,h:h});
+      }catch(err){ rej(err); }
+    };
+    img.onerror=function(){ rej(new Error('image illisible')); };
+    img.src=dataUrl;
+  });
+}
+function dataUrlToBlob(dataUrl){
+  const p=dataUrl.split(','), mime=(p[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
+  const bin=atob(p[1]||''); const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+async function edlAddPhoto(room,file){
+  const raw=await edlReadAsDataURL(file);
+  const full=await edlCompressDataUrl(raw,1600,0.72);
+  const thumb=await edlCompressDataUrl(raw,280,0.55);
+  const id=uid();
+  await edlPutBlob(id, dataUrlToBlob(full.dataUrl));
+  room.media=room.media||[];
+  room.media.push({id:id,kind:'photo',mime:'image/jpeg',caption:'',thumb:thumb.dataUrl,w:full.w,h:full.h,bytes:Math.round(full.dataUrl.length*3/4),created:Date.now()});
+}
+function edlVideoThumb(file){
+  return new Promise(function(res){
+    const url=URL.createObjectURL(file);
+    const v=document.createElement('video');
+    v.muted=true; v.preload='metadata'; v.src=url;
+    const done=function(thumb){ URL.revokeObjectURL(url); res(thumb||''); };
+    v.onloadeddata=function(){
+      try{
+        v.currentTime=Math.min(0.3, (v.duration||1)/4);
+      }catch(e){ done(''); }
+    };
+    v.onseeked=function(){
+      try{
+        const c=document.createElement('canvas');
+        const w=Math.min(280, v.videoWidth||280), h=Math.round((v.videoHeight||160)*w/(v.videoWidth||280));
+        c.width=w; c.height=h;
+        c.getContext('2d').drawImage(v,0,0,w,h);
+        done(c.toDataURL('image/jpeg',0.55));
+      }catch(e){ done(''); }
+    };
+    v.onerror=function(){ done(''); };
+    setTimeout(function(){ done(''); }, 2500);
+  });
+}
+async function edlAddVideo(room,file){
+  const id=uid();
+  const thumb=await edlVideoThumb(file);
+  await edlPutBlob(id, file);
+  room.media=room.media||[];
+  room.media.push({id:id,kind:'video',mime:file.type||'video/mp4',caption:'',thumb:thumb,w:0,h:0,bytes:file.size,created:Date.now()});
+}
+function edlCapMedia(rid,mid,cap){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return;
+  const m=(r.media||[]).find(function(x){ return x.id===mid; });
+  if(m){ m.caption=cap; edlPersist(); }
+}
+async function edlDelMedia(rid,mid){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  if(!r) return;
+  r.media=(r.media||[]).filter(function(x){ return x.id!==mid; });
+  try{ await edlDelBlob(mid); }catch(e){}
+  edlPersist(); edlRenderRooms();
+}
+async function edlViewMedia(rid,mid){
+  const r=_edlCur&&_edlCur.rooms.find(function(x){ return x.id===rid; });
+  const m=r&&(r.media||[]).find(function(x){ return x.id===mid; });
+  if(!m) return;
+  const body=document.getElementById('edlLbBody');
+  document.getElementById('edlLbTitle').textContent=m.caption|| (m.kind==='video'?'Vidéo':'Photo');
+  let blob=null;
+  try{ blob=await edlGetBlob(m.id); }catch(e){}
+  if(blob){
+    const url=URL.createObjectURL(blob);
+    body.innerHTML=m.kind==='video'
+      ? '<video src="'+url+'" controls autoplay style="width:100%"></video>'
+      : '<img src="'+url+'" alt="">';
+    body.dataset.obj=url;
+  }else if(m.thumb){
+    body.innerHTML='<img src="'+m.thumb+'" alt=""><p style="color:#ccc;font-size:.75rem;text-align:center;margin-top:8px">Miniature uniquement — fichier original absent de cet appareil</p>';
+  }else{
+    body.innerHTML='<p style="color:#ccc;text-align:center">Média introuvable</p>';
+  }
+  openM('edlLightbox');
+}
+function edlDelete(id){
+  const e=edls.find(function(x){ return x.id===id; });
+  if(!e) return;
+  if(!confirm('Supprimer cet état des lieux et ses photos ?')) return;
+  edlDeleteBlobsOf(e);
+  edls=edls.filter(function(x){ return x.id!==id; });
+  sv('el',edls);
+  if(_edlCur && _edlCur.id===id){ _edlCur=null; edlShowList(); }
+  rEdls();
+}
+function edlDeleteForLg(lgId){
+  const gone=edls.filter(function(e){ return e.lgId===lgId; });
+  gone.forEach(function(e){ edlDeleteBlobsOf(e); });
+  edls=edls.filter(function(e){ return e.lgId!==lgId; });
+  sv('el',edls);
+}
+async function edlDuplicate(id){
+  const src=edls.find(function(x){ return x.id===id; });
+  if(!src) return;
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.id=uid(); copy.lcId=''; copy.date=tod(); copy.status='brouillon';
+  copy.created=Date.now(); copy.updated=Date.now();
+  copy.type='entree';
+  for(let i=0;i<(copy.rooms||[]).length;i++){
+    const r=copy.rooms[i]; r.id=uid();
+    for(let j=0;j<(r.media||[]).length;j++){
+      const m=r.media[j]; const old=m.id; m.id=uid();
+      try{
+        const blob=await edlGetBlob(old);
+        if(blob) await edlPutBlob(m.id, blob);
+      }catch(e){}
+    }
+  }
+  edls.unshift(copy); sv('el',edls);
+  showToast('⧉ Copie créée — rattachez-la au prochain locataire');
+  edlOpen(copy.id);
+}
+async function edlBuildHtml(){
+  if(!_edlCur) return '';
+  edlReadMeta();
+  const e=_edlCur, lg=gLg(e.lgId), bat=gBat(lg.batId), lc=e.lcId?gLc(e.lcId):null;
+  const blr=getBailleur();
+  const typeLbl=e.type==='sortie'?'de sortie':'d\'entrée';
+  let roomsHtml='';
+  for(let i=0;i<(e.rooms||[]).length;i++){
+    const r=e.rooms[i];
+    let figs='';
+    for(let j=0;j<(r.media||[]).length;j++){
+      const m=r.media[j];
+      let src=m.thumb||'';
+      try{
+        const blob=await edlGetBlob(m.id);
+        if(blob){
+          src=await new Promise(function(res){
+            const fr=new FileReader();
+            fr.onload=function(){ res(fr.result); };
+            fr.onerror=function(){ res(m.thumb||''); };
+            fr.readAsDataURL(blob);
+          });
+        }
+      }catch(err){}
+      if(!src) continue;
+      if(m.kind==='video'){
+        figs+='<figure><video src="'+src+'" controls></video><figcaption>'+esc(m.caption||'Vidéo')+'</figcaption></figure>';
+      }else{
+        figs+='<figure><img src="'+src+'" alt="'+esc(m.caption||r.name)+'"><figcaption>'+esc(m.caption||'')+'</figcaption></figure>';
+      }
+    }
+    if(!(r.notes||'').trim() && !figs) continue;
+    roomsHtml+='<section><h2>'+esc(r.name)+'</h2>'+(r.notes?'<p>'+esc(r.notes).replace(/\n/g,'<br>')+'</p>':'')+'<div class="g">'+figs+'</div></section>';
+  }
+  const m=e.meters||{};
+  const meters=[['Électricité HP',m.elecHP],['Électricité HC',m.elecHC],['Gaz',m.gaz],['Eau',m.eau],['Mazout',m.mazout]].filter(function(x){ return x[1]; });
+  return '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>État des lieux '+esc(typeLbl)+'</title>'+
+    '<style>body{font-family:system-ui,sans-serif;max-width:860px;margin:24px auto;padding:0 16px;color:#1a1814}h1{color:#1F3B57}h2{margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:4px}.meta{background:#f4f2ef;padding:12px 14px;border-radius:8px}figure{margin:0 0 12px}img,video{max-width:100%;border-radius:6px}.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media print{.g{grid-template-columns:1fr 1fr}button{display:none}}</style></head><body>'+
+    '<p style="color:#666;font-size:12px">Région wallonne · Décret du 15 mars 2018 — article 27</p>'+
+    '<h1>État des lieux '+esc(typeLbl)+'</h1>'+
+    '<div class="meta"><p><b>Bien :</b> '+esc(lg.addr||bat.addr||lg.nom||'')+' — '+esc(lg.nom)+'</p>'+
+    '<p><b>Bailleur :</b> '+esc(blr.nom||'')+'</p>'+
+    '<p><b>Preneur :</b> '+(lc?esc(lcFull(lc)):'(à rattacher)')+'</p>'+
+    '<p><b>Date :</b> '+esc(fD(e.date))+'</p>'+
+    (e.cles?'<p><b>Clés :</b> '+esc(e.cles)+'</p>':'')+
+    (e.detecteurs?'<p><b>Détecteurs de fumée :</b> '+esc(e.detecteurs)+'</p>':'')+
+    (e.docsEntretien?'<p><b>Documents d\'entretien :</b> '+esc(e.docsEntretien)+'</p>':'')+
+    (meters.length?'<p><b>Compteurs :</b> '+meters.map(function(x){ return esc(x[0])+' '+esc(x[1]); }).join(' · ')+'</p>':'')+
+    '</div>'+roomsHtml+
+    (e.conclusion?'<section><h2>Conclusion</h2><p>'+esc(e.conclusion).replace(/\n/g,'<br>')+'</p></section>':'')+
+    '<p style="margin-top:32px;font-size:12px;color:#666">Document généré par Keystone. L\'état des lieux d\'entrée est annexé au bail. Fait en deux exemplaires.</p>'+
+    '</body></html>';
+}
+async function edlPrint(){
+  if(!edlSave(false)) return;
+  showToast('Préparation de l\'aperçu…');
+  const html=await edlBuildHtml();
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank','noopener');
+  const a=document.createElement('a');
+  const lg=gLg(_edlCur.lgId);
+  a.href=url; a.download=('EDL_'+(_edlCur.type||'entree')+'_'+(lg.nom||'logement')).replace(/[^\w-]+/g,'_')+'.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  if(w) setTimeout(function(){ try{ w.focus(); }catch(e){} }, 400);
+  showToast('⬇ HTML téléchargé — imprimez-le en PDF depuis le navigateur');
+}
+function edlPhotoEdlForLc(lc){
+  if(!lc) return null;
+  const own=edls.filter(function(e){ return e.lcId===lc.id; }).sort(function(a,b){ return (b.updated||0)-(a.updated||0); });
+  if(own.length) return own[0];
+  const tpl=edlFindForLg(lc.lgId);
+  return tpl[0]||null;
+}
+async function edlGenWord(){
+  if(!edlSave(false)) return;
+  const e=_edlCur;
+  window._edlPendingConclusion=(e.conclusion?e.conclusion+'\n\n':'')+edlSummaryText(e);
+  window._edlPendingCles=e.cles||'';
+  if(e.lcId){
+    openDocGen(e.type==='sortie'?'edl_sortie':'edl_entree', e.lcId);
+    return;
+  }
+  const lg=gLg(e.lgId), bat=gBat(lg.batId), blr=getBailleur();
+  const vars={
+    'bailleur.nom':blr.nom||'','loc.civilite':'','loc.prenom':'','loc.nom':'',
+    'lgt.adresse':lg.addr||bat.addr||'','lgt.contenu':lg.contenu||'',
+    'lgt.cles':e.cles||lg.cles||'','bail.dateDebut':'',
+    'edl.date':_frDate(e.date||tod()),
+    'edl.conclusion':window._edlPendingConclusion||'',
+    'edl.type':e.type==='sortie'?'de sortie':'d’entrée',
+    'bail.chkChargesIncl':'☐','bail.chkChargesSus':'☒'
+  };
+  try{
+    const resp=await fetch('docs-templates/Template_EDL.docx',{cache:'no-store'});
+    if(!resp.ok) throw new Error('template introuvable ('+resp.status+')');
+    const merged=_docxMerge(new Uint8Array(await resp.arrayBuffer()),vars);
+    const base=e.type==='sortie'?'EDL_sortie':'EDL_entree';
+    _docGen={lcId:'',type:e.type==='sortie'?'edl_sortie':'edl_entree',blob:new Blob([merged],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}),filename:(base+'_'+(lg.nom||'logement')).replace(/[^\w-]+/g,'_')+'.docx',email:''};
+    document.getElementById('docConfirmInfo').innerHTML=
+      'Document généré : <strong>'+esc(_docGen.filename)+'</strong><br>Type : '+esc(DOC_LABELS[_docGen.type])+
+      '<br><span style="color:var(--t3)">Aucun locataire rattaché — le preneur reste à compléter. Utilisez Transférer pour l\'envoyer.</span>';
+    const eb=document.getElementById('docEmailBtn');
+    if(eb){ eb.disabled=true; eb.style.opacity='.5'; eb.style.cursor='not-allowed'; }
+    openM('mDocConfirm');
+  }catch(err){
+    showToast('⚠️ Échec de génération : '+err.message);
+  }
+}
+function edlOpenTransfer(){
+  if(!edlSave(false)) return;
+  const e=_edlCur;
+  const vis=lcs.filter(function(l){ return !e.lgId || l.lgId===e.lgId; });
+  const sel=document.getElementById('edlTransferLc');
+  sel.innerHTML='<option value="">Aucun — envoi libre</option>'+vis.map(function(l){
+    return '<option value="'+l.id+'">'+esc(lcFull(l))+(l.email?' — '+esc(l.email):'')+'</option>';
+  }).join('');
+  sel.value=e.lcId||'';
+  const em=document.getElementById('edlTransferEmail');
+  const lc=e.lcId?gLc(e.lcId):null;
+  em.value=(lc&&lc.email)||'';
+  sel.onchange=function(){
+    const l=gLc(sel.value);
+    if(l&&l.email) em.value=l.email;
+  };
+  openM('mEdlTransfer');
+}
+async function edlDoTransfer(){
+  if(!_edlCur) return;
+  const lcId=document.getElementById('edlTransferLc').value;
+  const email=(document.getElementById('edlTransferEmail').value||'').trim();
+  if(lcId){
+    _edlCur.lcId=lcId;
+    document.getElementById('edlLc').value=lcId;
+    edlPersist();
+    const nom='État des lieux '+(_edlCur.type==='sortie'?'de sortie':'d\'entrée')+' — '+(gLg(_edlCur.lgId).nom||'');
+    const exists=dcs.some(function(d){ return d.edlId===_edlCur.id; });
+    if(!exists){
+      dcs.push({id:uid(),nom:nom,type:'etat',lcId:lcId,date:_edlCur.date||tod(),notes:'Dossier photographique Keystone',edlId:_edlCur.id});
+      sv('dc',dcs);
+    }
+  }
+  closeM('mEdlTransfer');
+  showToast('Préparation du dossier photos…');
+  const html=await edlBuildHtml();
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const lg=gLg(_edlCur.lgId);
+  const filename=('EDL_'+(_edlCur.type||'entree')+'_'+(lg.nom||'logement')).replace(/[^\w-]+/g,'_')+'.html';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  const sujet='État des lieux '+(_edlCur.type==='sortie'?'de sortie':'d\'entrée')+(lg.nom?' — '+lg.nom:'');
+  const blr=getBailleur();
+  const corps='Bonjour,\n\nVous trouverez en pièce jointe l\'état des lieux photographique'+(lg.addr||gBat(lg.batId).addr?' concernant le logement situé '+(lg.addr||gBat(lg.batId).addr):'')+'.\n\n⚠️ Important : joignez le fichier « '+filename+' » que vous venez de télécharger (et le PDF si vous l\'avez imprimé).\n\nCordialement,\n'+(blr.nom||'');
+  if(email){
+    const url='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(email)+'&su='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
+    window.open(url,'_blank','noopener');
+    showToast('✉ Dossier téléchargé — joignez-le dans Gmail');
+  }else{
+    showToast('⬇ Dossier HTML téléchargé');
+  }
+}
+
 // ═══ SIDEBAR ═══
 function toggleSb(){
   const sb=document.getElementById('sb');const btn=sb.querySelector('.sb-toggle');
@@ -5172,7 +5992,7 @@ function closeMobSb(){
   ov.style.display='none';
 }
 function mobNav(el){const p=el.dataset.p;if(p==='more'){toggleMobSb();return;}document.querySelectorAll('.mn-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');nav(p);}
-function mobFab(){const m={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),documents:()=>openM('mDoc'),rappels:()=>openM('mRap'),annonces:()=>openAnForm()};if(m[curP])m[curP]();}
+function mobFab(){const m={dashboard:()=>openM('mPay'),logements:()=>openM('mLog'),locataires:()=>openNewLoc(),paiements:()=>openM('mPay'),charges:()=>openM('mRel'),entretien:()=>openM('mEnt'),edl:()=>edlNew(),documents:()=>openM('mDoc'),rappels:()=>openM('mRap'),annonces:()=>openAnForm()};if(m[curP])m[curP]();}
 
 
 
@@ -5589,7 +6409,12 @@ const AI_TOOLS = [
    input_schema:{type:'object',properties:{
      type:{type:'string',enum:['bail_rp','bail_cd','bail_etudiant','edl_entree','edl_sortie'],description:'bail_rp = bail de résidence principale (9 ans) ; bail_cd = bail de courte durée (≤ 3 ans) ; bail_etudiant = bail étudiant ; edl_entree = état des lieux d\'entrée ; edl_sortie = état des lieux de sortie'},
      locataire:{type:'string',description:'Nom du locataire concerné'}
-   },required:['type','locataire']}}
+   },required:['type','locataire']}},
+  {name:'ouvrir_etat_des_lieux',description:'Ouvre le dossier photographique d\'état des lieux (photos/vidéos pièce par pièce) pour un logement ou un locataire. Permet de créer ou reprendre un EDL réutilisable, puis de générer le document et de le transférer au locataire ou à un candidat.',
+   input_schema:{type:'object',properties:{
+     logement:{type:'string',description:'Nom du logement'},
+     locataire:{type:'string',description:'Nom du locataire (alternative au logement)'}
+   }}}
 ];
 
 // Normalise pour recherche tolérante (minuscule, sans accents).
@@ -5751,6 +6576,20 @@ function executeAITool(name,input){
       const t=_enum(input.type,['bail_rp','bail_cd','bail_etudiant','edl_entree','edl_sortie'],'bail_rp');
       if(typeof openDocGen==='function')openDocGen(t,_lc.item.id);
       return '✅ Écran de validation des variables ouvert pour le document ('+(DOC_LABELS[t]||t)+') de '+lcFull(_lc.item)+'. Indique à l\'utilisateur qu\'il doit vérifier et compléter les variables (PEB, signature, remarques…), valider, puis confirmer le document avant tout envoi.';
+    }
+    if(name==='ouvrir_etat_des_lieux'){
+      if(input.locataire){
+        const _lc=_aiPick(lcs,input.locataire,l=>l.prenom+' '+l.nom,'locataires');
+        if(_lc.msg)return _lc.msg;
+        if(!_lc.item)return 'Locataire introuvable : "'+input.locataire+'".';
+        edlOpenForLc(_lc.item.id);
+        return '✅ Dossier d\'état des lieux photographique ouvert pour '+lcFull(_lc.item)+'.';
+      }
+      const _lg=_aiPick(lgs,input.logement,l=>l.nom,'logements');
+      if(_lg.msg)return _lg.msg;
+      if(!_lg.item)return 'Logement introuvable : "'+(input.logement||'')+'". Précise un logement ou un locataire.';
+      edlOpenForLg(_lg.item.id);
+      return '✅ Dossier d\'état des lieux photographique ouvert pour '+_lg.item.nom+'. L\'utilisateur peut y prendre des photos/vidéos, générer le Word, puis transférer au locataire.';
     }
     return 'Outil inconnu : '+name;
   }catch(e){return 'Erreur lors de l\'exécution : '+e.message;}
@@ -5925,7 +6764,8 @@ ACTIONS — tu peux ENREGISTRER des informations dans l'application :
 - Référence les bâtiments / logements / locataires / compteurs par leur NOM tel qu'il apparaît dans le contexte ci-dessous.
 - S'il manque une information obligatoire, ou si une référence est ambiguë (ex : deux locataires de nom proche), NE DEVINE PAS : demande une précision à l'utilisateur.
 - Après chaque action réussie, confirme en une phrase claire. Si l'outil renvoie une erreur ou une demande de précision, relaie-la fidèlement à l'utilisateur.
-- DOCUMENTS : pour produire un bail ou un état des lieux, utilise l'outil generer_document. Il OUVRE l'écran de validation des variables — il ne génère jamais le document directement. Préviens l'utilisateur qu'il doit vérifier/compléter les variables, valider, puis confirmer le document (double validation obligatoire). Il existe TROIS types de bail (bail_rp = résidence principale, bail_cd = courte durée, bail_etudiant = étudiant) : si l'utilisateur dit « génère le bail » sans préciser, DEMANDE-LUI lequel avant d'appeler l'outil — ne devine pas. Cas typiques : nouveau locataire → propose un bail + l'état des lieux d'entrée ; départ d'un locataire → propose l'état des lieux de sortie.
+- DOCUMENTS : pour produire un bail ou un état des lieux Word, utilise l'outil generer_document. Il OUVRE l'écran de validation des variables — il ne génère jamais le document directement. Préviens l'utilisateur qu'il doit vérifier/compléter les variables, valider, puis confirmer le document (double validation obligatoire). Il existe TROIS types de bail (bail_rp = résidence principale, bail_cd = courte durée, bail_etudiant = étudiant) : si l'utilisateur dit « génère le bail » sans préciser, DEMANDE-LUI lequel avant d'appeler l'outil — ne devine pas. Cas typiques : nouveau locataire → propose un bail + l'état des lieux d'entrée ; départ d'un locataire → propose l'état des lieux de sortie.
+- ÉTAT DES LIEUX PHOTOGRAPHIQUE : si l'utilisateur veut prendre des photos, une vidéo, constituer un dossier réutilisable sur le logement (avant même d'avoir un locataire) ou transférer l'EDL à un candidat/locataire, utilise ouvrir_etat_des_lieux. C'est l'outil à privilégier pour « faire l'état des lieux » sur place.
 
 ${buildContext()}`;
 }
@@ -6412,6 +7252,7 @@ async function driveLoad(forcePull){
     if(data.annonces){ans=data.annonces;sv('an',ans);}
     if(data.entretiens){ens=data.entretiens;sv('en',ens);}
     if(data.documents){dcs=data.documents;sv('dc',dcs);}
+    if(data.edls){edls=data.edls;sv('el',edls);}
     if(data.rappels){rps=data.rappels;sv('rp',rps);}
     if(data.compteurs){cos=data.compteurs;sv('co',cos);}
     if(data.releves){rls=data.releves;sv('rl',rls);}
@@ -6460,7 +7301,7 @@ async function driveSave(silent){
       version:'1.3', savedAt:new Date().toISOString(),
       batiments:bats, logements:lgs, locataires:lcs, paiements:pys,
       credits:crs, charges:chs, depenses:dps,
-      entretiens:ens, documents:dcs, rappels:rps,
+      entretiens:ens, documents:dcs, edls:edls, rappels:rps,
       compteurs:cos, releves:rls, todos:tds, annonces:ans,
       customFields:(function(){try{return JSON.parse(localStorage.getItem('ks_customfields')||'[]');}catch(e){return[];}})(),
       cardPrefs:(function(){try{return JSON.parse(localStorage.getItem('ks_cardprefs')||'[]');}catch(e){return[];}})(),
@@ -7200,7 +8041,8 @@ function loginNewEmpty(){
   sessionStorage.setItem('ks_isolated','1');
   Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));localStorage.removeItem('_ksi_ks_bailleur');
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];
+  bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];edls=[];
+  if(typeof edlClearDb==='function')edlClearDb();
   // v2.17 : rôle 'admin' (et non 'lecture') — le mode "Application vide" sert à
   // monter un projet de zéro ; avec 'lecture' (canAdd:false) applyRoleRestrictions()
   // masquait définitivement les boutons "＋ Ajouter" du toolbar dès la 1re entité.
@@ -7221,7 +8063,8 @@ function loginNewCode(){
     sessionStorage.setItem('ks_isolated','1');
     Object.keys(K).forEach(k=>localStorage.removeItem('_ksi_'+K[k]));localStorage.removeItem('_ksi_ks_bailleur');
   ['driveBtnConnect','driveBtn','menuDrive','syncBar'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';}});
-    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];
+    bats=[];lgs=[];lcs=[];pys=[];ens=[];dcs=[];rps=[];cos=[];rls=[];crs=[];chs=[];dps=[];tds=[];ans=[];edls=[];
+    if(typeof edlClearDb==='function')edlClearDb();
     if(cfg.bats){bats=cfg.bats;sv('bt',bats);}
     if(cfg.lgs){lgs=cfg.lgs;sv('lg',lgs);}
     if(cfg.lcs){lcs=cfg.lcs||[];sv('lc',lcs);}
@@ -7292,7 +8135,7 @@ function doLogin(profile){
   if(!window._ksIsolated){
     bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
     ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
-    crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');ans=ld('an');
+    crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');ans=ld('an');edls=ld('el');
   }
   // v2.17 : un (re)login ramène toujours au Dashboard plutôt que de rester sur
   // la dernière page consultée d'un mode précédent.
@@ -7338,7 +8181,7 @@ function applyRoleRestrictions(){
   const pagePerms = {
     batiments:'seeBatiments', logements:'seeLogements', locataires:'seeLocataires',
     paiements:'seePaiements', charges:'seeCharges', entretien:'seeEntretien',
-    documents:'seeDocuments', rappels:'seeRappels', tableau:'seeTableauAnnuel',
+    documents:'seeDocuments', edl:'seeLogements', rappels:'seeRappels', tableau:'seeTableauAnnuel',
     assistant:'seeAssistantIA', annonces:'seeAnnonces'
   };
   document.querySelectorAll('.sb-item[data-p]').forEach(item=>{
@@ -7380,7 +8223,7 @@ function logout(){
   // Reload non-isolated data depuis localStorage (au cas où on sort d'une session isolée)
   bats=ld('bt'); lgs=ld('lg'); lcs=ld('lc'); pys=ld('py');
   ens=ld('en'); dcs=ld('dc'); rps=ld('rp'); cos=ld('co'); rls=ld('rl');
-  crs=ld('cr'); chs=ld('ch'); dps=ld('dp'); tds=ld('td'); ans=ld('an');
+  crs=ld('cr'); chs=ld('ch'); dps=ld('dp'); tds=ld('td'); ans=ld('an'); edls=ld('el');
   // Hide Drive + logout UI
   ['driveBtn','driveBtnConnect','syncBar','menuDrive'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   const lb=document.getElementById('logoutBtn');if(lb)lb.style.display='none';
@@ -8625,10 +9468,10 @@ if(_isDemo){
   window._ksIsolated = true;  // certitude
   _loadDemoData();
 } else if(window._ksIsolated){
-  // Reload isolated data arrays immediately (all 12 collections)
+  // Reload isolated data arrays immediately (all 13 collections)
   bats=ld('bt');lgs=ld('lg');lcs=ld('lc');pys=ld('py');
   ens=ld('en');dcs=ld('dc');rps=ld('rp');cos=ld('co');rls=ld('rl');
-  crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');ans=ld('an');
+  crs=ld('cr');chs=ld('ch');dps=ld('dp');tds=ld('td');ans=ld('an');edls=ld('el');
 }
 if(!_isDemo) injectRealData();  // injectRealData() bail-out déjà sur _ksIsolated, mais on est explicite ici
 rDash();
@@ -8737,7 +9580,7 @@ function copyProjectCode(){
 // Helper : peuple les variables data avec le dataset de démo.
 // Extrait de l'ancien activateDemo pour être appelable depuis le bootstrap.
 function _loadDemoData(){
-  crs=[]; chs=[]; dps=[]; dcs=[];
+  crs=[]; chs=[]; dps=[]; dcs=[]; edls=[];
   tds=[
     {id:'td_d1',text:'Relancer Isabelle DUPONT (loyer mars en retard)',done:false,created:Date.now()-86400000*2},
     {id:'td_d2',text:'Planifier entretien chaudière Apt 303',done:false,created:Date.now()-86400000},
@@ -8810,6 +9653,21 @@ function activateDemo(){
   location.reload();
 }
 
+function openPayFor(lcId){
+  document.getElementById('mPayT').textContent='Enregistrer un paiement';
+  const hid=document.getElementById('payId'); if(hid) hid.value='';
+  fillSels();
+  openM('mPay');
+  setTimeout(function(){
+    const sel=document.getElementById('payLoc'); if(sel) sel.value=lcId||'';
+    const lc=lcs.find(function(x){ return x.id===lcId; });
+    const lg=lc?gLg(lc.lgId):null;
+    const du=document.getElementById('payDu');
+    if(du && lg) du.value=(lg.loyer||0)+(lg.ch||0);
+    const pm=document.getElementById('payMois'); if(pm && !pm.value) pm.value=tmth();
+    const pd=document.getElementById('payDate'); if(pd && !pd.value) pd.value=tod();
+  },20);
+}
 function editPay(id){
   const p=pys.find(x=>x.id===id);if(!p)return;
   document.getElementById('mPayT').textContent='Modifier le paiement';

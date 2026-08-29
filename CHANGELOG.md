@@ -4,13 +4,22 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
-## v2.31 — 2026-08-29 — `f88d82d`
+## v2.32 — 2026-08-29 — (merge)
 - **Annonces de location** : nouvel onglet dans la barre latérale. Création d'une
   annonce à partir d'une fiche logement (photos, vidéo, sphère 360° / visite
   virtuelle). Lien public à envoyer à un amateur (WhatsApp, e-mail, SMS, copie,
   fichier HTML) : galerie, vidéo, visite 360°, descriptif repris de la fiche, et
   bandeau de promotion de l'espace locataire Keystone. Pas de compte requis pour
   ouvrir le lien.
+
+## v2.31 — 2026-08-29 — `9f46afc`
+- **États des lieux photographiques** : nouveau module (entrée **et** sortie).
+  Prise de photos (appareil / galerie) et de vidéos pièce par pièce, dossier
+  attaché au **logement** (réutilisable avant d'avoir un locataire), transfert
+  vers un locataire ou un candidat, aperçu HTML/PDF avec photos, génération
+  du Word EDL existant pré-rempli depuis les notes.
+- Les originaux restent sur l'appareil (IndexedDB) ; les miniatures voyagent
+  dans l'export JSON / Drive. L'outil Word historique (📋) est conservé.
 
 ## v2.30 — 2026-06-21 — `d6e661e`
 - **Étude de cas** : défaut « charges annuelles non récupérables » abaissé
@@ -22,7 +31,7 @@
 - Chantier « bâtiment » Phase 2 (UI) : **sélecteur global « Vue par bâtiment »**.
 
 ## v2.28 — 2026-05-20 — `79744b2`
-- Chantier « bâtiment » Phase 2 : **fiche bâtiment en lecture seule**.
+- Chantier « bâtiment » Phase 2 : fiche bâtiment en **lecture seule**.
 
 ## v2.27 — 2026-05-20 — `44a14c7`
 - Chantier « bâtiment » Phase 1 : schéma — `batId` optionnel sur les entretiens (hook prepare).
