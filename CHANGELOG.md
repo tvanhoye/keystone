@@ -4,7 +4,7 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
-## v2.33 — 2026-09-16
+## v2.33 — 2026-09-16 — `9f51565`
 - **Comptes existants (owner)** : le bouton pour ouvrir la liste des comptes
   (menu 💾 + raccourci 👥 dans la barre du haut) réapparaît en session Admin.
   Il avait disparu pour le profil par défaut (`masteradmin`) à cause d'un test
