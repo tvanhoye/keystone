@@ -747,7 +747,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
     <div class="sb-item" id="sbAssistant" data-p="assistant" data-tip="Assistant IA"><span class="sb-icon">🤖</span><span class="sb-lbl">Assistant IA</span></div>
     <div class="sb-item" data-p="todo" data-tip="To-do list"><span class="sb-icon">✅</span><span class="sb-lbl">To-do list</span></div>
   </nav>
-  <div class="sb-foot"><div>Keystone v2.32</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 29/08/2026</div></div>
+  <div class="sb-foot"><div>Keystone v2.33</div><div style="font-size:.58rem;margin-top:2px;color:rgba(255,255,255,.55)">Mis à jour le 16/09/2026</div></div>
 </aside>
 
 <div id="main">
@@ -758,6 +758,7 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
     </div>
     <div style="display:flex;align-items:center;gap:6px">
       <div id="tdate" style="font-size:.69rem;color:var(--t3)"></div>
+      <button id="btnProfiles" data-masteronly class="btn btn-s btn-xs" onclick="showProfileManager()" title="Comptes existants" style="display:none;font-size:0.7rem;padding:3px 8px;">👥</button>
       <button id="logoutBtn" class="btn btn-s btn-xs" onclick="logout()" title="Se déconnecter" style="font-size: 0.7rem; padding: 3px 8px;">🚪</button>
       <button id="driveBtn" class="btn btn-s btn-sm" onclick="syncNow()" title="Synchroniser Google Drive" style="display:none">
         <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="14" height="14"> Sync
@@ -780,8 +781,8 @@ html.an-public #sb,html.an-public #main,html.an-public #mob-nav,html.an-public #
         <div id="menuDrive" class="top-menu-item" onclick="closeTopMenu();(driveToken&amp;&amp;localStorage.getItem('ks_drive'))?syncNow():driveSignIn()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
           <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" width="16" height="16"> <span id="menuDriveLbl">Google Drive</span>
         </div>
-        <div id="menuProfiles" class="top-menu-item" onclick="closeTopMenu();showProfileManager()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
-          👥 Gérer les profils
+        <div id="menuProfiles" data-masteronly class="top-menu-item" onclick="closeTopMenu();showProfileManager()" style="display:none;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:var(--tx);cursor:pointer;border-top:1px solid var(--bd)">
+          👥 Comptes existants
         </div>
         <div class="top-menu-item" onclick="closeTopMenu();logout()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.8rem;font-weight:600;color:#c0392b;cursor:pointer">
           🚪 Se déconnecter
@@ -6915,11 +6916,23 @@ function autoResize(el){
 }
 
 
+// Session du propriétaire (profil Admin par défaut = masteradmin).
+// Les contrôles « comptes existants » ne s'affichent que pour cette session,
+// jamais en démo / projet isolé / Admin Projet / autres rôles.
+function isOwnerAdminSession(){
+  return !!currentProfile && currentProfile.role==='masteradmin' && !window._ksIsolated;
+}
+function syncOwnerOnlyUi(){
+  const show=isOwnerAdminSession();
+  const mp=document.getElementById('menuProfiles');
+  const bp=document.getElementById('btnProfiles');
+  if(mp) mp.style.display=show?'flex':'none';
+  if(bp) bp.style.display=show?'':'none';
+}
+
 // ── TOP MENU ──
 function toggleTopMenu(){
-  // Show/hide admin-only items
-  const mp=document.getElementById('menuProfiles');
-  if(mp) mp.style.display=(!currentProfile||currentProfile.role==='admin')?'flex':'none';
+  syncOwnerOnlyUi();
   const m=document.getElementById('topMenu');
   m.style.display=m.style.display==='none'?'block':'none';
 }
@@ -8156,6 +8169,7 @@ function applyRoleRestrictions(){
     el.style.display='';
     el.removeAttribute('data-role-hidden');
   });
+  syncOwnerOnlyUi();
   if(!currentProfile) return;
   const role = currentProfile.role;
   if(role==='masteradmin'||role==='admin'){
@@ -8225,7 +8239,8 @@ function logout(){
   ens=ld('en'); dcs=ld('dc'); rps=ld('rp'); cos=ld('co'); rls=ld('rl');
   crs=ld('cr'); chs=ld('ch'); dps=ld('dp'); tds=ld('td'); ans=ld('an'); edls=ld('el');
   // Hide Drive + logout UI
-  ['driveBtn','driveBtnConnect','syncBar','menuDrive'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['driveBtn','driveBtnConnect','syncBar','menuDrive','btnProfiles'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const mp=document.getElementById('menuProfiles');if(mp)mp.style.display='none';
   const lb=document.getElementById('logoutBtn');if(lb)lb.style.display='none';
   const tdate=document.getElementById('tdate');if(tdate)tdate.innerHTML='';
   // Show login screen directement (pas de reload, donc pas de dépendance fragile au sessionStorage)
@@ -9501,11 +9516,11 @@ setTimeout(async ()=>{
     await driveHandleRedirect();
     driveInit();
   }
-  // Update menu visibility for admin items
+  // Drive visible par défaut ; les items « comptes existants » restent
+  // masqués jusqu'à applyRoleRestrictions() (owner / masteradmin uniquement).
   const md=document.getElementById('menuDrive');
-  const mp=document.getElementById('menuProfiles');
-  if(md) md.style.display='flex'; // shown for admin by default, toggleTopMenu hides for others
-  if(mp) mp.style.display='flex';
+  if(md) md.style.display='flex';
+  if(typeof syncOwnerOnlyUi==='function') syncOwnerOnlyUi();
   checkLogin();
   applyAssistantVisibility();
 },300);

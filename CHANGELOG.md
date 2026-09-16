@@ -4,6 +4,14 @@
 > la plus récente est **en haut**. SHA = commit qui a posé le bump du footer.
 > Dates au format AAAA-MM-JJ. Pour l'état courant, voir `PROJECT_STATE.md`.
 
+## v2.33 — 2026-09-16
+- **Comptes existants (owner)** : le bouton pour ouvrir la liste des comptes
+  (menu 💾 + raccourci 👥 dans la barre du haut) réapparaît en session Admin.
+  Il avait disparu pour le profil par défaut (`masteradmin`) à cause d'un test
+  `role==='admin'` obsolète, et le badge profil qui servait d'entrée était
+  déjà masqué sur mobile. Toujours **uniquement pour le masteradmin**, jamais
+  en démo / session isolée / Admin Projet / autres rôles.
+
 ## v2.32 — 2026-08-29 — `594827f`
 - **Annonces de location** : nouvel onglet dans la barre latérale. Création d'une
   annonce à partir d'une fiche logement (photos, vidéo, sphère 360° / visite

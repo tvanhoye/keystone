@@ -5,20 +5,23 @@
 > des coordonnées (repo, branche, domaine), voir `CLAUDE_SYNC.md`. Pour les
 > demandes entrantes de Claude, voir `CLAUDE_NOTES.md`.
 
-*Dernière réécriture : 2026-08-29.*
+*Dernière réécriture : 2026-09-16.*
 
 ## VERSION ACTUELLE EN PROD
-- **Footer : `Keystone v2.32`**
+- **Footer : `Keystone v2.32`** (cette branche pose **v2.33**, pas encore mergée)
 - **SHA déployé : `594827f`** (merge `#4` Annonces sur `main` ; GitHub Pages
   publie `main`)
 - **Date du commit déployé : 2026-08-29**
 - URL : https://tvanhoye.github.io/keystone/
 
 ## DERNIER TRAVAIL POUSSÉ
-- **v2.32** — Nouvel onglet **Annonces** : création d'une annonce de location
-  à partir d'une fiche logement (photos, vidéo, sphère 360°). Lien public
-  (WhatsApp, e-mail, SMS, fichier HTML). Bandeau espace locataire Keystone.
-  Coexiste avec le module EDL v2.31.
+- **v2.33** — Bouton « Comptes existants » rétabli **uniquement** pour la
+  session masteradmin (profil Admin par défaut). Cause : `toggleTopMenu`
+  n'affichait l'entrée que si `role==='admin'` (Admin Projet), donc le
+  propriétaire ne la voyait plus ; sur mobile le badge profil (`#tdate`)
+  est déjà `display:none`. Ajout d'un raccourci 👥 dans la topbar, masqué
+  pour tout le monde sauf le masteradmin hors session isolée.
+- **v2.32** — Nouvel onglet **Annonces**.
 - **v2.31** — Module **états des lieux photographiques**.
 - **v2.30** — Étude de cas, défaut charges non récupérables 1400 → 600 €/an.
 
@@ -42,6 +45,8 @@
 - **Assistant IA** : proxy Cloudflare Worker (`ai-proxy-worker.js`).
 - **Architecture mono-fichier** + sync Drive / localStorage.
 - Prod = `tvanhoye.github.io/keystone/` (pas de domaine custom).
+- **Comptes existants** : `isOwnerAdminSession()` = `masteradmin` ET pas
+  `_ksIsolated`. Ne pas réintroduire un test `role==='admin'` seul.
 
 ## ÉTAT MÉMOIRE À CORRIGER CÔTÉ CLAUDE
 - ❌ « Prod en v2.28 / v2.30 » → ✅ **v2.32** sur `main` (`594827f`).
